@@ -41,7 +41,7 @@ Dokumentasi: https://wiki.openstreetmap.org/wiki/Overpass_API
 2. **Penerima/Pencari** — mencari dan membeli/mengambil barang bekas (Saling Beli), meminjam barang yang dibutuhkan sementara (Saling Pinjam), mengklaim makanan berlebih (Saling Bagi), atau memesan tebengan yang tersedia (Saling Tebeng)
 
 ## Tautan Deployment
-🔗 *Akan diisi setelah deploy ke PWS — Checkpoint 2*
+🔗 *https://pws.cs.ui.ac.id/muhammad.hasbi52/salink*
 
 ## Tautan Desain Figma
 🔗 *https://www.figma.com/design/mLX7a6qFC62AiaaPumui8N/SaLink?node-id=0-1&t=JJDhM32RmaUpT8tI-1*
