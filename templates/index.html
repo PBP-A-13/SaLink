@@ -1,0 +1,47 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SaLink</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Anton&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="{% static 'style.css' %}" />
+</head>
+<body>
+
+  <header class="navbar">
+    <a href="#" class="logo">SaLink</a>
+    <nav>
+      <ul>
+        <li><a href="#" class="active">HOME</a></li>
+        <li><a href="#">BELI</a></li>
+        <li><a href="#">NEBENG</a></li>
+        <li><a href="#">BAGI</a></li>
+        <li><a href="#">PINJAM</a></li>
+      </ul>
+    </nav>
+    <a href="#" class="profile">
+      <span>Profile</span>
+      <div class="avatar"></div>
+    </a>
+  </header>
+
+  <section class="hero">
+    <h1>SaLink</h1>
+  </section>
+
+  <main class="sheet">
+    <h2>What you need</h2>
+    <div class="grid">
+      <article class="card"><div class="card-img"></div><div class="card-title">JUDUL BARANG</div></article>
+      <article class="card"><div class="card-img"></div><div class="card-title">JUDUL BARANG</div></article>
+      <article class="card"><div class="card-img"></div><div class="card-title">JUDUL BARANG</div></article>
+      <article class="card"><div class="card-img"></div><div class="card-title">JUDUL BARANG</div></article>
+    </div>
+  </main>
+
+</body>
+</html>
