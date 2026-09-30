@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'main',
     'saling_beli',
+    'saling_bagi',
 ]
 
 MIDDLEWARE = [
