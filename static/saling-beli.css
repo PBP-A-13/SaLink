@@ -186,6 +186,7 @@ a {
   /* potong judul panjang jadi 2 baris agar tinggi kartu seragam */
   display: -webkit-box;
   -webkit-line-clamp: 2;
+  line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
   min-height: 2.4em;

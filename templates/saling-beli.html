@@ -55,14 +55,18 @@
     <section class="grid" aria-label="Daftar barang">
       {% for item in items %}
       <article class="card">
-        <div class="card__image">
+        <a href="{% url 'saling_beli:item_detail' item.id %}" class="card__image" style="display: block;">
           {% if item.image_url %}
             <img src="{{ item.image_url }}" alt="{{ item.title }}" loading="lazy">
+          {% else %}
+            <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: #eee; font-size: 0.8rem; opacity: 0.6;">Tanpa Foto</div>
           {% endif %}
-        </div>
+        </a>
 
         <div class="card__body">
-          <h2 class="card__title">{{ item.title }}</h2>
+          <h2 class="card__title">
+            <a href="{% url 'saling_beli:item_detail' item.id %}">{{ item.title }}</a>
+          </h2>
           <p class="card__price">
             {% if item.is_free %}Gratis{% else %}Rp{{ item.price|floatformat:"0g" }}{% endif %}
           </p>
