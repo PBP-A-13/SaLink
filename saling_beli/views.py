@@ -1,8 +1,10 @@
+import datetime
 import json
 
 from django.core.exceptions import ValidationError
+from django.db.models import Q
 from django.http import HttpResponse, JsonResponse
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, render
 from django.views.decorators.http import require_http_methods
 
 from .models import ItemListing
@@ -65,12 +67,87 @@ def _validation_errors(listing):
 	return None
 
 
+# ==========================================
+# HTML Views (Menggunakan Session & Cookies)
+# ==========================================
+
+def index(request):
+	"""
+	Halaman utama katalog prelove Saling Beli (HTML).
+	Mendukung pencarian (?q=...), session view count, dan pembacaan cookie.
+	"""
+	query = request.GET.get('q', '').strip()
+	items = ItemListing.objects.all()
+
+	if query:
+		items = items.filter(
+			Q(title__icontains=query) |
+			Q(description__icontains=query) |
+			Q(pickup_location__icontains=query)
+		)
+
+	# Session tracking: hitung berapa kali user membuka katalog saling_beli
+	session_views = request.session.get('saling_beli_views', 0) + 1
+	request.session['saling_beli_views'] = session_views
+
+	# Cookie tracking: membaca cookie last_visit
+	last_visit_cookie = request.COOKIES.get('saling_beli_last_visit', None)
+	last_login_cookie = request.COOKIES.get('last_login', None)
+
+	context = {
+		'items': items,
+		'query': query,
+		'session_views': session_views,
+		'last_visit_cookie': last_visit_cookie,
+		'last_login_cookie': last_login_cookie,
+	}
+
+	response = render(request, 'saling-beli.html', context)
+
+	# Set cookie kunjungan terakhir untuk tracking user preference
+	now_str = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+	response.set_cookie('saling_beli_last_visit', now_str, max_age=60 * 60 * 24 * 7)
+
+	return response
+
+
+def item_detail(request, listing_id):
+	"""
+	Halaman detail barang prelove (HTML).
+	Menyimpan riwayat barang yang baru dilihat ke dalam Session user.
+	"""
+	item = get_object_or_404(ItemListing, pk=listing_id)
+
+	# Session: Tambahkan item ke daftar 'recently_viewed'
+	recently_viewed = request.session.get('recently_viewed_items', [])
+	item_id_str = str(item.id)
+	if item_id_str in recently_viewed:
+		recently_viewed.remove(item_id_str)
+	recently_viewed.insert(0, item_id_str)
+	request.session['recently_viewed_items'] = recently_viewed[:5]
+
+	context = {
+		'item': item,
+	}
+	return render(request, 'saling-beli-detail.html', context)
+
+
+# ==========================================
+# REST / JSON API Views
+# ==========================================
+
 @require_http_methods(['GET', 'POST'])
 def listings(request):
 	if request.method == 'GET':
 		return JsonResponse([_listing_data(item) for item in ItemListing.objects.all()], safe=False)
 
 	return _create_listing(request)
+
+
+@require_http_methods(['GET'])
+def listings_json(request):
+	"""Endpoint khusus pengembalian JSON semua listing"""
+	return JsonResponse([_listing_data(item) for item in ItemListing.objects.all()], safe=False)
 
 
 @require_http_methods(['POST'])

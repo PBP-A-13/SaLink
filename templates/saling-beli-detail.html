@@ -1,0 +1,141 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SaLink - Detail Barang: {{ item.title }}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Anton&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'saling-beli.css' %}">
+  <style>
+    .detail-card {
+      max-width: 680px;
+      margin: 0 auto;
+      border: 2px solid;
+      border-radius: var(--radius-card);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    .detail-image {
+      width: 100%;
+      max-height: 400px;
+      object-fit: cover;
+      border-bottom: 2px solid;
+    }
+    .detail-content {
+      padding: var(--space-4);
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-2);
+    }
+    .badge {
+      display: inline-block;
+      padding: var(--space-1) var(--space-2);
+      border: 1px solid;
+      border-radius: var(--radius-pill);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      align-self: flex-start;
+    }
+    .detail-meta {
+      font-size: 0.85rem;
+      line-height: 1.5;
+    }
+    .actions-bar {
+      display: flex;
+      gap: var(--space-3);
+      margin-top: var(--space-3);
+    }
+  </style>
+</head>
+<body>
+
+  <header class="navbar">
+    <a href="/" class="navbar__logo">SaLink</a>
+
+    <nav class="navbar__menu" aria-label="Navigasi utama">
+      <a href="/">Home</a>
+      <a href="{% url 'saling_beli:index' %}" class="is-active" aria-current="page">Beli</a>
+      <a href="/saling-tebeng/">Nebeng</a>
+      <a href="/saling-bagi/">Bagi</a>
+      <a href="/saling-pinjam/">Pinjam</a>
+    </nav>
+
+    <div class="navbar__profile">
+      {% if user.is_authenticated %}
+        <span>{{ user.username }}</span>
+      {% else %}
+        <span>Guest</span>
+      {% endif %}
+      <svg class="navbar__avatar" viewBox="0 0 24 24" aria-hidden="true">
+        <circle cx="12" cy="8" r="4" fill="currentColor"/>
+        <path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7z" fill="currentColor"/>
+      </svg>
+    </div>
+  </header>
+
+  <main class="page">
+    <div style="margin-bottom: var(--space-3); max-width: 680px; margin-inline: auto;">
+      <a href="{% url 'saling_beli:index' %}" class="btn" style="width: auto; padding: 4px 16px;">&larr; Kembali ke Katalog</a>
+    </div>
+
+    <article class="detail-card">
+      {% if item.image_url %}
+        <img src="{{ item.image_url }}" alt="{{ item.title }}" class="detail-image">
+      {% endif %}
+
+      <div class="detail-content">
+        <span class="badge">{{ item.get_category_display }} &bull; {{ item.get_condition_display }}</span>
+        <h1 style="margin: 0; font-size: 1.75rem; text-transform: uppercase;">{{ item.title }}</h1>
+        <p style="font-size: 1.25rem; font-weight: bold; margin: 0;">
+          {% if item.is_free %}Gratis (Hibah){% else %}Rp{{ item.price|floatformat:"0g" }}{% endif %}
+        </p>
+
+        <hr style="border: 0; border-top: 1px solid; margin-block: var(--space-2); opacity: 0.3;">
+
+        <div class="detail-meta">
+          <p><strong>Penjual/Pemberi:</strong> {{ item.user.username }}</p>
+          <p><strong>Titik Temu COD Kampus:</strong> {{ item.pickup_location }}</p>
+          <p><strong>Status:</strong> {{ item.get_status_display }}</p>
+          <p style="margin-top: var(--space-3); font-family: sans-serif; white-space: pre-line; font-size: 0.95rem;">
+            {{ item.description }}
+          </p>
+        </div>
+
+        <div class="actions-bar">
+          <a href="mailto:{{ item.user.email|default:'support@salink.ui.ac.id' }}?subject=Minat%20Barang:%20{{ item.title|urlencode }}" class="btn" style="flex: 1; padding: 8px 16px; font-size: 0.9rem;">
+            Hubungi Penjual
+          </a>
+          <button id="btn-save-cookie" class="btn" style="width: auto; padding: 8px 16px;" onclick="saveToCookies('{{ item.id }}')">
+            ⭐ Simpan ke Favorit (Cookie)
+          </button>
+        </div>
+        <p id="cookie-status" style="font-size: 0.75rem; opacity: 0.8; margin-top: 4px;"></p>
+      </div>
+    </article>
+  </main>
+
+  <script>
+    function saveToCookies(itemId) {
+      let saved = [];
+      const cookie = document.cookie.split('; ').find(row => row.startsWith('salink_saved_items='));
+      if (cookie) {
+        try {
+          saved = JSON.parse(decodeURIComponent(cookie.split('=')[1]));
+        } catch (e) {
+          saved = [];
+        }
+      }
+      if (!saved.includes(itemId)) {
+        saved.push(itemId);
+      }
+      document.cookie = "salink_saved_items=" + encodeURIComponent(JSON.stringify(saved)) + "; path=/; max-age=604800";
+      const statusEl = document.getElementById('cookie-status');
+      statusEl.textContent = 'Barang berhasil disimpan di riwayat favorit browser Anda (Cookie)!';
+    }
+  </script>
+</body>
+</html>
