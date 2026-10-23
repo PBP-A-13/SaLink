@@ -16,10 +16,10 @@
     <a href="#" class="logo">SaLink</a>
     <nav>
       <ul>
-        <li><a href="#" class="active">HOME</a></li>
-        <li><a href="#">BELI</a></li>
-        <li><a href="#">NEBENG</a></li>
-        <li><a href="#">BAGI</a></li>
+        <li><a href="/" class="active">HOME</a></li>
+        <li><a href="{% url 'saling_beli:index' %}">BELI</a></li>
+        <li><a href="/saling-tebeng/">NEBENG</a></li>
+        <li><a href="/saling-bagi/">BAGI</a></li>
         <li><a href="{% url 'saling_pinjam:item_list' %}">PINJAM</a></li>
       </ul>
     </nav>

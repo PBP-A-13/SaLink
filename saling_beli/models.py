@@ -39,5 +39,55 @@ class ItemListing(models.Model):
     class Meta:
         ordering = ['-created_at']
 
+
     def __str__(self):
         return f"{self.title} ({'Gratis' if self.is_free else f'Rp{self.price:,}'})"
+
+
+class PriceOffer(models.Model):
+    class OfferStatus(models.TextChoices):
+        PENDING = 'PENDING', 'Menunggu Respon'
+        ACCEPTED = 'ACCEPTED', 'Diterima'
+        REJECTED = 'REJECTED', 'Ditolak'
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    item = models.ForeignKey(ItemListing, on_delete=models.CASCADE, related_name='offers')
+    buyer = models.ForeignKey(User, on_delete=models.CASCADE, related_name='price_offers')
+    offered_price = models.DecimalField(max_digits=12, decimal_places=0, help_text="Harga penawaran nego dalam Rupiah")
+    note = models.CharField(max_length=255, blank=True, help_text="Pesan/alasan nego (opsional)")
+    status = models.CharField(max_length=20, choices=OfferStatus.choices, default=OfferStatus.PENDING)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"Nego Rp{self.offered_price:,} untuk {self.item.title} oleh {self.buyer.username} [{self.status}]"
+
+
+class TransactionOrder(models.Model):
+    class Stage(models.TextChoices):
+        MENUNGGU_TRANSFER = 'MENUNGGU_TRANSFER', 'Menunggu Transfer'
+        BUKTI_DIUNGGAH = 'BUKTI_DIUNGGAH', 'Bukti Terkirim / Verifikasi'
+        DIKONFIRMASI = 'DIKONFIRMASI', 'Dikonfirmasi Penjual'
+        JANJI_TEMU_COD = 'JANJI_TEMU_COD', 'Janji Temu COD Kampus'
+        SELESAI = 'SELESAI', 'Transaksi Selesai'
+        BATAL = 'BATAL', 'Dibatalkan'
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    item = models.ForeignKey(ItemListing, on_delete=models.CASCADE, related_name='orders')
+    buyer = models.ForeignKey(User, on_delete=models.CASCADE, related_name='orders_bought')
+    seller = models.ForeignKey(User, on_delete=models.CASCADE, related_name='orders_sold')
+    agreed_price = models.DecimalField(max_digits=12, decimal_places=0, default=0)
+    stage = models.CharField(max_length=30, choices=Stage.choices, default=Stage.MENUNGGU_TRANSFER)
+    payment_proof_note = models.CharField(max_length=255, blank=True, help_text="Catatan transfer atau nomor referensi bank")
+    cod_meeting_time = models.CharField(max_length=150, blank=True, help_text="Waktu pertemuan COD yang disepakati")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"Order #{str(self.id)[:8]} - {self.item.title} ({self.get_stage_display()})"
