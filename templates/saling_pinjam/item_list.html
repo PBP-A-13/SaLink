@@ -1,0 +1,114 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SaLink - Pinjam</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Anton&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="{% static 'saling_pinjam.css' %}">
+</head>
+<body>
+
+    <!-- ===== NAVBAR ===== -->
+    <header class="navbar">
+        <a href="/" class="navbar__logo">SaLink</a>
+
+        <nav class="navbar__menu">
+            <a href="/" class="navbar__link">HOME</a>
+            <a href="/saling-beli/" class="navbar__link">BELI</a>
+            <a href="#" class="navbar__link">NEBENG</a>
+            <a href="/saling-bagi/" class="navbar__link">BAGI</a>
+            <a href="{% url 'saling_pinjam:item_list' %}" class="navbar__link navbar__link--active">PINJAM</a>
+        </nav>
+
+        <a href="#" class="navbar__profile">
+            <span class="navbar__profile-text">Profile</span>
+            <span class="navbar__avatar">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <circle cx="12" cy="8" r="5"></circle>
+                    <path d="M3 22c0-5 4-8 9-8s9 3 9 8z"></path>
+                </svg>
+            </span>
+        </a>
+    </header>
+
+    <!-- ===== KONTEN UTAMA ===== -->
+    <main class="pinjam">
+
+        <!-- Kiri: Jadwal Pinjam -->
+        <section class="jadwal">
+            <h2 class="today">{{ today_label }}</h2>
+            <h3 class="section-title section-title--center">Jadwal Pinjam &middot; {{ month_label }}</h3>
+
+            <div class="calendar">
+                <div class="calendar__days">
+                    <span>Minggu</span>
+                    <span>Senin</span>
+                    <span>Selasa</span>
+                    <span>Rabu</span>
+                    <span>Kamis</span>
+                    <span>Jumat</span>
+                    <span>Sabtu</span>
+                </div>
+
+                <div class="calendar__grid">
+                    {% for week in calendar_weeks %}
+                        {% for day in week %}
+                        <div class="calendar__cell{% if not day.in_month %} calendar__cell--muted{% endif %}{% if day.is_today %} calendar__cell--today{% endif %}">
+                            <span class="calendar__date">{{ day.date.day }}</span>
+                        </div>
+                        {% endfor %}
+                    {% endfor %}
+                </div>
+            </div>
+        </section>
+
+        <!-- Kanan: Barang & Pinjaman Saya -->
+        <aside class="sidebar">
+            <section class="barang">
+                <h3 class="section-title">Barang</h3>
+
+                <div class="barang__list">
+                    {% for item in items|slice:":4" %}
+                    <a href="{% url 'saling_pinjam:item_detail' item.id %}" class="item-card">
+                        <div class="item-card__image"></div>
+                        <div class="item-card__info">
+                            <span class="item-card__name">{{ item.name }}</span>
+                            <span class="item-card__meta">{{ item.pickup_location }}</span>
+                        </div>
+                    </a>
+                    {% empty %}
+                    <p class="empty-text">Belum ada barang yang bisa dipinjam.</p>
+                    {% endfor %}
+                </div>
+            </section>
+
+            <section class="pinjaman-saya">
+                <h3 class="section-title">Pinjaman Saya</h3>
+
+                <div class="pinjaman-saya__box">
+                    {% if user.is_authenticated %}
+                        {% for req in my_requests %}
+                        <a href="{% url 'saling_pinjam:my_borrows' %}" class="pinjaman-saya__row">
+                            <span>{{ req.item.name }}</span>
+                            <span class="pinjaman-saya__status">{{ req.get_status_display }}</span>
+                        </a>
+                        {% empty %}
+                        <p class="empty-text">Kamu belum meminjam apa pun.</p>
+                        {% endfor %}
+                    {% else %}
+                        <p class="empty-text">Login untuk melihat pinjaman kamu.</p>
+                    {% endif %}
+                </div>
+            </section>
+        </aside>
+
+    </main>
+
+</body>
+</html>
