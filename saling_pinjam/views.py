@@ -1,3 +1,6 @@
+import calendar
+from datetime import date
+
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
@@ -5,9 +8,36 @@ from django.db.models import Q
 from .models import BorrowItem, BorrowRequest
 from .forms import BorrowItemForm, BorrowRequestForm
 
+HARI = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu']
+BULAN = [
+    'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+    'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember',
+]
+
+
+def build_calendar(today):
+    """
+    Susun kalender bulan berjalan (minggu dimulai hari Minggu, sesuai desain).
+    Mengembalikan list minggu, tiap minggu berisi 7 dict hari.
+    """
+    cal = calendar.Calendar(firstweekday=6)  # 6 = Minggu
+    weeks = []
+    for week in cal.monthdatescalendar(today.year, today.month):
+        weeks.append([
+            {
+                'date': day,
+                'in_month': day.month == today.month,
+                'is_today': day == today,
+            }
+            for day in week
+        ])
+    return weeks
+
+
 def item_list(request):
     """
-    Katalog barang yang tersedia untuk dipinjam beserta filter pencarian dan kategori.
+    Halaman utama Pinjam: jadwal (kalender), katalog barang yang tersedia untuk dipinjam
+    beserta filter pencarian dan kategori, dan ringkasan pinjaman milik user.
     """
     category = request.GET.get('category', '')
     query = request.GET.get('q', '')
@@ -23,11 +53,27 @@ def item_list(request):
             Q(pickup_location__icontains=query)
         )
 
+    today = date.today()
+
+    my_requests = []
+    if request.user.is_authenticated:
+        my_requests = (
+            BorrowRequest.objects
+            .filter(borrower=request.user)
+            .select_related('item')[:5]
+        )
+
     context = {
         'items': items,
         'categories': BorrowItem.Category.choices,
         'selected_category': category,
         'query': query,
+        # Bagian kalender
+        'today_label': f'{HARI[today.weekday()]}, {today.day} {BULAN[today.month - 1]} {today.year}',
+        'month_label': f'{BULAN[today.month - 1]} {today.year}',
+        'calendar_weeks': build_calendar(today),
+        # Bagian "Pinjaman Saya"
+        'my_requests': my_requests,
     }
     return render(request, 'saling_pinjam/item_list.html', context)
 
