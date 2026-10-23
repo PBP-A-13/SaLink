@@ -188,10 +188,15 @@
         <div class="actions-bar">
           <div class="btn-group">
             <button onclick="openPaymentModal()" class="btn" style="flex: 2; padding: 10px 16px; font-size: 0.95rem; cursor: pointer;">
-              💳 Beli Sekarang & Bayar Transfer
+              💳 Beli Sekarang
             </button>
+            {% if not item.is_free %}
+            <button onclick="openNegoModal()" class="btn" style="flex: 1.5; padding: 10px 16px; font-size: 0.95rem; cursor: pointer; background: #fafafa;">
+              🤝 Ajukan Nego
+            </button>
+            {% endif %}
             <a href="mailto:{{ item.user.email|default:'support@salink.ui.ac.id' }}?subject=Minat%20Barang:%20{{ item.title|urlencode }}" class="btn" style="flex: 1; padding: 10px 16px; font-size: 0.85rem;">
-              Chat / Tanya
+              Chat
             </a>
             <button id="btn-save-cookie" class="btn btn--icon" style="padding: 10px 16px;" onclick="saveToCookies('{{ item.id }}')" title="Simpan ke Favorit (Cookie)">
               ⭐ Simpan
@@ -199,6 +204,91 @@
           </div>
           <p id="cookie-status" style="font-size: 0.75rem; opacity: 0.8; margin: 0;"></p>
         </div>
+
+        <!-- Section Riwayat Tawaran Nego -->
+        {% if offers %}
+        <div style="margin-top: var(--space-4); border-top: 2px dashed rgba(0,0,0,0.15); padding-top: var(--space-3); font-family: sans-serif;">
+          <h4 style="margin: 0 0 var(--space-2); text-transform: uppercase; font-size: 0.95rem;">🤝 Daftar Penawaran Nego</h4>
+          <div style="display: flex; flex-direction: column; gap: 8px;">
+            {% for off in offers %}
+            <div style="border: 1px solid #e0e0e0; border-radius: 6px; padding: 10px; background: #fafafa; font-size: 0.85rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 6px;">
+              <div>
+                <strong>@{{ off.buyer.username }}</strong> menawar <strong>Rp{{ off.offered_price|floatformat:"0g" }}</strong>
+                {% if off.note %}<span style="opacity: 0.75;">- "{{ off.note }}"</span>{% endif %}
+                <div style="font-size: 0.75rem; margin-top: 2px;">
+                  Status: 
+                  {% if off.status == 'ACCEPTED' %}
+                    <span style="color: green; font-weight: bold;">Disetujui</span>
+                  {% elif off.status == 'REJECTED' %}
+                    <span style="color: red; font-weight: bold;">Ditolak</span>
+                  {% else %}
+                    <span style="color: orange; font-weight: bold;">Menunggu Respon</span>
+                  {% endif %}
+                </div>
+              </div>
+              {% if user == item.user and off.status == 'PENDING' %}
+              <div style="display: flex; gap: 6px;">
+                <button onclick="respondOffer('{{ off.id }}', 'accept')" class="btn" style="padding: 4px 10px; font-size: 0.75rem; background: #2e7d32; color: #fff; cursor: pointer;">Terima</button>
+                <button onclick="respondOffer('{{ off.id }}', 'reject')" class="btn" style="padding: 4px 10px; font-size: 0.75rem; background: #c62828; color: #fff; cursor: pointer;">Tolak</button>
+              </div>
+              {% endif %}
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+        {% endif %}
+
+        <!-- Section Order Tracker COD Kampus -->
+        {% if orders %}
+        <div style="margin-top: var(--space-4); border-top: 2px dashed rgba(0,0,0,0.15); padding-top: var(--space-3); font-family: sans-serif;">
+          <h4 style="margin: 0 0 var(--space-2); text-transform: uppercase; font-size: 0.95rem;">📦 Status & Tracker Transaksi COD</h4>
+          <div style="display: flex; flex-direction: column; gap: 12px;">
+            {% for ord in orders %}
+            <div style="border: 2px solid; border-radius: 8px; padding: 12px; background: #fff; font-size: 0.85rem;">
+              <div style="display: flex; justify-content: space-between; margin-bottom: 8px; border-bottom: 1px solid #eee; padding-bottom: 6px;">
+                <span><strong>Order #{{ ord.id|stringformat:'s'|slice:':8' }}</strong></span>
+                <span style="font-weight: 600; color: #0070f3;">{{ ord.get_stage_display }}</span>
+              </div>
+              <p style="margin: 2px 0;">Pembeli: <strong>@{{ ord.buyer.username }}</strong> | Penjual: <strong>@{{ ord.seller.username }}</strong></p>
+              <p style="margin: 2px 0;">Nominal Sepakat: <strong>Rp{{ ord.agreed_price|floatformat:"0g" }}</strong></p>
+              <p style="margin: 2px 0;">Titik Temu COD: <strong>{{ ord.item.pickup_location }}</strong></p>
+              {% if ord.payment_proof_note %}
+              <p style="margin: 2px 0; background: #f0fdf4; padding: 4px 8px; border-radius: 4px;">Bukti / Ref: {{ ord.payment_proof_note }}</p>
+              {% endif %}
+              {% if ord.cod_meeting_time %}
+              <p style="margin: 2px 0; background: #eff6ff; padding: 4px 8px; border-radius: 4px;">Waktu COD: {{ ord.cod_meeting_time }}</p>
+              {% endif %}
+
+              <!-- Timeline Stepper -->
+              <div style="display: flex; justify-content: space-between; margin-top: 10px; font-size: 0.7rem; text-align: center; gap: 4px;">
+                <div style="flex: 1; padding: 4px; border-radius: 4px; background: {% if ord.stage != 'BATAL' %}#e8f5e9{% else %}#eee{% endif %}; font-weight: 600;">1. Transfer</div>
+                <div style="flex: 1; padding: 4px; border-radius: 4px; background: {% if ord.stage in 'BUKTI_DIUNGGAH DIKONFIRMASI JANJI_TEMU_COD SELESAI' %}#e8f5e9{% else %}#eee{% endif %};">2. Verifikasi</div>
+                <div style="flex: 1; padding: 4px; border-radius: 4px; background: {% if ord.stage in 'JANJI_TEMU_COD SELESAI' %}#e8f5e9{% else %}#eee{% endif %};">3. Janji COD</div>
+                <div style="flex: 1; padding: 4px; border-radius: 4px; background: {% if ord.stage == 'SELESAI' %}#4caf50; color: white{% else %}#eee{% endif %};">4. Selesai</div>
+              </div>
+
+              {% if user == ord.buyer or user == ord.seller %}
+              <div style="margin-top: 10px; display: flex; gap: 6px; flex-wrap: wrap;">
+                {% if user == ord.buyer and ord.stage == 'MENUNGGU_TRANSFER' %}
+                  <button onclick="updateOrderPrompt('{{ ord.id }}', 'BUKTI_DIUNGGAH', 'Masukkan no. referensi transfer / nama bank pengirim:')" class="btn" style="padding: 4px 10px; font-size: 0.75rem;">Konfirmasi Sudah Transfer</button>
+                {% endif %}
+                {% if user == ord.seller and ord.stage == 'BUKTI_DIUNGGAH' %}
+                  <button onclick="updateOrder('{{ ord.id }}', 'DIKONFIRMASI')" class="btn" style="padding: 4px 10px; font-size: 0.75rem; background: #2e7d32; color: #fff;">Verifikasi Dana Masuk</button>
+                {% endif %}
+                {% if ord.stage in 'DIKONFIRMASI BUKTI_DIUNGGAH' %}
+                  <button onclick="updateOrderPrompt('{{ ord.id }}', 'JANJI_TEMU_COD', 'Tentukan hari & jam pertemuan COD kampus:', 'cod_time')" class="btn" style="padding: 4px 10px; font-size: 0.75rem;">Atur Waktu COD</button>
+                {% endif %}
+                {% if ord.stage == 'JANJI_TEMU_COD' %}
+                  <button onclick="updateOrder('{{ ord.id }}', 'SELESAI')" class="btn" style="padding: 4px 10px; font-size: 0.75rem; background: #1565c0; color: #fff;">Selesaikan Transaksi (Barang Diterima)</button>
+                {% endif %}
+              </div>
+              {% endif %}
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+        {% endif %}
+
       </div>
     </article>
   </main>
@@ -223,8 +313,54 @@
     </div>
   </div>
 
+  <!-- Modal Nego Harga -->
+  <div id="negoModal" class="modal-overlay" onclick="closeNegoModalOnBg(event)" style="display: none;">
+    <div class="modal-content">
+      <h2 style="margin: 0; font-size: 1.25rem; text-transform: uppercase;">🤝 Ajukan Nego Harga</h2>
+      <p style="font-family: sans-serif; font-size: 0.85rem; color: #555; margin: 6px 0 12px;">
+        Harga awal barang: <strong>Rp{{ item.price|floatformat:"0g" }}</strong>
+      </p>
+
+      <form id="form-nego" onsubmit="submitNego(event)" style="font-family: sans-serif; font-size: 0.9rem; display: flex; flex-direction: column; gap: 10px;">
+        {% csrf_token %}
+        <label>
+          Tawaran Harga Anda (Rp):
+          <input type="number" id="offered_price" name="offered_price" required min="1000" max="{{ item.price }}" placeholder="Contoh: 45000" style="width: 100%; padding: 8px; margin-top: 4px; border: 1.5px solid; border-radius: 4px; font: inherit;">
+        </label>
+        <label>
+          Catatan / Alasan Nego (Opsional):
+          <input type="text" id="nego_note" name="note" placeholder="Misal: Ambil hari ini di Perpusat kak" style="width: 100%; padding: 8px; margin-top: 4px; border: 1.5px solid; border-radius: 4px; font: inherit;">
+        </label>
+
+        <div style="display: flex; gap: var(--space-2); justify-content: flex-end; margin-top: var(--space-2);">
+          <button type="button" class="btn" onclick="closeNegoModal()" style="padding: 6px 14px; width: auto;">Batal</button>
+          <button type="submit" class="btn" style="padding: 6px 14px; width: auto; background: currentColor; color: #fff;">
+            Kirim Penawaran
+          </button>
+        </div>
+      </form>
+      <p id="nego-message" style="font-family: sans-serif; font-size: 0.8rem; margin: 8px 0 0;"></p>
+    </div>
+  </div>
+
   <script>
-    function copyRekening(nomor) {
+    function getCookie(name) {
+      let cookieValue = null;
+      if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+          const cookie = cookies[i].trim();
+          if (cookie.substring(0, name.length + 1) === (name + '=')) {
+            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+            break;
+          }
+        }
+      }
+      return cookieValue;
+    }
+    const csrftoken = getCookie('csrftoken');
+
+    function copyRekening() {
       const text = document.getElementById('rekening-text').innerText;
       navigator.clipboard.writeText(text).then(() => {
         alert('Nomor rekening/tujuan transfer penjual berhasil disalin ke clipboard!');
@@ -245,12 +381,122 @@
       }
     }
 
+    function openNegoModal() {
+      document.getElementById('negoModal').style.display = 'flex';
+    }
+
+    function closeNegoModal() {
+      document.getElementById('negoModal').style.display = 'none';
+    }
+
+    function closeNegoModalOnBg(e) {
+      if (e.target.id === 'negoModal') {
+        closeNegoModal();
+      }
+    }
+
+    function submitNego(e) {
+      e.preventDefault();
+      const price = document.getElementById('offered_price').value;
+      const note = document.getElementById('nego_note').value;
+      const msg = document.getElementById('nego-message');
+
+      fetch("{% url 'saling_beli:make-offer' item.id %}", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": csrftoken
+        },
+        body: JSON.stringify({ offered_price: price, note: note })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          msg.style.color = "green";
+          msg.textContent = data.message;
+          setTimeout(() => location.reload(), 1200);
+        } else {
+          msg.style.color = "red";
+          msg.textContent = data.error || "Gagal mengirim penawaran.";
+        }
+      })
+      .catch(() => {
+        msg.style.color = "red";
+        msg.textContent = "Terjadi kesalahan jaringan.";
+      });
+    }
+
+    function respondOffer(offerId, action) {
+      fetch(`/saling-beli/offer/${offerId}/respond/`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": csrftoken
+        },
+        body: JSON.stringify({ action: action })
+      })
+      .then(res => res.json())
+      .then(data => {
+        alert(data.message || (data.success ? 'Berhasil' : data.error));
+        location.reload();
+      });
+    }
+
     function confirmTransferOrder() {
       const msg = document.getElementById('order-message');
-      msg.textContent = 'Permintaan pembelian dicatat! Silakan simpan bukti transfer dan temui penjual di {{ item.pickup_location }}.';
-      setTimeout(() => {
-        closePaymentModal();
-      }, 2500);
+      fetch("{% url 'saling_beli:create-order' item.id %}", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": csrftoken
+        }
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          msg.textContent = data.message;
+          setTimeout(() => location.reload(), 1500);
+        } else {
+          msg.style.color = "red";
+          msg.textContent = data.error || "Gagal membuat pesanan.";
+        }
+      })
+      .catch(() => {
+        msg.textContent = 'Permintaan pembelian dicatat! Silakan simpan bukti transfer dan temui penjual.';
+        setTimeout(() => closePaymentModal(), 2000);
+      });
+    }
+
+    function updateOrderPrompt(orderId, stage, promptText, fieldType) {
+      const val = prompt(promptText);
+      if (val === null) return;
+      const payload = { stage: stage };
+      if (fieldType === 'cod_time') {
+        payload.cod_meeting_time = val;
+      } else {
+        payload.note = val;
+      }
+      sendOrderUpdate(orderId, payload);
+    }
+
+    function updateOrder(orderId, stage) {
+      sendOrderUpdate(orderId, { stage: stage });
+    }
+
+    function sendOrderUpdate(orderId, payload) {
+      fetch(`/saling-beli/order/${orderId}/update-stage/`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": csrftoken
+        },
+        body: JSON.stringify(payload)
+      })
+      .then(res => res.json())
+      .then(data => {
+        alert(data.message || (data.success ? 'Status diperbarui!' : data.error));
+        location.reload();
+      });
     }
 
     function saveToCookies(itemId) {
@@ -273,3 +519,4 @@
   </script>
 </body>
 </html>
+

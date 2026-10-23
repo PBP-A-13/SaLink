@@ -9,6 +9,12 @@ urlpatterns = [
     path('', views.index, name='index'),
     path('detail/<uuid:listing_id>/', views.item_detail, name='item_detail'),
 
+    # Nego & Order Tracking Endpoints
+    path('detail/<uuid:listing_id>/offer/', views.make_offer, name='make-offer'),
+    path('offer/<uuid:offer_id>/respond/', views.respond_offer, name='respond-offer'),
+    path('detail/<uuid:listing_id>/order/', views.create_order, name='create-order'),
+    path('order/<uuid:order_id>/update-stage/', views.update_order_stage, name='update-order-stage'),
+
     # JSON / REST API Endpoints
     path('json/', views.listings, name='listing-list'),
     path('json/all/', views.listings_json, name='listing-json'),
