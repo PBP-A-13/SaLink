@@ -111,7 +111,7 @@ def index(request):
 		'recently_viewed_items': recently_viewed_items,
 	}
 
-	response = render(request, 'saling-beli.html', context)
+	response = render(request, 'saling_beli/saling-beli.html', context)
 
 	# Set cookie kunjungan terakhir untuk tracking user preference
 	now_str = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
@@ -146,7 +146,7 @@ def item_detail(request, listing_id):
 		'offers': offers,
 		'orders': orders,
 	}
-	return render(request, 'saling-beli-detail.html', context)
+	return render(request, 'saling_beli/saling-beli-detail.html', context)
 
 
 @require_http_methods(['POST'])

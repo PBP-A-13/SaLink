@@ -107,6 +107,21 @@
       flex-direction: column;
       gap: var(--space-3);
     }
+    .step-pill {
+      flex: 1;
+      padding: 4px;
+      border-radius: 4px;
+      background: #eee;
+    }
+    .step-pill.is-active {
+      background: #e8f5e9;
+      font-weight: 600;
+    }
+    .step-pill.is-done {
+      background: #4caf50;
+      color: #fff;
+      font-weight: 600;
+    }
   </style>
 </head>
 <body>
@@ -261,10 +276,10 @@
 
               <!-- Timeline Stepper -->
               <div style="display: flex; justify-content: space-between; margin-top: 10px; font-size: 0.7rem; text-align: center; gap: 4px;">
-                <div style="flex: 1; padding: 4px; border-radius: 4px; background: {% if ord.stage != 'BATAL' %}#e8f5e9{% else %}#eee{% endif %}; font-weight: 600;">1. Transfer</div>
-                <div style="flex: 1; padding: 4px; border-radius: 4px; background: {% if ord.stage in 'BUKTI_DIUNGGAH DIKONFIRMASI JANJI_TEMU_COD SELESAI' %}#e8f5e9{% else %}#eee{% endif %};">2. Verifikasi</div>
-                <div style="flex: 1; padding: 4px; border-radius: 4px; background: {% if ord.stage in 'JANJI_TEMU_COD SELESAI' %}#e8f5e9{% else %}#eee{% endif %};">3. Janji COD</div>
-                <div style="flex: 1; padding: 4px; border-radius: 4px; background: {% if ord.stage == 'SELESAI' %}#4caf50; color: white{% else %}#eee{% endif %};">4. Selesai</div>
+                <div class="step-pill {% if ord.stage != 'BATAL' %}is-active{% endif %}">1. Transfer</div>
+                <div class="step-pill {% if ord.stage == 'BUKTI_DIUNGGAH' or ord.stage == 'DIKONFIRMASI' or ord.stage == 'JANJI_TEMU_COD' or ord.stage == 'SELESAI' %}is-active{% endif %}">2. Verifikasi</div>
+                <div class="step-pill {% if ord.stage == 'JANJI_TEMU_COD' or ord.stage == 'SELESAI' %}is-active{% endif %}">3. Janji COD</div>
+                <div class="step-pill {% if ord.stage == 'SELESAI' %}is-done{% endif %}">4. Selesai</div>
               </div>
 
               {% if user == ord.buyer or user == ord.seller %}
@@ -275,7 +290,7 @@
                 {% if user == ord.seller and ord.stage == 'BUKTI_DIUNGGAH' %}
                   <button onclick="updateOrder('{{ ord.id }}', 'DIKONFIRMASI')" class="btn" style="padding: 4px 10px; font-size: 0.75rem; background: #2e7d32; color: #fff;">Verifikasi Dana Masuk</button>
                 {% endif %}
-                {% if ord.stage in 'DIKONFIRMASI BUKTI_DIUNGGAH' %}
+                {% if ord.stage == 'DIKONFIRMASI' or ord.stage == 'BUKTI_DIUNGGAH' %}
                   <button onclick="updateOrderPrompt('{{ ord.id }}', 'JANJI_TEMU_COD', 'Tentukan hari & jam pertemuan COD kampus:', 'cod_time')" class="btn" style="padding: 4px 10px; font-size: 0.75rem;">Atur Waktu COD</button>
                 {% endif %}
                 {% if ord.stage == 'JANJI_TEMU_COD' %}
