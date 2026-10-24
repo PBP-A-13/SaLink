@@ -7,7 +7,7 @@ from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_http_methods
 
-from .models import ItemListing, PriceOffer, TransactionOrder
+from .models import ItemChatMessage, ItemListing, PriceOffer, TransactionOrder, UserNotification
 
 EDITABLE_FIELDS = {
 	'title',
@@ -33,6 +33,8 @@ def _listing_data(listing):
 		'is_free': listing.is_free,
 		'price': str(listing.price),
 		'image_url': listing.image_url,
+		'image': listing.image.url if listing.image else None,
+		'display_image': listing.display_image,
 		'pickup_location': listing.pickup_location,
 		'status': listing.status,
 		'created_at': listing.created_at.isoformat(),
@@ -175,6 +177,15 @@ def make_offer(request, listing_id):
 		note=note.strip()
 	)
 
+	# Kirim Notifikasi ke Penjual
+	UserNotification.objects.create(
+		user=item.user,
+		title=f'Tawaran Nego Baru dari @{request.user.username}',
+		message=f'@{request.user.username} menawar "{item.title}" seharga Rp{offered_price:,}.',
+		notification_type=UserNotification.NotifType.OFFER,
+		link=f'/saling-beli/detail/{item.id}/'
+	)
+
 	return JsonResponse({
 		'success': True,
 		'message': 'Penawaran nego berhasil dikirim ke penjual!',
@@ -214,6 +225,14 @@ def respond_offer(request, offer_id):
 			seller=offer.item.user,
 			defaults={'agreed_price': offer.offered_price}
 		)
+		# Kirim Notifikasi ke Pembeli
+		UserNotification.objects.create(
+			user=offer.buyer,
+			title='Tawaran Nego Anda Diterima!',
+			message=f'Penjual @{request.user.username} menerima tawaran Rp{offer.offered_price:,} untuk "{offer.item.title}". Transaksi COD dimulai.',
+			notification_type=UserNotification.NotifType.TRACKER_UPDATE,
+			link=f'/saling-beli/detail/{offer.item.id}/'
+		)
 		return JsonResponse({
 			'success': True,
 			'status': 'ACCEPTED',
@@ -223,6 +242,13 @@ def respond_offer(request, offer_id):
 	elif action == 'reject':
 		offer.status = PriceOffer.OfferStatus.REJECTED
 		offer.save()
+		UserNotification.objects.create(
+			user=offer.buyer,
+			title='Tawaran Nego Ditolak',
+			message=f'Penjual @{request.user.username} menolak tawaran Anda untuk "{offer.item.title}".',
+			notification_type=UserNotification.NotifType.OFFER,
+			link=f'/saling-beli/detail/{offer.item.id}/'
+		)
 		return JsonResponse({
 			'success': True,
 			'status': 'REJECTED',
@@ -252,6 +278,15 @@ def create_order(request, listing_id):
 		stage=TransactionOrder.Stage.MENUNGGU_TRANSFER,
 	)
 
+	# Notifikasi ke Penjual
+	UserNotification.objects.create(
+		user=item.user,
+		title=f'Pesanan Baru dari @{request.user.username}!',
+		message=f'@{request.user.username} telah memesan "{item.title}". Menunggu konfirmasi transfer/COD.',
+		notification_type=UserNotification.NotifType.TRACKER_UPDATE,
+		link=f'/saling-beli/detail/{item.id}/'
+	)
+
 	return JsonResponse({
 		'success': True,
 		'order_id': str(order.id),
@@ -262,7 +297,7 @@ def create_order(request, listing_id):
 @require_http_methods(['POST'])
 def update_order_stage(request, order_id):
 	"""
-	Memperbarui tahapan status transaksi / tracker COD.
+	Memperbarui tahapan status transaksi / tracker COD dan mengirimkan notifikasi.
 	"""
 	if not request.user.is_authenticated:
 		return JsonResponse({'error': 'Authentication required.'}, status=401)
@@ -294,6 +329,16 @@ def update_order_stage(request, order_id):
 			order.item.status = ItemListing.Status.SOLD
 			order.item.save()
 
+		# Kirim Notifikasi ke pihak lawan (jika pembeli update -> kirim ke penjual, vice versa)
+		recipient = order.seller if request.user == order.buyer else order.buyer
+		UserNotification.objects.create(
+			user=recipient,
+			title=f'Update Tracker: {order.item.title}',
+			message=f'Status pesanan #{str(order.id)[:8]} diubah menjadi: "{order.get_stage_display()}" oleh @{request.user.username}.',
+			notification_type=UserNotification.NotifType.TRACKER_UPDATE,
+			link=f'/saling-beli/detail/{order.item.id}/'
+		)
+
 		return JsonResponse({
 			'success': True,
 			'stage': order.stage,
@@ -302,6 +347,7 @@ def update_order_stage(request, order_id):
 		})
 
 	return JsonResponse({'error': 'Tahapan status tidak valid.'}, status=400)
+
 
 
 # ==========================================
@@ -390,3 +436,203 @@ def _update_listing(request, listing_id):
 
 	listing.save()
 	return JsonResponse(_listing_data(listing))
+
+
+@require_http_methods(['GET'])
+def location_search(request):
+	"""
+	Integrasi Public OpenStreetMap (Nominatim API - Free & No API Key Required)
+	Digunakan untuk mencari titik temu / COD kampus UI atau drop-point secara real-time.
+	"""
+	import urllib.parse
+	import urllib.request
+
+	query = request.GET.get('q', '').strip()
+	if not query:
+		query = 'Universitas Indonesia'
+
+	# Parameterized search prioritizing UI / Depok
+	params = {
+		'format': 'json',
+		'q': f"{query}, Depok",
+		'addressdetails': 1,
+		'limit': 5,
+	}
+	url = f"https://nominatim.openstreetmap.org/search?{urllib.parse.urlencode(params)}"
+	req = urllib.request.Request(
+		url,
+		headers={'User-Agent': 'SaLink-StudentApp/1.0 (cs-ui-pbp@salink.ui.ac.id)'}
+	)
+
+	try:
+		with urllib.request.urlopen(req, timeout=5) as resp:
+			data = json.loads(resp.read().decode('utf-8'))
+			results = [
+				{
+					'display_name': item.get('display_name'),
+					'lat': item.get('lat'),
+					'lon': item.get('lon'),
+					'type': item.get('type'),
+				}
+				for item in data
+			]
+			return JsonResponse({'success': True, 'query': query, 'locations': results})
+	except Exception as e:
+		return JsonResponse({'success': False, 'error': str(e), 'locations': []}, status=502)
+
+
+@require_http_methods(['POST'])
+def upload_item_image(request, listing_id):
+	"""
+	Endpoint untuk mengupload foto barang dari perangkat ke server/media
+	"""
+	if not request.user.is_authenticated:
+		return JsonResponse({'error': 'Authentication required.'}, status=401)
+
+	listing = get_object_or_404(ItemListing, pk=listing_id, user=request.user)
+
+	if 'image' not in request.FILES:
+		return JsonResponse({'error': 'No image file provided in multipart/form-data.'}, status=400)
+
+	uploaded_file = request.FILES['image']
+	# Validasi ekstensi
+	allowed_extensions = ('.jpg', '.jpeg', '.png', '.webp', '.gif')
+	if not uploaded_file.name.lower().endswith(allowed_extensions):
+		return JsonResponse({'error': 'Format file harus berupa gambar (JPG, PNG, WEBP, GIF).'}, status=400)
+
+	listing.image = uploaded_file
+	listing.save()
+
+	return JsonResponse({
+		'success': True,
+		'message': 'Foto barang berhasil diunggah!',
+		'image_url': listing.image.url,
+		'listing': _listing_data(listing),
+	})
+
+
+# ==========================================
+# Chat & Realtime In-App Notification Views
+# ==========================================
+
+@require_http_methods(['GET', 'POST'])
+def item_chats(request, listing_id):
+	"""
+	Mengambil riwayat chat atau mengirim pesan baru terkait barang.
+	Ketika pesan terkirim, otomatis mengirimkan notifikasi ke penerima.
+	"""
+	if not request.user.is_authenticated:
+		return JsonResponse({'error': 'Silakan login untuk menggunakan fitur chat.'}, status=401)
+
+	item = get_object_or_404(ItemListing, pk=listing_id)
+
+	if request.method == 'GET':
+		# Tampilkan riwayat chat yang melibatkan user saat ini
+		chats = ItemChatMessage.objects.filter(
+			item=item
+		).filter(
+			Q(sender=request.user) | Q(recipient=request.user)
+		).select_related('sender', 'recipient').order_by('created_at')
+
+		data = [
+			{
+				'id': str(c.id),
+				'sender': c.sender.username,
+				'is_me': c.sender == request.user,
+				'message': c.message,
+				'created_at': c.created_at.strftime('%H:%M, %d %b'),
+			}
+			for c in chats
+		]
+		return JsonResponse({'success': True, 'chats': data})
+
+	# POST: Kirim pesan
+	try:
+		body = json.loads(request.body) if request.body else {}
+		message_text = request.POST.get('message') or body.get('message', '')
+	except json.JSONDecodeError:
+		message_text = request.POST.get('message', '')
+
+	message_text = message_text.strip()
+	if not message_text:
+		return JsonResponse({'error': 'Pesan tidak boleh kosong.'}, status=400)
+
+	# Tentukan penerima: jika yang kirim pembeli -> penerimanya penjual; jika penjual -> kirim ke pembeli
+	recipient = item.user if request.user != item.user else (
+		# Jika penjual mengirim pesan balasan, cari user pembeli yang sedang bertransaksi / chat terakhir
+		item.orders.exclude(buyer=request.user).values_list('buyer', flat=True).first() or
+		item.offers.exclude(buyer=request.user).values_list('buyer', flat=True).first()
+	)
+	if not recipient:
+		return JsonResponse({'error': 'Belum ada calon pembeli yang memulai percakapan.'}, status=400)
+
+	if isinstance(recipient, int):
+		from django.contrib.auth.models import User
+		recipient = User.objects.get(pk=recipient)
+
+	chat = ItemChatMessage.objects.create(
+		item=item,
+		sender=request.user,
+		recipient=recipient,
+		message=message_text
+	)
+
+	# Buat Notifikasi ke Penerima Pesan
+	UserNotification.objects.create(
+		user=recipient,
+		title=f'Pesan baru dari @{request.user.username}',
+		message=f'@{request.user.username} mengirim pesan tentang "{item.title}": "{message_text[:60]}"',
+		notification_type=UserNotification.NotifType.CHAT,
+		link=f'/saling-beli/detail/{item.id}/'
+	)
+
+	return JsonResponse({
+		'success': True,
+		'message': 'Pesan berhasil terkirim!',
+		'chat': {
+			'id': str(chat.id),
+			'sender': chat.sender.username,
+			'is_me': True,
+			'message': chat.message,
+			'created_at': chat.created_at.strftime('%H:%M, %d %b'),
+		}
+	})
+
+
+@require_http_methods(['GET'])
+def user_notifications(request):
+	"""
+	Endpoint untuk mengecek notifikasi user secara berkala (polling / badge).
+	"""
+	if not request.user.is_authenticated:
+		return JsonResponse({'notifications': [], 'unread_count': 0})
+
+	notifs = UserNotification.objects.filter(user=request.user)[:10]
+	unread_count = UserNotification.objects.filter(user=request.user, is_read=False).count()
+
+	data = [
+		{
+			'id': str(n.id),
+			'title': n.title,
+			'message': n.message,
+			'type': n.notification_type,
+			'link': n.link or '#',
+			'is_read': n.is_read,
+			'created_at': n.created_at.strftime('%H:%M, %d %b'),
+		}
+		for n in notifs
+	]
+
+	return JsonResponse({'success': True, 'unread_count': unread_count, 'notifications': data})
+
+
+@require_http_methods(['POST'])
+def mark_notifications_read(request):
+	"""
+	Menandai semua notifikasi user sebagai terbaca.
+	"""
+	if not request.user.is_authenticated:
+		return JsonResponse({'error': 'Authentication required.'}, status=401)
+
+	UserNotification.objects.filter(user=request.user, is_read=False).update(is_read=True)
+	return JsonResponse({'success': True, 'message': 'Semua notifikasi ditandai sebagai terbaca.'})

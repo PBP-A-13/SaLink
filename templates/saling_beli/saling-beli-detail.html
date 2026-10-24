@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Anton&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="{% static 'saling-beli.css' %}">
+  <link rel="stylesheet" href="{% static 'saling_beli/saling-beli.css' %}">
   <style>
     .detail-card {
       max-width: 680px;
@@ -137,7 +137,24 @@
       <a href="/saling-pinjam/">Pinjam</a>
     </nav>
 
-    <div class="navbar__profile">
+    <div class="navbar__profile" style="position: relative;">
+      <!-- Bell Notification Button -->
+      <button id="notif-btn" onclick="toggleNotifDropdown()" style="background: none; border: none; cursor: pointer; position: relative; padding: 4px; display: flex; align-items: center;" title="Notifikasi Transaksi & Chat">
+        <span style="font-size: 1.2rem;">🔔</span>
+        <span id="notif-badge" style="display: none; position: absolute; top: 0; right: 0; background: #e11d48; color: #fff; font-size: 0.65rem; font-weight: bold; padding: 2px 5px; border-radius: 999px;">0</span>
+      </button>
+
+      <!-- Dropdown Notifikasi -->
+      <div id="notif-dropdown" style="display: none; position: absolute; top: 110%; right: 0; width: 280px; max-height: 340px; overflow-y: auto; background: #fff; border: 2px solid; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 200; padding: 8px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 6px; margin-bottom: 6px;">
+          <strong style="font-size: 0.85rem;">Notifikasi Anda</strong>
+          <button onclick="markAllNotifsRead()" style="background: none; border: none; font-size: 0.7rem; color: #0284c7; cursor: pointer;">Tandai Dibaca</button>
+        </div>
+        <div id="notif-list" style="display: flex; flex-direction: column; gap: 6px; font-size: 0.75rem;">
+          <p style="text-align: center; color: #777; margin: 8px 0;">Tidak ada notifikasi baru.</p>
+        </div>
+      </div>
+
       {% if user.is_authenticated %}
         <span>{{ user.username }}</span>
       {% else %}
@@ -156,10 +173,10 @@
     </div>
 
     <article class="detail-card">
-      {% if item.image_url %}
-        <img src="{{ item.image_url }}" alt="{{ item.title }}" class="detail-image">
+      {% if item.display_image %}
+        <img src="{{ item.display_image }}" alt="{{ item.title }}" class="detail-image" id="main-item-image">
       {% else %}
-        <div style="height: 240px; display: flex; align-items: center; justify-content: center; border-bottom: 2px solid; background: #fafafa; font-size: 0.9rem; opacity: 0.6;">
+        <div id="image-placeholder" style="height: 240px; display: flex; align-items: center; justify-content: center; border-bottom: 2px solid; background: #fafafa; font-size: 0.9rem; opacity: 0.6;">
           Tidak ada foto barang
         </div>
       {% endif %}
@@ -175,11 +192,31 @@
 
         <div class="detail-meta">
           <p><strong>Penjual/Pemberi:</strong> {{ item.user.username }}</p>
-          <p><strong>Titik Temu COD Kampus:</strong> {{ item.pickup_location }}</p>
+          <p>
+            <strong>Titik Temu COD Kampus:</strong> 
+            <span id="pickup-location-display">{{ item.pickup_location }}</span>
+            <button onclick="checkOsmLocation('{{ item.pickup_location|escapejs }}')" class="btn" style="padding: 2px 8px; font-size: 0.7rem; margin-left: 6px; cursor: pointer;">
+              📍 Cek di Peta (OSM)
+            </button>
+          </p>
+          <div id="osm-result" style="display: none; background: #f0f9ff; border: 1px solid #bae6fd; padding: 8px; border-radius: 6px; font-size: 0.8rem; margin: 6px 0;"></div>
           <p><strong>Status Ketersediaan:</strong> {{ item.get_status_display }}</p>
           <p style="margin-top: var(--space-2); font-family: sans-serif; white-space: pre-line; font-size: 0.95rem;">
             {{ item.description }}
           </p>
+
+          {% if user == item.user %}
+          <!-- Fitur Upload Foto Khusus Penjual Barang -->
+          <div style="margin-top: 10px; padding: 10px; background: #fdf6b2; border: 1px solid #facc15; border-radius: 6px;">
+            <p style="margin: 0 0 6px 0; font-weight: bold; font-size: 0.85rem;">📸 Unggah / Ganti Foto Barang Anda:</p>
+            <form id="upload-image-form" onsubmit="uploadItemPicture(event)" enctype="multipart/form-data" style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
+              {% csrf_token %}
+              <input type="file" id="item-picture-input" name="image" accept="image/*" required style="font-size: 0.8rem;">
+              <button type="submit" class="btn" style="padding: 4px 10px; font-size: 0.8rem; background: #000; color: #fff;">Upload Foto</button>
+            </form>
+            <p id="upload-status" style="margin: 4px 0 0; font-size: 0.75rem;"></p>
+          </div>
+          {% endif %}
         </div>
 
         <!-- Bagian Pembayaran Transfer Langsung -->
@@ -210,9 +247,9 @@
               🤝 Ajukan Nego
             </button>
             {% endif %}
-            <a href="mailto:{{ item.user.email|default:'support@salink.ui.ac.id' }}?subject=Minat%20Barang:%20{{ item.title|urlencode }}" class="btn" style="flex: 1; padding: 10px 16px; font-size: 0.85rem;">
-              Chat
-            </a>
+            <button onclick="openChatModal()" class="btn" style="flex: 1; padding: 10px 16px; font-size: 0.85rem; cursor: pointer;">
+              💬 Chat Penjual
+            </button>
             <button id="btn-save-cookie" class="btn btn--icon" style="padding: 10px 16px;" onclick="saveToCookies('{{ item.id }}')" title="Simpan ke Favorit (Cookie)">
               ⭐ Simpan
             </button>
@@ -357,6 +394,30 @@
       <p id="nego-message" style="font-family: sans-serif; font-size: 0.8rem; margin: 8px 0 0;"></p>
     </div>
   </div>
+
+  <!-- Modal Chat Interaktif -->
+  <div id="chatModal" class="modal-overlay" onclick="closeChatModalOnBg(event)" style="display: none;">
+    <div class="modal-content" style="max-height: 520px; display: flex; flex-direction: column;">
+      <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid; padding-bottom: 8px;">
+        <h2 style="margin: 0; font-size: 1.15rem; text-transform: uppercase;">💬 Chat: {{ item.title|truncatechars:28 }}</h2>
+        <button onclick="closeChatModal()" style="background: none; border: none; font-size: 1.2rem; cursor: pointer;">&times;</button>
+      </div>
+
+      <p style="font-size: 0.75rem; color: #555; margin: 4px 0 8px;">Penjual: <strong>@{{ item.user.username }}</strong></p>
+
+      <!-- Kotak Isi Pesan -->
+      <div id="chat-box" style="flex: 1; min-height: 200px; max-height: 260px; overflow-y: auto; border: 1.5px solid; border-radius: 6px; padding: 10px; background: #fafafa; display: flex; flex-direction: column; gap: 8px; font-family: sans-serif; font-size: 0.85rem;">
+        <p style="text-align: center; color: #888;">Memuat pesan...</p>
+      </div>
+
+      <!-- Form Kirim Pesan -->
+      <form id="chat-form" onsubmit="sendChatMessage(event)" style="display: flex; gap: 6px; margin-top: 8px;">
+        <input type="text" id="chat-input" placeholder="Tulis pesan ke penjual..." required style="flex: 1; padding: 8px; border: 1.5px solid; border-radius: 4px; font: inherit; font-size: 0.85rem;">
+        <button type="submit" class="btn" style="padding: 8px 16px; background: #000; color: #fff; font-size: 0.85rem; cursor: pointer;">Kirim</button>
+      </form>
+    </div>
+  </div>
+
 
   <script>
     function getCookie(name) {
@@ -530,6 +591,261 @@
       document.cookie = "salink_saved_items=" + encodeURIComponent(JSON.stringify(saved)) + "; path=/; max-age=604800";
       const statusEl = document.getElementById('cookie-status');
       statusEl.textContent = 'Barang berhasil disimpan di riwayat favorit browser Anda (Cookie)!';
+    }
+
+    function checkOsmLocation(locName) {
+      const resEl = document.getElementById('osm-result');
+      resEl.style.display = 'block';
+      resEl.innerHTML = '<em>Mencari data lokasi dari OpenStreetMap Nominatim...</em>';
+
+      fetch(`{% url 'saling_beli:location-search' %}?q=${encodeURIComponent(locName)}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.success && data.locations.length > 0) {
+            const loc = data.locations[0];
+            resEl.innerHTML = `
+              <strong>✅ Ditemukan di OpenStreetMap:</strong><br>
+              <span>${loc.display_name}</span><br>
+              <small style="color: #555;">Koordinat: ${loc.lat}, ${loc.lon}</small> | 
+              <a href="https://www.openstreetmap.org/?mlat=${loc.lat}&mlon=${loc.lon}#map=17/${loc.lat}/${loc.lon}" target="_blank" rel="noopener noreferrer" style="color: #0284c7; text-decoration: underline;">Buka Peta Publik &rarr;</a>
+            `;
+          } else {
+            resEl.innerHTML = `⚠️ Lokasi spesifik belum terindeks penuh di OpenStreetMap. Titik perkiraan kampus UI tetap berlaku.`;
+          }
+        })
+        .catch(err => {
+          resEl.innerHTML = `⚠️ Gagal menghubungi layanan OpenStreetMap.`;
+        });
+    }
+
+    function uploadItemPicture(e) {
+      e.preventDefault();
+      const statusEl = document.getElementById('upload-status');
+      const input = document.getElementById('item-picture-input');
+      if (!input.files.length) return;
+
+      const formData = new FormData();
+      formData.append('image', input.files[0]);
+
+      statusEl.style.color = '#555';
+      statusEl.textContent = 'Mengunggah gambar...';
+
+      fetch(`{% url 'saling_beli:upload-image' item.id %}`, {
+        method: 'POST',
+        headers: {
+          'X-CSRFToken': csrftoken
+        },
+        body: formData
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          statusEl.style.color = 'green';
+          statusEl.textContent = data.message;
+          setTimeout(() => location.reload(), 1200);
+        } else {
+          statusEl.style.color = 'red';
+          statusEl.textContent = data.error || 'Gagal mengunggah foto.';
+        }
+      })
+      .catch(() => {
+        statusEl.style.color = 'red';
+        statusEl.textContent = 'Terjadi kesalahan jaringan saat mengunggah.';
+      });
+    }
+
+    // ==========================================
+    // Realtime Notifications & Chat Client Logic
+    // ==========================================
+    function toggleNotifDropdown() {
+      const dd = document.getElementById('notif-dropdown');
+      dd.style.display = (dd.style.display === 'none' || dd.style.display === '') ? 'block' : 'none';
+      if (dd.style.display === 'block') {
+        fetchNotifications();
+      }
+    }
+
+    let seenNotifIds = new Set();
+    let isFirstNotifLoad = true;
+
+    function showSalinkToast(title, message, link, type) {
+      let container = document.getElementById('salink-toast-container');
+      if (!container) {
+        container = document.createElement('div');
+        container.id = 'salink-toast-container';
+        container.className = 'salink-toast-container';
+        document.body.appendChild(container);
+      }
+
+      const toast = document.createElement('div');
+      toast.className = 'salink-toast';
+
+      let icon = '🔔';
+      if (type === 'CHAT') icon = '💬';
+      else if (type === 'OFFER') icon = '🤝';
+      else if (type === 'TRACKER_UPDATE') icon = '📦';
+
+      toast.innerHTML = `
+        <div class="salink-toast__icon">${icon}</div>
+        <div class="salink-toast__body">
+          <h5 class="salink-toast__title">${title}</h5>
+          <p class="salink-toast__desc">${message}</p>
+        </div>
+        <button class="salink-toast__close" onclick="this.parentElement.remove()">&times;</button>
+      `;
+
+      if (link && link !== '#') {
+        toast.style.cursor = 'pointer';
+        toast.onclick = function(e) {
+          if (e.target.classList.contains('salink-toast__close')) return;
+          window.location.href = link;
+        };
+      }
+
+      container.appendChild(toast);
+
+      setTimeout(() => {
+        toast.classList.add('is-hiding');
+        setTimeout(() => toast.remove(), 250);
+      }, 5000);
+    }
+
+    function fetchNotifications() {
+      fetch('{% url "saling_beli:user-notifications" %}')
+        .then(res => res.json())
+        .then(data => {
+          const badge = document.getElementById('notif-badge');
+          if (data.unread_count > 0) {
+            badge.style.display = 'inline-block';
+            badge.textContent = data.unread_count;
+          } else {
+            badge.style.display = 'none';
+          }
+
+          const list = document.getElementById('notif-list');
+          if (data.notifications && data.notifications.length > 0) {
+            // Trigger in-app stylized popup toast for newly arrived unread notifications
+            data.notifications.forEach(n => {
+              if (!seenNotifIds.has(n.id)) {
+                seenNotifIds.add(n.id);
+                if (!isFirstNotifLoad && !n.is_read) {
+                  showSalinkToast(n.title, n.message, n.link, n.type);
+                }
+              }
+            });
+
+            list.innerHTML = data.notifications.map(n => `
+              <div style="padding: 6px; border-radius: 4px; background: ${n.is_read ? '#f9fafb' : '#eff6ff'}; border: 1px solid ${n.is_read ? '#e5e7eb' : '#bfdbfe'};">
+                <a href="${n.link}" style="text-decoration: none; color: inherit; display: block;">
+                  <strong style="color: #111;">${n.title}</strong>
+                  <p style="margin: 2px 0 0 0; color: #4b5563;">${n.message}</p>
+                  <small style="color: #9ca3af; font-size: 0.65rem;">${n.created_at}</small>
+                </a>
+              </div>
+            `).join('');
+          } else {
+            list.innerHTML = '<p style="text-align: center; color: #777; margin: 8px 0;">Tidak ada notifikasi baru.</p>';
+          }
+          isFirstNotifLoad = false;
+        })
+        .catch(() => {});
+    }
+
+    function markAllNotifsRead() {
+      fetch('{% url "saling_beli:mark-notifications-read" %}', {
+        method: 'POST',
+        headers: {
+          'X-CSRFToken': csrftoken
+        }
+      })
+      .then(res => res.json())
+      .then(() => {
+        fetchNotifications();
+      });
+    }
+
+    // Polling notifikasi setiap 5 detik
+    setInterval(fetchNotifications, 5000);
+    fetchNotifications();
+
+    // Chat Functions
+    let chatPollInterval = null;
+
+    function openChatModal() {
+      document.getElementById('chatModal').style.display = 'flex';
+      loadChatMessages();
+      if (!chatPollInterval) {
+        chatPollInterval = setInterval(loadChatMessages, 4000);
+      }
+    }
+
+    // Auto open modal chat jika navigasi berasal dari link #chat
+    if (window.location.hash === '#chat') {
+      setTimeout(openChatModal, 200);
+    }
+
+    function closeChatModal() {
+      document.getElementById('chatModal').style.display = 'none';
+      if (chatPollInterval) {
+        clearInterval(chatPollInterval);
+        chatPollInterval = null;
+      }
+    }
+
+    function closeChatModalOnBg(e) {
+      if (e.target.id === 'chatModal') {
+        closeChatModal();
+      }
+    }
+
+    function loadChatMessages() {
+      const box = document.getElementById('chat-box');
+      fetch('{% url "saling_beli:item-chats" item.id %}')
+        .then(res => res.json())
+        .then(data => {
+          if (data.chats && data.chats.length > 0) {
+            box.innerHTML = data.chats.map(c => `
+              <div style="align-self: ${c.is_me ? 'flex-end' : 'flex-start'}; max-width: 80%; background: ${c.is_me ? '#000' : '#e5e7eb'}; color: ${c.is_me ? '#fff' : '#000'}; padding: 6px 10px; border-radius: 8px; word-break: break-word;">
+                <div style="font-size: 0.65rem; opacity: 0.75; margin-bottom: 2px;">${c.is_me ? 'Anda' : '@' + c.sender} &bull; ${c.created_at}</div>
+                <div>${c.message}</div>
+              </div>
+            `).join('');
+            box.scrollTop = box.scrollHeight;
+          } else {
+            box.innerHTML = '<p style="text-align: center; color: #888; margin: auto;">Belum ada pesan. Mulai obrolan dengan penjual!</p>';
+          }
+        })
+        .catch(() => {});
+    }
+
+    function sendChatMessage(e) {
+      e.preventDefault();
+      const input = document.getElementById('chat-input');
+      const text = input.value.trim();
+      if (!text) return;
+
+      fetch('{% url "saling_beli:item-chats" item.id %}', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': csrftoken
+        },
+        body: JSON.stringify({ message: text })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          input.value = '';
+          loadChatMessages();
+          // Cek notifikasi terbaru
+          fetchNotifications();
+        } else {
+          alert(data.error || 'Gagal mengirim pesan.');
+        }
+      })
+      .catch(() => {
+        alert('Terjadi kesalahan jaringan saat mengirim pesan.');
+      });
     }
   </script>
 </body>

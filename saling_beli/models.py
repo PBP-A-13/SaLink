@@ -30,7 +30,8 @@ class ItemListing(models.Model):
     condition = models.CharField(max_length=30, choices=Condition.choices, default=Condition.GOOD)
     is_free = models.BooleanField(default=False, help_text="Centang jika barang dihibahkan secara gratis")
     price = models.DecimalField(max_digits=12, decimal_places=0, default=0, help_text="Harga dalam Rupiah (0 jika gratis)")
-    image_url = models.URLField(max_length=500, blank=True, null=True, help_text="Tautan foto barang")
+    image_url = models.URLField(max_length=500, blank=True, null=True, help_text="Tautan foto barang (opsional)")
+    image = models.ImageField(upload_to='item_images/', blank=True, null=True, help_text="Upload foto barang dari perangkat")
     pickup_location = models.CharField(max_length=255, default='Perpustakaan Pusat UI', help_text="Titik temu / COD kampus")
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.AVAILABLE)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -39,6 +40,12 @@ class ItemListing(models.Model):
     class Meta:
         ordering = ['-created_at']
 
+    @property
+    def display_image(self):
+        """Mengembalikan file upload jika ada, jika tidak kembalikan image_url"""
+        if self.image:
+            return self.image.url
+        return self.image_url
 
     def __str__(self):
         return f"{self.title} ({'Gratis' if self.is_free else f'Rp{self.price:,}'})"
@@ -91,3 +98,47 @@ class TransactionOrder(models.Model):
 
     def __str__(self):
         return f"Order #{str(self.id)[:8]} - {self.item.title} ({self.get_stage_display()})"
+
+
+class ItemChatMessage(models.Model):
+    """
+    Pesan obrolan/chat langsung antara pembeli dan penjual terkait barang tertentu.
+    """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    item = models.ForeignKey(ItemListing, on_delete=models.CASCADE, related_name='chat_messages')
+    sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sent_chats')
+    recipient = models.ForeignKey(User, on_delete=models.CASCADE, related_name='received_chats')
+    message = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    is_read = models.BooleanField(default=False)
+
+    class Meta:
+        ordering = ['created_at']
+
+    def __str__(self):
+        return f"Chat from {self.sender.username} to {self.recipient.username} on {self.item.title}"
+
+
+class UserNotification(models.Model):
+    """
+    Notifikasi realtime/in-app ketika ada update status tracker transaksi atau chat baru.
+    """
+    class NotifType(models.TextChoices):
+        CHAT = 'CHAT', 'Pesan Baru'
+        TRACKER_UPDATE = 'TRACKER_UPDATE', 'Pembaruan Status Tracker'
+        OFFER = 'OFFER', 'Penawaran Nego'
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='notifications')
+    title = models.CharField(max_length=150)
+    message = models.TextField()
+    notification_type = models.CharField(max_length=30, choices=NotifType.choices, default=NotifType.TRACKER_UPDATE)
+    link = models.CharField(max_length=255, blank=True, null=True, help_text="Tautan tujuan saat notifikasi diklik")
+    is_read = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"Notif for {self.user.username}: {self.title} ({'Read' if self.is_read else 'Unread'})"
