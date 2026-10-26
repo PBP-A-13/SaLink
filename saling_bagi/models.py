@@ -1,10 +1,16 @@
 from django.db import models
 from django.contrib.auth.models import User
 
+
 class Makanan(models.Model):
     nama_makanan = models.CharField(max_length=255)
     deskripsi = models.TextField()
+    porsi = models.PositiveIntegerField(default=1)
+    foto = models.ImageField(upload_to='makanan/', null=True, blank=True)
     lokasi_pengambilan = models.CharField(max_length=255)
+    # Koordinat untuk pin di map (opsional)
+    latitude = models.FloatField(null=True, blank=True)
+    longitude = models.FloatField(null=True, blank=True)
     batas_layak_konsumsi = models.DateTimeField()
     is_available = models.BooleanField(default=True)
     # Menghubungkan data makanan dengan user yang membagikan
