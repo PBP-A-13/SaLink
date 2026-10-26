@@ -1,7 +1,10 @@
 from django.urls import path
 from . import views
 
+app_name = 'saling_tebeng'
+
 urlpatterns = [
+    path('', views.nebeng_list, name='index'),
     path('nebeng/', views.nebeng_list, name='nebeng_list'),
     path('nebeng/tawarkan/', views.tawarkan_tebengan, name='tawarkan_tebengan'),
     path('nebeng/jadwal/<int:schedule_id>/batal/', views.cancel_schedule, name='cancel_schedule'),

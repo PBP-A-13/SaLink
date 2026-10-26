@@ -9,7 +9,7 @@ from django.db.models import Q
 from django.utils import timezone
 from django.utils.dateparse import parse_date, parse_time
 from django.views.decorators.http import require_POST
-from models import RideBooking, RideOffer, RideRequest, RideSchedule, Vehicle
+from .models import RideBooking, RideOffer, RideRequest, RideSchedule, Vehicle
 
 
 LOCATIONS = {

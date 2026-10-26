@@ -20,7 +20,7 @@
       <a href="{% url 'saling_beli:index' %}" class="is-active" aria-current="page">Beli</a>
       <a href="/saling-tebeng/">Nebeng</a>
       <a href="/saling-bagi/">Bagi</a>
-      <a href="/saling-pinjam/">Pinjam</a>
+      <a href="{% url 'saling_pinjam:item_list' %}">Pinjam</a>
     </nav>
 
     <div class="navbar__profile">
@@ -41,16 +41,22 @@
 
   <main class="page">
 
-    <form class="search" method="get" action="">
-      <div class="search__field">
-        <svg class="search__icon" viewBox="0 0 24 24" aria-hidden="true">
-          <circle cx="10" cy="10" r="6" fill="none" stroke="currentColor" stroke-width="2"/>
-          <line x1="14.5" y1="14.5" x2="20" y2="20" stroke="currentColor" stroke-width="2"/>
-        </svg>
-        <input type="text" name="q" value="{{ request.GET.q }}" placeholder="Cari Barang Prelove" aria-label="Cari barang" style="border: none !important; outline: none !important; background: transparent !important; box-shadow: none !important; width: 100%; height: 100%; padding: 0;">
-      </div>
-      <button type="submit" class="search__button">Search</button>
-    </form>
+    <div style="display: flex; justify-content: center; align-items: center; gap: 12px; margin-top: var(--space-4); margin-bottom: var(--space-4); flex-wrap: wrap;">
+      <form class="search" method="get" action="" style="margin: 0;">
+        <div class="search__field">
+          <svg class="search__icon" viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="10" cy="10" r="6" fill="none" stroke="currentColor" stroke-width="2"/>
+            <line x1="14.5" y1="14.5" x2="20" y2="20" stroke="currentColor" stroke-width="2"/>
+          </svg>
+          <input type="text" name="q" value="{{ request.GET.q }}" placeholder="Cari Barang Prelove" aria-label="Cari barang" style="border: none !important; outline: none !important; background: transparent !important; box-shadow: none !important; width: 100%; height: 100%; padding: 0;">
+        </div>
+        <button type="submit" class="search__button">Search</button>
+      </form>
+
+      <a href="{% url 'saling_beli:item_create' %}" class="btn-salink btn-salink--primary" style="height: 48px; padding-inline: 18px; font-size: 0.92rem; text-decoration: none;">
+        ➕ Jual / Hibahkan
+      </a>
+    </div>
 
     <section class="grid" aria-label="Daftar barang">
       {% for item in items %}

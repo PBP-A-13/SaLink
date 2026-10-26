@@ -7,6 +7,7 @@ app_name = 'saling_beli'
 urlpatterns = [
     # Halaman HTML & Detail
     path('', views.index, name='index'),
+    path('tambah/', views.item_create_page, name='item_create'),
     path('detail/<uuid:listing_id>/', views.item_detail, name='item_detail'),
 
     # Nego & Order Tracking Endpoints
@@ -23,9 +24,6 @@ urlpatterns = [
     path('<uuid:listing_id>/update/', views.listing_update, name='listing-update'),
     path('<uuid:listing_id>/delete/', views.listing_delete, name='listing-delete'),
     path('<uuid:listing_id>/upload-image/', views.upload_item_image, name='upload-image'),
-
-    # Public Free API: OpenStreetMap Nominatim
-    path('api/locations/', views.location_search, name='location-search'),
 
     # Chat & Notifications Endpoints
     path('detail/<uuid:listing_id>/chats/', views.item_chats, name='item-chats'),

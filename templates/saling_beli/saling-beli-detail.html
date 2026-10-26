@@ -195,52 +195,94 @@
           <p>
             <strong>Titik Temu COD Kampus:</strong> 
             <span id="pickup-location-display">{{ item.pickup_location }}</span>
-            <button onclick="checkOsmLocation('{{ item.pickup_location|escapejs }}')" class="btn" style="padding: 2px 8px; font-size: 0.7rem; margin-left: 6px; cursor: pointer;">
-              📍 Cek di Peta (OSM)
-            </button>
           </p>
-          <div id="osm-result" style="display: none; background: #f0f9ff; border: 1px solid #bae6fd; padding: 8px; border-radius: 6px; font-size: 0.8rem; margin: 6px 0;"></div>
           <p><strong>Status Ketersediaan:</strong> {{ item.get_status_display }}</p>
+
+          {% if not item.is_free and item.payout_account_number %}
+          <div style="background: #f8fafc; border: 1.5px solid #000; border-radius: 8px; padding: 10px 14px; margin: 10px 0;">
+            <p style="margin: 0; font-size: 0.85rem;">
+              <strong>🛡️ Rekening Pencairan Penjual (Terdaftar di SaLink):</strong><br>
+              <span style="font-family: sans-serif;">{{ item.payout_method }} &bull; No: <strong>{{ item.payout_account_number }}</strong> (a.n. {{ item.payout_account_name|default:item.user.username }})</span>
+            </p>
+          </div>
+          {% endif %}
+
           <p style="margin-top: var(--space-2); font-family: sans-serif; white-space: pre-line; font-size: 0.95rem;">
             {{ item.description }}
           </p>
 
           {% if user == item.user %}
           <!-- Fitur Upload Foto Khusus Penjual Barang -->
-          <div style="margin-top: 10px; padding: 10px; background: #fdf6b2; border: 1px solid #facc15; border-radius: 6px;">
-            <p style="margin: 0 0 6px 0; font-weight: bold; font-size: 0.85rem;">📸 Unggah / Ganti Foto Barang Anda:</p>
+          <div style="margin-top: 10px; padding: 10px; background: #fdf6b2; border: 2px solid #000; border-radius: 8px;">
+            <p style="margin: 0 0 6px 0; font-weight: bold; font-size: 0.85rem; text-transform: uppercase;">📸 Unggah / Ganti Foto Barang Anda:</p>
             <form id="upload-image-form" onsubmit="uploadItemPicture(event)" enctype="multipart/form-data" style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
               {% csrf_token %}
               <input type="file" id="item-picture-input" name="image" accept="image/*" required style="font-size: 0.8rem;">
-              <button type="submit" class="btn" style="padding: 4px 10px; font-size: 0.8rem; background: #000; color: #fff;">Upload Foto</button>
+              <button type="submit" class="btn" style="padding: 6px 12px; font-size: 0.8rem; background: #000; color: #fff;">Upload Foto</button>
             </form>
             <p id="upload-status" style="margin: 4px 0 0; font-size: 0.75rem;"></p>
           </div>
           {% endif %}
         </div>
 
-        <!-- Bagian Pembayaran Transfer Langsung -->
-        <div class="payment-box">
-          <h3>Mekanisme Pembayaran Langsung</h3>
-          <div class="payment-info">
-            <p>Pembayaran dilakukan dengan <strong>Transfer Langsung ke Penjual</strong> (Bank Transfer / QRIS / e-Wallet):</p>
-            <div style="margin-block: 4px;">
-              <span>No. Rekening / Virtual Rekening Penjual:</span><br>
-              <span class="copy-pill" onclick="copyRekening()">
-                <span id="rekening-text">BCA / Mandiri: 70012-{{ item.user.username }}</span>
-                <small>(Klik Salin)</small>
-              </span>
-            </div>
-            <p style="font-size: 0.75rem; opacity: 0.8;">
-              * Setelah transfer, kirim bukti pembayaran saat bertemu di titik COD kampus ({{ item.pickup_location }}) atau kirim via konfirmasi ke penjual.
+        {% if not item.is_free %}
+        <!-- Bagian Pembayaran Garansi QRIS SaLink Escrow -->
+        <div class="payment-box" style="border: 2px solid #000; border-radius: 12px; padding: 16px; background: #f0fdf4; margin-block: var(--space-3);">
+          <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+            <span style="font-size: 1.4rem;">🛡️</span>
+            <h3 style="margin: 0; font-size: 1.05rem; text-transform: uppercase;">Garansi Pembayaran Aman: QRIS SaLink Escrow</h3>
+          </div>
+          <div class="payment-info" style="font-family: sans-serif; font-size: 0.85rem; line-height: 1.5;">
+            <p style="margin: 0 0 8px 0;">
+              Untuk melindungi mahasiswa dari risiko penipuan COD, seluruh pembayaran ditransfer terlebih dahulu ke <strong>QRIS Resmi SaLink</strong> (Penampung Aman).
             </p>
+            <div style="display: flex; gap: 14px; align-items: center; background: #fff; border: 2px solid #000; border-radius: 10px; padding: 12px; flex-wrap: wrap;">
+              <div style="text-align: center; border: 1px dashed #000; padding: 8px; border-radius: 8px; background: #fafafa;">
+                <!-- QR Code Visual -->
+                <svg width="90" height="90" viewBox="0 0 100 100" style="display: block; margin: 0 auto;">
+                  <rect width="100" height="100" fill="#fff"/>
+                  <rect x="10" y="10" width="30" height="30" fill="#000"/>
+                  <rect x="15" y="15" width="20" height="20" fill="#fff"/>
+                  <rect x="20" y="20" width="10" height="10" fill="#000"/>
+                  <rect x="60" y="10" width="30" height="30" fill="#000"/>
+                  <rect x="65" y="15" width="20" height="20" fill="#fff"/>
+                  <rect x="70" y="20" width="10" height="10" fill="#000"/>
+                  <rect x="10" y="60" width="30" height="30" fill="#000"/>
+                  <rect x="15" y="65" width="20" height="20" fill="#fff"/>
+                  <rect x="20" y="70" width="10" height="10" fill="#000"/>
+                  <rect x="45" y="45" width="12" height="12" fill="#000"/>
+                  <rect x="55" y="65" width="10" height="15" fill="#000"/>
+                  <rect x="75" y="55" width="15" height="10" fill="#000"/>
+                  <rect x="45" y="20" width="10" height="15" fill="#000"/>
+                  <rect x="65" y="80" width="20" height="10" fill="#000"/>
+                </svg>
+                <span style="font-size: 0.65rem; font-weight: bold; text-transform: uppercase;">QRIS SALINK UI</span>
+              </div>
+              <div style="flex: 1; min-width: 180px;">
+                <p style="margin: 0; font-size: 0.85rem;"><strong>NMID:</strong> ID1024592019920</p>
+                <p style="margin: 2px 0;"><strong>Merchant:</strong> SALINK OFFICIAL UI</p>
+                <p style="margin: 2px 0;"><strong>Nominal:</strong> Rp{{ item.price|floatformat:"0g" }}</p>
+                <p style="margin: 4px 0 0; font-size: 0.75rem; color: #444;">
+                  ✅ Dana Anda ditahan aman oleh SaLink. Saat Anda telah bertemu di titik COD dan mengonfirmasi barang diterima, sistem SaLink otomatis mentransfer dana ke rekening penjual.
+                </p>
+              </div>
+            </div>
           </div>
         </div>
+        {% else %}
+        <!-- Box Hibah Gratis -->
+        <div style="border: 2px solid #000; border-radius: 12px; padding: 14px; background: #e0f2fe; margin-block: var(--space-3); font-family: sans-serif; font-size: 0.85rem;">
+          <strong style="text-transform: uppercase;">🎁 Barang Hibah Gratis (Rp0)</strong>
+          <p style="margin: 4px 0 0;">
+            Barang ini dibagikan gratis oleh mahasiswa UI. Tidak ada biaya sepeser pun. Silakan hubungi pemberi via chat atau klik 'Ambil Barang' untuk mengatur jadwal COD.
+          </p>
+        </div>
+        {% endif %}
 
         <div class="actions-bar">
           <div class="btn-group">
-            <button onclick="openPaymentModal()" class="btn" style="flex: 2; padding: 10px 16px; font-size: 0.95rem; cursor: pointer;">
-              💳 Beli Sekarang
+            <button onclick="openPaymentModal()" class="btn" style="flex: 2; padding: 10px 16px; font-size: 0.95rem; cursor: pointer; background: #000; color: #fff;">
+              {% if item.is_free %}🎁 Ambil Barang (Gratis){% else %}💳 Beli Sekarang (QRIS){% endif %}
             </button>
             {% if not item.is_free %}
             <button onclick="openNegoModal()" class="btn" style="flex: 1.5; padding: 10px 16px; font-size: 0.95rem; cursor: pointer; background: #fafafa;">
@@ -345,20 +387,36 @@
     </article>
   </main>
 
-  <!-- Modal Konfirmasi Transfer Langsung -->
+  <!-- Modal Konfirmasi Transfer Garansi QRIS SaLink -->
   <div id="paymentModal" class="modal-overlay" onclick="closeModalOnBg(event)">
-    <div class="modal-content">
-      <h2 style="margin: 0; font-size: 1.25rem; text-transform: uppercase;">Konfirmasi Pembayaran Transfer</h2>
+    <div class="modal-content" style="border: 2px solid #000; border-radius: 16px; box-shadow: 6px 6px 0px #000;">
+      <h2 style="margin: 0; font-size: 1.25rem; text-transform: uppercase;">
+        🛡️ {% if item.is_free %}Konfirmasi Ambil Hibah Gratis{% else %}Pembayaran QRIS SaLink (Aman Anti-Penipuan){% endif %}
+      </h2>
       <div style="font-family: sans-serif; font-size: 0.9rem; line-height: 1.5;">
-        <p>Anda akan membeli: <strong>{{ item.title }}</strong></p>
-        <p>Total Tagihan: <strong>{% if item.is_free %}Gratis{% else %}Rp{{ item.price|floatformat:"0g" }}{% endif %}</strong></p>
-        <p>Silakan lakukan transfer ke penjual (<strong>{{ item.user.username }}</strong>) dan tentukan waktu serah-terima di <strong>{{ item.pickup_location }}</strong>.</p>
+        <p style="margin: 6px 0;">Barang: <strong>{{ item.title }}</strong></p>
+        <p style="margin: 6px 0;">Total Bayar: <strong>{% if item.is_free %}Gratis (Rp0){% else %}Rp{{ item.price|floatformat:"0g" }}{% endif %}</strong></p>
+        <p style="margin: 6px 0;">Titik Temu COD: <strong>{{ item.pickup_location }}</strong></p>
+
+        {% if not item.is_free %}
+        <div style="background: #f0fdf4; border: 1.5px solid #000; border-radius: 8px; padding: 10px; margin: 8px 0; font-size: 0.8rem;">
+          <p style="margin: 0;">
+            1. Pindai QRIS <strong>SALINK OFFICIAL UI</strong> dengan m-banking/e-wallet Anda.<br>
+            2. Dana Anda disimpan aman oleh pihak SaLink.<br>
+            3. Saat COD berlangsung dan barang sudah Anda terima & cek, klik <strong>'Selesaikan Transaksi'</strong> di tracker, lalu SaLink meneruskan dana ke: <strong>{{ item.payout_method }} {{ item.payout_account_number }} (a.n. {{ item.payout_account_name|default:item.user.username }})</strong>.
+          </p>
+        </div>
+        {% else %}
+        <p style="font-size: 0.85rem; color: #555;">
+          Pesanan hibah akan dibuat di sistem SaLink. Silakan hubungi pemberi via chat atau atur waktu janji temu COD di kampus.
+        </p>
+        {% endif %}
       </div>
 
       <div style="display: flex; gap: var(--space-2); justify-content: flex-end; margin-top: var(--space-2);">
         <button class="btn" onclick="closePaymentModal()" style="padding: 6px 14px; width: auto;">Batal</button>
-        <button class="btn" onclick="confirmTransferOrder()" style="padding: 6px 14px; width: auto; background: currentColor; color: #fff;">
-          Saya Sudah Siap Transfer
+        <button class="btn" onclick="confirmTransferOrder()" style="padding: 6px 14px; width: auto; background: #000; color: #fff;">
+          {% if item.is_free %}Konfirmasi Ambil Barang{% else %}Konfirmasi Bayar QRIS & Buat Pesanan{% endif %}
         </button>
       </div>
       <p id="order-message" style="font-family: sans-serif; font-size: 0.8rem; color: green; margin: 0;"></p>
@@ -591,31 +649,6 @@
       document.cookie = "salink_saved_items=" + encodeURIComponent(JSON.stringify(saved)) + "; path=/; max-age=604800";
       const statusEl = document.getElementById('cookie-status');
       statusEl.textContent = 'Barang berhasil disimpan di riwayat favorit browser Anda (Cookie)!';
-    }
-
-    function checkOsmLocation(locName) {
-      const resEl = document.getElementById('osm-result');
-      resEl.style.display = 'block';
-      resEl.innerHTML = '<em>Mencari data lokasi dari OpenStreetMap Nominatim...</em>';
-
-      fetch(`{% url 'saling_beli:location-search' %}?q=${encodeURIComponent(locName)}`)
-        .then(res => res.json())
-        .then(data => {
-          if (data.success && data.locations.length > 0) {
-            const loc = data.locations[0];
-            resEl.innerHTML = `
-              <strong>✅ Ditemukan di OpenStreetMap:</strong><br>
-              <span>${loc.display_name}</span><br>
-              <small style="color: #555;">Koordinat: ${loc.lat}, ${loc.lon}</small> | 
-              <a href="https://www.openstreetmap.org/?mlat=${loc.lat}&mlon=${loc.lon}#map=17/${loc.lat}/${loc.lon}" target="_blank" rel="noopener noreferrer" style="color: #0284c7; text-decoration: underline;">Buka Peta Publik &rarr;</a>
-            `;
-          } else {
-            resEl.innerHTML = `⚠️ Lokasi spesifik belum terindeks penuh di OpenStreetMap. Titik perkiraan kampus UI tetap berlaku.`;
-          }
-        })
-        .catch(err => {
-          resEl.innerHTML = `⚠️ Gagal menghubungi layanan OpenStreetMap.`;
-        });
     }
 
     function uploadItemPicture(e) {

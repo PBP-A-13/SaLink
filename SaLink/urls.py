@@ -9,6 +9,7 @@ urlpatterns = [
     path('saling-bagi/', include('saling_bagi.urls')),
     path('saling-beli/', include('saling_beli.urls')),
     path('saling-pinjam/', include('saling_pinjam.urls')),
+    path('saling-tebeng/', include('saling_tebeng.urls')),
 ]
 
 if settings.DEBUG:

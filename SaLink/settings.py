@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'saling_beli',
     'saling_bagi',
     'saling_pinjam',
+    'saling_tebeng',
 ]
 
 MIDDLEWARE = [
