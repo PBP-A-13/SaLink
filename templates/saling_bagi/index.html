@@ -1,0 +1,116 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SaLink - Bagi</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Anton&display=swap" rel="stylesheet">
+
+    <!-- Leaflet (OpenStreetMap, tanpa API key) -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+
+    <link rel="stylesheet" href="{% static 'saling_bagi/saling_bagi.css' %}">
+</head>
+<body>
+
+    <!-- ===== NAVBAR ===== -->
+    <header class="navbar">
+        <a href="/" class="navbar__logo">SaLink</a>
+
+        <nav class="navbar__menu">
+            <a href="/" class="navbar__link">HOME</a>
+            <a href="{% url 'saling_beli:index' %}" class="navbar__link">BELI</a>
+            <a href="/saling-tebeng/" class="navbar__link">NEBENG</a>
+            <a href="{% url 'saling_bagi:index' %}" class="navbar__link navbar__link--active">BAGI</a>
+            <a href="{% url 'saling_pinjam:item_list' %}" class="navbar__link">PINJAM</a>
+        </nav>
+
+        <a href="#" class="navbar__profile">
+            <span class="navbar__profile-text">Profile</span>
+            <span class="navbar__avatar">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <circle cx="12" cy="8" r="5"></circle>
+                    <path d="M3 22c0-5 4-8 9-8s9 3 9 8z"></path>
+                </svg>
+            </span>
+        </a>
+    </header>
+
+    <!-- ===== MAP ===== -->
+    <section class="map-section">
+        <div id="map"></div>
+    </section>
+
+    <!-- ===== DAFTAR MAKANAN ===== -->
+    <main class="bagi">
+        {% if messages %}
+        <div class="messages">
+            {% for message in messages %}
+            <div class="messages__item messages__item--{{ message.tags }}">{{ message }}</div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <h2 class="section-title">Baru Saja di Upload</h2>
+
+        <div class="food-grid">
+            {% for m in makanan_list %}
+            <article class="food-card">
+                <div class="food-card__image">
+                    {% if m.foto %}
+                    <img src="{{ m.foto.url }}" alt="{{ m.nama_makanan }}">
+                    {% endif %}
+                </div>
+
+                <div class="food-card__info">
+                    <p class="food-card__name">{{ m.nama_makanan }}</p>
+                    <p class="food-card__meta">Porsi : {{ m.porsi }}</p>
+
+                    <p class="food-card__label">{{ m.lokasi_pengambilan }}</p>
+                    <p class="food-card__meta">Exp : {{ m.batas_layak_konsumsi|date:"d/m/y" }}</p>
+                </div>
+
+                <form method="post" action="{% url 'saling_bagi:ambil_makanan' m.id %}" class="food-card__form">
+                    {% csrf_token %}
+                    <button type="submit" class="food-card__button">Ambil Makanan</button>
+                </form>
+            </article>
+            {% empty %}
+            <p class="empty-text">Belum ada makanan yang dibagikan.</p>
+            {% endfor %}
+        </div>
+    </main>
+
+    {{ markers|json_script:"markers-data" }}
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        // Default: sekitar Depok
+        const map = L.map('map', { scrollWheelZoom: false }).setView([-6.3647, 106.8286], 13);
+
+        L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(map);
+
+        const markers = JSON.parse(document.getElementById('markers-data').textContent);
+        const bounds = [];
+
+        markers.forEach(function (m) {
+            L.marker([m.lat, m.lng])
+                .addTo(map)
+                .bindPopup('<strong>' + m.nama + '</strong><br>' + m.lokasi);
+            bounds.push([m.lat, m.lng]);
+        });
+
+        if (bounds.length > 0) {
+            map.fitBounds(bounds, { padding: [40, 40], maxZoom: 16 });
+        }
+    </script>
+
+</body>
+</html>
