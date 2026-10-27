@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'saling_bagi',
     'saling_pinjam',
     'saling_tebeng',
+    'user_page',
 ]
 
 MIDDLEWARE = [
@@ -56,6 +57,9 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = 'SaLink.urls'
+LOGIN_URL = '/akun/login/'
+LOGIN_REDIRECT_URL = '/akun/profile/'
+LOGOUT_REDIRECT_URL = '/akun/login/'
 
 TEMPLATES = [
     {

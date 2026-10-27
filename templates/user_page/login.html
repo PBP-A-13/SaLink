@@ -1,0 +1,51 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Masuk | SaLink</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Anton&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'user_page/user-page.css' %}">
+</head>
+<body class="account-body">
+  {% include 'user_page/_navbar.html' %}
+  <main class="account-page auth-layout">
+    <section class="auth-intro">
+      <p class="eyebrow">{{ module_name }} <span> / AKUN</span></p>
+      <h1>Semua kebutuhan kampus, satu akun.</h1>
+      <p class="auth-intro__copy">Masuk untuk mengelola aktivitas dan terhubung dengan komunitas SaLink.</p>
+      <div class="module-stamp" aria-label="Modul SaLink">
+        <span>BELI</span><span>PINJAM</span><span>BAGI</span>
+      </div>
+    </section>
+
+    <section class="auth-panel" aria-labelledby="login-title">
+      <p class="eyebrow">SELAMAT DATANG KEMBALI</p>
+      <h2 id="login-title">Masuk ke SaLink</h2>
+      <p class="panel-copy">Gunakan akunmu untuk lanjut ke {{ module_name }}.</p>
+      {% if form.non_field_errors %}
+        <div class="form-alert" role="alert">Username atau password tidak cocok.</div>
+      {% endif %}
+      <form method="post" class="account-form">
+        {% csrf_token %}
+        <input type="hidden" name="next" value="{{ next }}">
+        <div class="field">
+          <label for="{{ form.username.id_for_label }}">Username</label>
+          {{ form.username }}
+          {{ form.username.errors }}
+        </div>
+        <div class="field">
+          <label for="{{ form.password.id_for_label }}">Password</label>
+          {{ form.password }}
+          {{ form.password.errors }}
+        </div>
+        <button class="action-button" type="submit">Masuk <span aria-hidden="true">&#8594;</span></button>
+      </form>
+      <p class="auth-switch">Belum punya akun? <a href="{% url 'user_page:register' %}?next={{ next|urlencode }}">Daftar sekarang</a></p>
+    </section>
+  </main>
+</body>
+</html>

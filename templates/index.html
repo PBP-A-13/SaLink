@@ -23,8 +23,8 @@
         <li><a href="{% url 'saling_pinjam:item_list' %}">PINJAM</a></li>
       </ul>
     </nav>
-    <a href="#" class="profile">
-      <span>Profile</span>
+    <a href="{% if user.is_authenticated %}{% url 'user_page:profile' %}{% else %}{% url 'user_page:login' %}?next={{ request.get_full_path|urlencode }}{% endif %}" class="profile">
+      <span>{% if user.is_authenticated %}{{ user.username }}{% else %}Masuk{% endif %}</span>
       <div class="avatar"></div>
     </a>
   </header>
