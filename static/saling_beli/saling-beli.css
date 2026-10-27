@@ -7,6 +7,8 @@
    --salink-cream   #FFF6DC  krem: kotak dalam kartu, sel, input
    Aturan: komponen hanya boleh memakai token, jangan tulis hex langsung. */
 
+@import url('../navbar-footer.css');
+
 *,
 *::before,
 *::after {

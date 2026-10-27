@@ -12,32 +12,7 @@
 </head>
 <body>
 
-  <header class="navbar">
-    <a href="/" class="navbar__logo">SaLink</a>
-
-    <nav class="navbar__menu" aria-label="Navigasi utama">
-      <a href="/">Home</a>
-      <a href="{% url 'saling_beli:index' %}" class="is-active" aria-current="page">Beli</a>
-      <a href="/saling-tebeng/">Nebeng</a>
-      <a href="/saling-bagi/">Bagi</a>
-      <a href="{% url 'saling_pinjam:item_list' %}">Pinjam</a>
-    </nav>
-
-    <div class="navbar__profile">
-      {% if user.is_authenticated %}
-        <span>{{ user.username }}</span>
-        {% if last_login_cookie %}
-          <span style="font-size: 0.65rem; opacity: 0.7;" title="Terakhir login via cookie">({{ last_login_cookie|slice:":10" }})</span>
-        {% endif %}
-      {% else %}
-        <span>Guest</span>
-      {% endif %}
-      <svg class="navbar__avatar" viewBox="0 0 24 24" aria-hidden="true">
-        <circle cx="12" cy="8" r="4" fill="currentColor"/>
-        <path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7z" fill="currentColor"/>
-      </svg>
-    </div>
-  </header>
+  {% include "_navbar.html" with active_nav="beli" %}
 
   <main class="page">
 
@@ -117,6 +92,8 @@
     {% endif %}
 
   </main>
+
+  {% include "_footer.html" %}
 
 </body>
 </html>

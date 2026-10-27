@@ -15,27 +15,7 @@
 <body>
 
     <!-- ===== NAVBAR ===== -->
-    <header class="navbar">
-        <a href="/" class="navbar__logo">SaLink</a>
-
-        <nav class="navbar__menu">
-            <a href="/" class="navbar__link">HOME</a>
-            <a href="/saling-beli/" class="navbar__link">BELI</a>
-            <a href="/saling-tebeng/" class="navbar__link">NEBENG</a>
-            <a href="/saling-bagi/" class="navbar__link">BAGI</a>
-            <a href="{% url 'saling_pinjam:item_list' %}" class="navbar__link navbar__link--active">PINJAM</a>
-        </nav>
-
-        <a href="#" class="navbar__profile">
-            <span class="navbar__profile-text">Profile</span>
-            <span class="navbar__avatar">
-                <svg viewBox="0 0 24 24" aria-hidden="true">
-                    <circle cx="12" cy="8" r="5"></circle>
-                    <path d="M3 22c0-5 4-8 9-8s9 3 9 8z"></path>
-                </svg>
-            </span>
-        </a>
-    </header>
+    {% include "_navbar.html" with active_nav="pinjam" %}
 
     <!-- ===== KONTEN UTAMA ===== -->
     <main class="pinjam">
@@ -110,6 +90,8 @@
         </aside>
 
     </main>
+ 
+    {% include "_footer.html" %}
 
 </body>
 </html>
