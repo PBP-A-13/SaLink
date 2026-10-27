@@ -22,7 +22,7 @@ def index(request):
     context = {
         'makanan_list': makanan_list,
     }
-    return render(request, 'saling_bagi/index.html', context)
+    return render(request, 'saling_bagi/saling_bagi.html', context)
 
 
 @login_required

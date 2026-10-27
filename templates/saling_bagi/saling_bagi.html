@@ -1,0 +1,38 @@
+{% extends 'index.html' %}
+
+{% block content %}
+<div style="padding: 20px;">
+    <h2>Saling Bagi - Makanan Berlebih</h2>
+    
+    <!-- Tombol ini bakal ngarahin ke urls.py path('tambah/') yang udah lu bikin -->
+    <a href="{% url 'saling_bagi:tambah_makanan' %}" style="display: inline-block; padding: 10px 15px; background: black; color: white; text-decoration: none; border-radius: 5px; margin-bottom: 20px;">
+        + Tambah Makanan
+    </a>
+
+    <h3>Baru Saja di Upload</h3>
+    
+    {% if makanan_list %}
+        <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+            {% for makanan in makanan_list %}
+                <!-- Ini adalah terjemahan dari desain Card Figma lu -->
+                <div style="border: 2px solid #ccc; padding: 15px; border-radius: 10px; width: 250px;">
+                    <h4>{{ makanan.nama_makanan }}</h4>
+                    <p><b>Porsi:</b> {{ makanan.porsi }}</p>
+                    <p><b>Lokasi:</b> {{ makanan.lokasi_pengambilan }}</p>
+                    <p><b>Exp:</b> {{ makanan.batas_layak_konsumsi|date:"d/m/Y" }}</p>
+                    
+                    <!-- Ini tombol yang bakal nge-trigger fungsi ambil_makanan di views.py -->
+                    <form action="{% url 'saling_bagi:ambil_makanan' makanan.id %}" method="POST">
+                        {% csrf_token %}
+                        <button type="submit" style="width: 100%; padding: 10px; background: white; border: 2px solid black; border-radius: 5px; cursor: pointer; font-weight: bold;">
+                            Ambil Makanan
+                        </button>
+                    </form>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p>Belum ada makanan yang dibagikan.</p>
+    {% endif %}
+</div>
+{% endblock content %}
