@@ -1,3 +1,5 @@
+@import url('navbar-footer.css');
+
 :root {
   --salink-dark: #4D2A00;
   --salink-primary: #CC6F00;
@@ -23,8 +25,6 @@
   --space-5: 48px;
 }
 
-@import url('navbar-footer.css');
-
 *,
 *::before,
 *::after {
@@ -35,7 +35,7 @@
 
 body {
   font-family: var(--font-display);
-  background: #C49774; /* Nada warm selaras di balik hero */
+  background: var(--salink-light);
   color: var(--salink-dark);
   -webkit-font-smoothing: antialiased;
   min-height: 100vh;
@@ -49,33 +49,29 @@ a {
 }
 
 /* ==========================================================================
-   HERO SECTION & OVERLAPPING TULISAN GEDE SALINK
+   HERO SECTION & TULISAN GEDE SALINK (ORIGINAL PROPORTIONS)
    ========================================================================== */
 .hero-wrapper {
   position: relative;
-  background: #C49774;
+  background: var(--salink-primary);
   overflow: hidden;
-  padding-top: 10px;
 }
 
 .hero {
   position: relative;
-  height: 430px;
+  height: 420px;
   background: transparent;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   overflow: hidden;
 }
 
 .hero h1 {
   position: absolute;
   left: 50%;
-  top: 90px;
+  top: 85px;
   transform: translateX(-50%);
-  font-size: clamp(160px, 30vw, 420px);
-  line-height: 0.9;
-  color: var(--salink-white);
+  font-size: clamp(140px, 28vw, 380px);
+  line-height: 1.1;
+  color: var(--salink-cream);
   white-space: nowrap;
   letter-spacing: -0.01em;
   user-select: none;
@@ -83,16 +79,16 @@ a {
 }
 
 /* ==========================================================================
-   MAIN SHEET (Menimpa tulisan SaLink saat discroll)
+   MAIN SHEET (Menimpa bagian bawah teks SaLink)
    ========================================================================== */
 .sheet {
   position: relative;
   z-index: 10;
-  margin-top: -85px;
+  margin-top: -65px;
   background: var(--salink-light);
-  border-radius: 60px 60px 0 0;
-  box-shadow: 0 -12px 36px rgba(77, 42, 0, 0.22);
-  padding: 48px 24px 60px;
+  border-radius: 70px 70px 0 0;
+  box-shadow: 0 -12px 35px rgba(77, 42, 0, 0.2);
+  padding: 44px 24px 60px;
   flex: 1;
 }
 
@@ -428,4 +424,4 @@ a {
     gap: 8px;
     text-align: center;
   }
-}
+}
