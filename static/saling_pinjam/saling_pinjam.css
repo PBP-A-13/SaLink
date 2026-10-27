@@ -31,74 +31,6 @@ a {
 }
 
 /* ---------- NAVBAR ---------- */
-.navbar {
-    display: grid;
-    grid-template-columns: 1fr auto 1fr;
-    align-items: center;
-    margin: 16px 16px 0;
-    padding: 10px 24px;
-    background: var(--salink-dark);
-    border-radius: 20px;
-}
-
-.navbar__logo {
-    font-size: 38px;
-    line-height: 1;
-    color: var(--salink-accent);
-}
-
-.navbar__menu {
-    display: flex;
-    align-items: center;
-    gap: 40px;
-}
-
-.navbar__link {
-    position: relative;
-    font-size: 20px;
-    color: var(--salink-white);
-    padding-bottom: 4px;
-    border-bottom: 3px solid transparent;
-    transition: color 0.15s ease;
-}
-
-.navbar__link:hover {
-    color: var(--salink-accent);
-}
-
-.navbar__link--active {
-    font-size: 22px;
-    color: var(--salink-accent);
-    border-bottom: 4px solid var(--salink-accent);
-}
-
-.navbar__profile {
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    gap: 10px;
-    color: var(--salink-white);
-}
-
-.navbar__profile-text {
-    font-size: 15px;
-}
-
-.navbar__avatar {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 40px;
-    height: 40px;
-    color: var(--salink-white);
-}
-
-.navbar__avatar svg {
-    width: 32px;
-    height: 32px;
-    fill: currentColor;
-}
-
 /* ---------- LAYOUT UTAMA ---------- */
 .pinjam {
     display: grid;
@@ -318,15 +250,4 @@ a {
         gap: 20px;
     }
 
-    .navbar__link {
-        font-size: 16px;
-    }
-
-    .navbar__link--active {
-        font-size: 18px;
-    }
-
-    .navbar__link--active::after {
-        width: 100%;
-    }
 }

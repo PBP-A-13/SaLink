@@ -21,61 +21,6 @@ body {
 
 a { color: inherit; text-decoration: none; }
 
-/* ===== NAVBAR ===== */
-.navbar {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin: 16px 16px 0;
-    padding: 10px 24px;
-    background: var(--salink-dark);
-    border-radius: 20px;
-}
-
-.navbar__logo { 
-    font-size: 36px; 
-    color: var(--salink-accent);
-}
-
-.navbar__menu {
-    display: flex;
-    gap: 32px;
-}
-
-.navbar__link {
-    font-size: 18px;
-    color: var(--salink-white);
-    padding-bottom: 4px;
-    border-bottom: 3px solid transparent;
-    transition: color 0.15s ease;
-}
-
-.navbar__link:hover {
-    color: var(--salink-accent);
-}
-
-.navbar__link--active { 
-    color: var(--salink-accent);
-    border-bottom-color: var(--salink-accent); 
-}
-
-.navbar__profile {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-size: 14px;
-    color: var(--salink-white);
-}
-
-.navbar__avatar {
-    width: 32px;
-    height: 32px;
-    display: inline-flex;
-    color: var(--salink-white);
-}
-
-.navbar__avatar svg { width: 100%; height: 100%; fill: currentColor; }
-
 /* ===== MAP ===== */
 .map-section {
     margin: 16px;
@@ -218,5 +163,4 @@ a { color: inherit; text-decoration: none; }
 /* ===== RESPONSIVE ===== */
 @media (max-width: 900px) {
     .food-grid { grid-template-columns: 1fr; }
-    .navbar__menu { gap: 16px; }
 }

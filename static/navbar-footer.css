@@ -260,3 +260,20 @@
     text-align: center;
   }
 }
+
+/* Keep the shared navbar layout consistent when module stylesheets load later. */
+@media (max-width: 680px) {
+  .navbar {
+    grid-template-columns: 1fr auto;
+    row-gap: 12px;
+    padding: 10px 16px;
+  }
+
+  .navbar__menu {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    justify-content: center;
+    gap: 16px;
+    font-size: 0.95rem;
+  }
+}
