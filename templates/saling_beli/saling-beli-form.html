@@ -1,0 +1,218 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SaLink - Jual / Hibahkan Barang</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Anton&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'saling_beli/saling-beli.css' %}?v=20261027_02">
+</head>
+<body>
+
+  <!-- Navbar Global SaLink -->
+  <header class="navbar">
+    <a href="/" class="navbar__logo">SaLink</a>
+
+    <nav class="navbar__menu" aria-label="Navigasi utama">
+      <a href="/">Home</a>
+      <a href="{% url 'saling_beli:index' %}" class="is-active" aria-current="page">Beli</a>
+      <a href="/saling-tebeng/">Nebeng</a>
+      <a href="/saling-bagi/">Bagi</a>
+      <a href="{% url 'saling_pinjam:item_list' %}">Pinjam</a>
+    </nav>
+
+    <a class="navbar__profile" href="{% if user.is_authenticated %}{% url 'user_page:profile' %}{% else %}{% url 'saling_beli:login' %}?next={{ request.get_full_path|urlencode }}{% endif %}">
+      <span>{% if user.is_authenticated %}{{ user.username }}{% else %}Masuk{% endif %}</span>
+      <svg class="navbar__avatar" viewBox="0 0 24 24" aria-hidden="true">
+        <circle cx="12" cy="8" r="4" fill="currentColor"/>
+        <path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7z" fill="currentColor"/>
+      </svg>
+    </a>
+  </header>
+
+  <main class="page">
+    <div style="max-width: 640px; margin: 0 auto;">
+      <a href="{% url 'saling_beli:index' %}" class="btn-salink" style="padding: 6px 14px; font-size: 0.85rem; margin-bottom: var(--space-3);">
+        ← Kembali ke Katalog
+      </a>
+    </div>
+
+    <section class="form-shell">
+      <header class="form-shell__header">
+        <h1 class="form-shell__title">➕ Form Penjual / Pemberi</h1>
+        <p class="form-shell__subtitle">
+          Jual barang prelove atau hibahkan barang gratis bagi sesama mahasiswa UI.
+        </p>
+      </header>
+
+      {% if form.errors %}
+        <div style="border: 2px solid #000; background: #ffe6e6; padding: 12px; border-radius: 8px; margin-bottom: var(--space-3); font-family: sans-serif; font-size: 0.85rem;">
+          <strong>Harap periksa isian form:</strong>
+          <ul style="margin: 6px 0 0 16px; padding: 0;">
+            {% for field, errors in form.errors.items %}
+              {% for error in errors %}
+                <li><strong>{{ field }}:</strong> {{ error }}</li>
+              {% endfor %}
+            {% endfor %}
+          </ul>
+        </div>
+      {% endif %}
+
+      <form method="post" enctype="multipart/form-data" action="{% url 'saling_beli:item_create' %}">
+        {% csrf_token %}
+
+        <!-- Judul Barang -->
+        <div class="form-group">
+          <label class="form-label" for="{{ form.title.id_for_label }}">{{ form.title.label }} *</label>
+          {{ form.title }}
+        </div>
+
+        <!-- Kategori & Kondisi Fisik -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div class="form-group">
+            <label class="form-label" for="{{ form.category.id_for_label }}">{{ form.category.label }}</label>
+            {{ form.category }}
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="{{ form.condition.id_for_label }}">{{ form.condition.label }}</label>
+            {{ form.condition }}
+          </div>
+        </div>
+
+        <!-- Checkbox Gratis / Hibah -->
+        <div class="form-group" style="margin-top: 6px;">
+          <label class="form-checkbox-row" for="{{ form.is_free.id_for_label }}">
+            {{ form.is_free }}
+            <span style="font-family: inherit; font-size: 0.95rem; text-transform: uppercase;">
+              {{ form.is_free.label }}
+            </span>
+          </label>
+        </div>
+
+        <!-- Harga (Hidden jika is_free dicentang) -->
+        <div class="form-group" id="price-group">
+          <label class="form-label" for="{{ form.price.id_for_label }}">{{ form.price.label }}</label>
+          {{ form.price }}
+          <span style="font-family: sans-serif; font-size: 0.75rem; color: #666;">
+            Ketik 0 atau centang opsi gratis di atas jika ingin menghibahkan.
+          </span>
+        </div>
+
+        <!-- Titik Temu COD Kampus UI -->
+        <div class="form-group">
+          <label class="form-label" for="{{ form.pickup_location.id_for_label }}">{{ form.pickup_location.label }} *</label>
+          {{ form.pickup_location }}
+        </div>
+
+        <!-- Rekening / E-Wallet Penjual (Escrow Salink QRIS Guarantee) -->
+        <div id="payout-box" style="border: 2px solid #000; border-radius: 12px; padding: 16px; background: #fdfbf7; margin-bottom: 20px;">
+          <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+            <span style="font-size: 1.2rem;">🛡️</span>
+            <div>
+              <strong style="font-size: 0.95rem; text-transform: uppercase;">Rekening / E-Wallet Pencairan (Garansi QRIS SaLink)</strong>
+              <p style="margin: 2px 0 0; font-family: sans-serif; font-size: 0.78rem; color: #555;">
+                Untuk menghindari penipuan, pembeli akan membayar via <strong>QRIS SaLink</strong>. Setelah barang diterima pembeli saat COD, SaLink akan langsung mentransfer dana ke rekening/e-wallet Anda.
+              </p>
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 10px;">
+            <div class="form-group" style="margin-bottom: 0;">
+              <label class="form-label" for="{{ form.payout_method.id_for_label }}">{{ form.payout_method.label }}</label>
+              {{ form.payout_method }}
+            </div>
+            <div class="form-group" style="margin-bottom: 0;">
+              <label class="form-label" for="{{ form.payout_account_name.id_for_label }}">{{ form.payout_account_name.label }}</label>
+              {{ form.payout_account_name }}
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-top: 10px; margin-bottom: 0;">
+            <label class="form-label" for="{{ form.payout_account_number.id_for_label }}">{{ form.payout_account_number.label }}</label>
+            {{ form.payout_account_number }}
+          </div>
+        </div>
+
+        <!-- Deskripsi Barang -->
+        <div class="form-group">
+          <label class="form-label" for="{{ form.description.id_for_label }}">{{ form.description.label }} *</label>
+          {{ form.description }}
+        </div>
+
+        <!-- Upload Foto dari Perangkat -->
+        <div class="form-group">
+          <label class="form-label" for="{{ form.image.id_for_label }}">{{ form.image.label }}</label>
+          {{ form.image }}
+          <div id="image-preview-container" style="display: none; margin-top: 8px;">
+            <img id="image-preview" src="" alt="Pratinjau Foto" style="max-width: 100%; max-height: 220px; object-fit: contain; border: 2px solid #000; border-radius: 8px;">
+          </div>
+        </div>
+
+        <!-- Fallback URL Foto Eksternal -->
+        <div class="form-group">
+          <label class="form-label" for="{{ form.image_url.id_for_label }}">{{ form.image_url.label }}</label>
+          {{ form.image_url }}
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="form-actions">
+          <a href="{% url 'saling_beli:index' %}" class="btn-salink">Batal</a>
+          <button type="submit" class="btn-salink btn-salink--primary">
+            🚀 Terbitkan Barang
+          </button>
+        </div>
+      </form>
+    </section>
+  </main>
+
+  <script>
+    // Toggle field harga jika opsi gratis dipilih
+    function togglePriceField() {
+      const isFreeCheckbox = document.getElementById('id_is_free');
+      const priceGroup = document.getElementById('price-group');
+      const payoutBox = document.getElementById('payout-box');
+      const priceInput = document.getElementById('id_price');
+
+      if (isFreeCheckbox && priceGroup) {
+        if (isFreeCheckbox.checked) {
+          priceGroup.style.display = 'none';
+          if (payoutBox) payoutBox.style.display = 'none';
+          if (priceInput) priceInput.value = 0;
+        } else {
+          priceGroup.style.display = 'flex';
+          if (payoutBox) payoutBox.style.display = 'block';
+        }
+      }
+    }
+
+    // Jalankan saat halaman pertama kali termuat
+    document.addEventListener('DOMContentLoaded', function() {
+      togglePriceField();
+
+      // Pratinjau gambar saat user memilih file
+      const imageInput = document.querySelector('.form-file-input');
+      const previewContainer = document.getElementById('image-preview-container');
+      const previewImg = document.getElementById('image-preview');
+
+      if (imageInput && previewContainer && previewImg) {
+        imageInput.addEventListener('change', function(e) {
+          const file = e.target.files[0];
+          if (file) {
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+              previewImg.src = evt.target.result;
+              previewContainer.style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+          } else {
+            previewContainer.style.display = 'none';
+          }
+        });
+      }
+    });
+  </script>
+</body>
+</html>
