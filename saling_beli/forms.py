@@ -65,7 +65,7 @@ class ItemListingForm(forms.ModelForm):
             'description': forms.Textarea(attrs={
                 'class': 'form-textarea',
                 'rows': 4,
-                'placeholder': 'Ceritakan kondisi fisik barang, alasan jual/hibah, atau kelengkapan...',
+                'placeholder': 'Ceritakan kondisi fisik barang, alasan jual, atau kelengkapan...',
                 'required': True,
             }),
             'pickup_location': forms.TextInput(attrs={
@@ -94,10 +94,10 @@ class ItemListingForm(forms.ModelForm):
             }),
         }
         labels = {
-            'title': 'Judul Barang / Barang yang Dihibahkan',
+            'title': 'Judul Barang',
             'category': 'Kategori Barang',
             'condition': 'Kondisi Fisik',
-            'is_free': 'Hibahkan Secara Gratis (Rp0)?',
+            'is_free': 'Bagikan Secara Gratis (Rp0)?',
             'price': 'Harga (Rp)',
             'description': 'Deskripsi Lengkap',
             'pickup_location': 'Titik Temu COD Kampus UI',

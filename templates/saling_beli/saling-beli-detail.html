@@ -12,15 +12,15 @@
 </head>
 <body>
 
-  <header class="navbar">
+<header class="navbar">
     <a href="/" class="navbar__logo">SaLink</a>
 
     <nav class="navbar__menu" aria-label="Navigasi utama">
-      <a href="/">Home</a>
-      <a href="{% url 'saling_beli:index' %}" class="is-active" aria-current="page">Beli</a>
-      <a href="/saling-tebeng/">Nebeng</a>
-      <a href="/saling-bagi/">Bagi</a>
-      <a href="/saling-pinjam/">Pinjam</a>
+      <a href="/">HOME</a>
+      <a href="{% url 'saling_beli:index' %}" class="is-active" aria-current="page">BELI</a>
+      <a href="/saling-tebeng/">NEBENG</a>
+      <a href="{% url 'saling_bagi:index' %}">BAGI</a>
+      <a href="{% url 'saling_pinjam:item_list' %}">PINJAM</a>
     </nav>
 
     <div class="navbar__profile" style="position: relative;">
@@ -31,25 +31,36 @@
       </button>
 
       <!-- Dropdown Notifikasi -->
-      <div id="notif-dropdown" style="display: none; position: absolute; top: 110%; right: 0; width: 280px; max-height: 340px; overflow-y: auto; background: #fff; border: 2px solid; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 200; padding: 8px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 6px; margin-bottom: 6px;">
+      <div id="notif-dropdown" style="display: none; position: absolute; top: 110%; right: 0; width: 280px; max-height: 340px; overflow-y: auto; background: var(--salink-cream); border: 2px solid var(--salink-dark); border-radius: 12px; box-shadow: 0 4px 16px rgba(0,0,0,0.2); z-index: 200; padding: 10px; color: var(--salink-dark);">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--salink-primary); padding-bottom: 6px; margin-bottom: 6px;">
           <strong style="font-size: 0.85rem;">Notifikasi Anda</strong>
-          <button onclick="markAllNotifsRead()" style="background: none; border: none; font-size: 0.7rem; color: #0284c7; cursor: pointer;">Tandai Dibaca</button>
+          <button onclick="markAllNotifsRead()" style="background: none; border: none; font-size: 0.7rem; color: var(--salink-primary); cursor: pointer; font-weight: bold;">Tandai Dibaca</button>
         </div>
         <div id="notif-list" style="display: flex; flex-direction: column; gap: 6px; font-size: 0.75rem;">
-          <p style="text-align: center; color: #777; margin: 8px 0;">Tidak ada notifikasi baru.</p>
+          <p style="text-align: center; color: var(--salink-muted); margin: 8px 0;">Tidak ada notifikasi baru.</p>
         </div>
       </div>
 
       {% if user.is_authenticated %}
-        <span>{{ user.username }}</span>
+        <a class="navbar__account" href="{% url 'user_page:profile' %}">{{ user.username }}</a>
+        <form method="post" action="{% url 'user_page:logout' %}" style="display: inline; margin: 0;">
+          {% csrf_token %}
+          <button class="navbar__logout" type="submit" aria-label="Keluar" title="Keluar">
+            <svg viewBox="0 0 24 24" aria-hidden="true" width="16" height="16">
+              <path d="M10 17l5-5-5-5M15 12H3m9-7h6a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2h-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </button>
+        </form>
       {% else %}
-        <span>Guest</span>
+        <a class="navbar__account" href="{% url 'user_page:login' %}?next={{ request.get_full_path|urlencode }}">Masuk</a>
+        <a class="navbar__account navbar__account--accent" href="{% url 'user_page:register' %}">Daftar</a>
       {% endif %}
-      <svg class="navbar__avatar" viewBox="0 0 24 24" aria-hidden="true">
-        <circle cx="12" cy="8" r="4" fill="currentColor"/>
-        <path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7z" fill="currentColor"/>
-      </svg>
+      <a class="navbar__avatar-link" href="{% if user.is_authenticated %}{% url 'user_page:profile' %}{% else %}{% url 'user_page:login' %}?next={{ request.get_full_path|urlencode }}{% endif %}" aria-label="Profil akun">
+        <svg class="navbar__avatar" viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="8" r="4" fill="currentColor"/>
+          <path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7z" fill="currentColor"/>
+        </svg>
+      </a>
     </div>
   </header>
 
@@ -71,7 +82,7 @@
         <span class="badge">{{ item.get_category_display }} &bull; {{ item.get_condition_display }}</span>
         <h1 style="margin: 0; font-size: 1.75rem; text-transform: uppercase;">{{ item.title }}</h1>
         <p style="font-size: 1.4rem; font-weight: bold; margin: 0;">
-          {% if item.is_free %}Gratis (Hibah){% else %}Rp{{ item.price|floatformat:"0g" }}{% endif %}
+          {% if item.is_free %}Gratis (Rp0){% else %}Rp{{ item.price|floatformat:"0g" }}{% endif %}
         </p>
 
         <hr style="border: 0; border-top: 1px solid; margin-block: var(--space-2); opacity: 0.2;">
@@ -156,11 +167,11 @@
           </div>
         </div>
         {% else %}
-        <!-- Box Hibah Gratis -->
+        <!-- Box Gratis -->
         <div style="border-radius: 14px; padding: 14px; background: var(--salink-white); margin-block: var(--space-3); font-family: var(--font-body); font-size: 0.85rem;">
-          <strong style="text-transform: uppercase;">🎁 Barang Hibah Gratis (Rp0)</strong>
+          <strong style="text-transform: uppercase;">🎁 Barang Gratis (Rp0)</strong>
           <p style="margin: 4px 0 0;">
-            Barang ini dibagikan gratis oleh mahasiswa UI. Tidak ada biaya sepeser pun. Silakan hubungi pemberi via chat atau klik 'Ambil Barang' untuk mengatur jadwal COD.
+            Barang ini dibagikan gratis oleh sesama mahasiswa UI. Tidak ada biaya sepeser pun. Silakan hubungi pemilik via chat atau klik 'Ambil Barang' untuk mengatur jadwal COD.
           </p>
         </div>
         {% endif %}
@@ -279,7 +290,7 @@
   <div id="paymentModal" class="modal-overlay" onclick="closeModalOnBg(event)">
     <div class="modal-content" style="border: 2px solid #000; border-radius: 16px; box-shadow: 6px 6px 0px #000;">
       <h2 style="margin: 0; font-size: 1.25rem; text-transform: uppercase;">
-        🛡️ {% if item.is_free %}Konfirmasi Ambil Hibah Gratis{% else %}Pembayaran QRIS SaLink (Aman Anti-Penipuan){% endif %}
+        🛡️ {% if item.is_free %}Konfirmasi Ambil Barang Gratis{% else %}Pembayaran QRIS SaLink (Aman Anti-Penipuan){% endif %}
       </h2>
       <div style="font-family: sans-serif; font-size: 0.9rem; line-height: 1.5;">
         <p style="margin: 6px 0;">Barang: <strong>{{ item.title }}</strong></p>
@@ -296,7 +307,7 @@
         </div>
         {% else %}
         <p style="font-size: 0.85rem; color: #555;">
-          Pesanan hibah akan dibuat di sistem SaLink. Silakan hubungi pemberi via chat atau atur waktu janji temu COD di kampus.
+          Pesanan barang gratis akan dibuat di sistem SaLink. Silakan hubungi pemilik via chat atau atur waktu janji temu COD di kampus.
         </p>
         {% endif %}
       </div>
@@ -769,6 +780,8 @@
       });
     }
   </script>
+  {% include "_footer.html" %}
+
 </body>
 </html>
 

@@ -29,7 +29,7 @@
       </form>
 
       <a href="{% url 'saling_beli:item_create' %}" class="btn-salink btn-salink--primary" style="height: 48px; padding-inline: 20px; font-size: 0.95rem;">
-        ➕ Jual / Hibahkan
+        ➕ Jual / Berbagi Gratis
       </a>
     </div>
 
@@ -49,7 +49,7 @@
             <a href="{% url 'saling_beli:item_detail' item.id %}">{{ item.title }}</a>
           </h2>
           <p class="card__price {% if item.is_free %}is-free{% endif %}">
-            {% if item.is_free %}🎁 Hibah Gratis{% else %}Rp{{ item.price|floatformat:"0g" }}{% endif %}
+            {% if item.is_free %}🎁 Gratis{% else %}Rp{{ item.price|floatformat:"0g" }}{% endif %}
           </p>
 
           <div class="card__actions">

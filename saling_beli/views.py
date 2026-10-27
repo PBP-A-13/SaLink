@@ -199,7 +199,7 @@ def make_offer(request, listing_id):
 
 	item = get_object_or_404(ItemListing, pk=listing_id)
 	if item.is_free or item.price <= 0:
-		return JsonResponse({'error': 'Barang gratis / hibah tidak dapat dinego.'}, status=400)
+		return JsonResponse({'error': 'Barang gratis tidak dapat dinego.'}, status=400)
 
 	if item.user == request.user:
 		return JsonResponse({'error': 'Anda tidak bisa menawar barang milik sendiri.'}, status=400)
