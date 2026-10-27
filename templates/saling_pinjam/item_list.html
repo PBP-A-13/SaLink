@@ -79,7 +79,8 @@
                         <div class="item-card__image"></div>
                         <div class="item-card__info">
                             <span class="item-card__name">{{ item.name }}</span>
-                            <span class="item-card__meta">{{ item.pickup_location }}</span>
+                            <span class="item-card__meta">Lokasi Pickup</span>
+                            <span class="item-card__status">{{ item.get_status_display }}</span>
                         </div>
                     </a>
                     {% empty %}
