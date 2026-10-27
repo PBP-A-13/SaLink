@@ -1,0 +1,46 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Buat Akun | SaLink</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Anton&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'user_page/user-page.css' %}">
+</head>
+<body class="account-body">
+  {% include 'user_page/_navbar.html' %}
+  <main class="account-page auth-layout auth-layout--register">
+    <section class="auth-intro">
+      <p class="eyebrow">MULAI DARI SINI</p>
+      <h1>Ruang berbagi untuk hidup kampus yang lebih ringan.</h1>
+      <p class="auth-intro__copy">Buat satu akun untuk terhubung di seluruh layanan SaLink.</p>
+      <div class="module-stamp" aria-label="Modul SaLink">
+        <span>BELI</span><span>PINJAM</span><span>BAGI</span>
+      </div>
+    </section>
+
+    <section class="auth-panel" aria-labelledby="register-title">
+      <p class="eyebrow">AKUN BARU</p>
+      <h2 id="register-title">Gabung ke SaLink</h2>
+      <form method="post" class="account-form">
+        {% csrf_token %}
+        <input type="hidden" name="next" value="{{ next }}">
+        {% for field in form %}
+          <div class="field">
+            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+            {{ field }}
+            {% if field.help_text %}<small class="field__help">{{ field.help_text|safe }}</small>{% endif %}
+            {{ field.errors }}
+          </div>
+        {% endfor %}
+        {% if form.non_field_errors %}<div class="form-alert" role="alert">{{ form.non_field_errors }}</div>{% endif %}
+        <button class="action-button" type="submit">Buat akun <span aria-hidden="true">&#8594;</span></button>
+      </form>
+      <p class="auth-switch">Sudah punya akun? <a href="{% url 'user_page:login' %}?next={{ next|urlencode }}">Masuk</a></p>
+    </section>
+  </main>
+</body>
+</html>

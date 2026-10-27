@@ -8,133 +8,19 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Anton&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="{% static 'saling_beli/saling-beli.css' %}">
-  <style>
-    .detail-card {
-      max-width: 680px;
-      margin: 0 auto;
-      border: 2px solid;
-      border-radius: var(--radius-card);
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
-      background: #fff;
-    }
-    .detail-image {
-      width: 100%;
-      max-height: 400px;
-      object-fit: cover;
-      border-bottom: 2px solid;
-    }
-    .detail-content {
-      padding: var(--space-4);
-      display: flex;
-      flex-direction: column;
-      gap: var(--space-2);
-    }
-    .badge {
-      display: inline-block;
-      padding: var(--space-1) var(--space-2);
-      border: 1px solid;
-      border-radius: var(--radius-pill);
-      font-size: 0.75rem;
-      text-transform: uppercase;
-      align-self: flex-start;
-    }
-    .detail-meta {
-      font-size: 0.85rem;
-      line-height: 1.6;
-    }
-    .actions-bar {
-      display: flex;
-      flex-direction: column;
-      gap: var(--space-2);
-      margin-top: var(--space-3);
-    }
-    .btn-group {
-      display: flex;
-      gap: var(--space-2);
-      flex-wrap: wrap;
-    }
-    .payment-box {
-      margin-top: var(--space-3);
-      padding: var(--space-3);
-      border: 2px dashed;
-      border-radius: var(--radius-card);
-      background: #fbfbfb;
-    }
-    .payment-box h3 {
-      margin: 0 0 var(--space-2) 0;
-      font-size: 1rem;
-      text-transform: uppercase;
-    }
-    .payment-info {
-      font-family: sans-serif;
-      font-size: 0.85rem;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-    .copy-pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 4px 10px;
-      border: 1px solid;
-      border-radius: var(--radius-pill);
-      cursor: pointer;
-      font-weight: bold;
-      width: fit-content;
-    }
-    .modal-overlay {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.5);
-      z-index: 100;
-      align-items: center;
-      justify-content: center;
-      padding: var(--space-3);
-    }
-    .modal-content {
-      background: #fff;
-      border: 2px solid;
-      border-radius: var(--radius-card);
-      max-width: 500px;
-      width: 100%;
-      padding: var(--space-4);
-      display: flex;
-      flex-direction: column;
-      gap: var(--space-3);
-    }
-    .step-pill {
-      flex: 1;
-      padding: 4px;
-      border-radius: 4px;
-      background: #eee;
-    }
-    .step-pill.is-active {
-      background: #e8f5e9;
-      font-weight: 600;
-    }
-    .step-pill.is-done {
-      background: #4caf50;
-      color: #fff;
-      font-weight: 600;
-    }
-  </style>
+  <link rel="stylesheet" href="{% static 'saling_beli/saling-beli.css' %}?v=20261027_02">
 </head>
 <body>
 
-  <header class="navbar">
+<header class="navbar">
     <a href="/" class="navbar__logo">SaLink</a>
 
     <nav class="navbar__menu" aria-label="Navigasi utama">
-      <a href="/">Home</a>
-      <a href="{% url 'saling_beli:index' %}" class="is-active" aria-current="page">Beli</a>
-      <a href="/saling-tebeng/">Nebeng</a>
-      <a href="/saling-bagi/">Bagi</a>
-      <a href="/saling-pinjam/">Pinjam</a>
+      <a href="/">HOME</a>
+      <a href="{% url 'saling_beli:index' %}" class="is-active" aria-current="page">BELI</a>
+      <a href="/saling-tebeng/">NEBENG</a>
+      <a href="{% url 'saling_bagi:index' %}">BAGI</a>
+      <a href="{% url 'saling_pinjam:item_list' %}">PINJAM</a>
     </nav>
 
     <div class="navbar__profile" style="position: relative;">
@@ -145,25 +31,36 @@
       </button>
 
       <!-- Dropdown Notifikasi -->
-      <div id="notif-dropdown" style="display: none; position: absolute; top: 110%; right: 0; width: 280px; max-height: 340px; overflow-y: auto; background: #fff; border: 2px solid; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 200; padding: 8px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 6px; margin-bottom: 6px;">
+      <div id="notif-dropdown" style="display: none; position: absolute; top: 110%; right: 0; width: 280px; max-height: 340px; overflow-y: auto; background: var(--salink-cream); border: 2px solid var(--salink-dark); border-radius: 12px; box-shadow: 0 4px 16px rgba(0,0,0,0.2); z-index: 200; padding: 10px; color: var(--salink-dark);">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--salink-primary); padding-bottom: 6px; margin-bottom: 6px;">
           <strong style="font-size: 0.85rem;">Notifikasi Anda</strong>
-          <button onclick="markAllNotifsRead()" style="background: none; border: none; font-size: 0.7rem; color: #0284c7; cursor: pointer;">Tandai Dibaca</button>
+          <button onclick="markAllNotifsRead()" style="background: none; border: none; font-size: 0.7rem; color: var(--salink-primary); cursor: pointer; font-weight: bold;">Tandai Dibaca</button>
         </div>
         <div id="notif-list" style="display: flex; flex-direction: column; gap: 6px; font-size: 0.75rem;">
-          <p style="text-align: center; color: #777; margin: 8px 0;">Tidak ada notifikasi baru.</p>
+          <p style="text-align: center; color: var(--salink-muted); margin: 8px 0;">Tidak ada notifikasi baru.</p>
         </div>
       </div>
 
       {% if user.is_authenticated %}
-        <span>{{ user.username }}</span>
+        <a class="navbar__account" href="{% url 'user_page:profile' %}">{{ user.username }}</a>
+        <form method="post" action="{% url 'user_page:logout' %}" style="display: inline; margin: 0;">
+          {% csrf_token %}
+          <button class="navbar__logout" type="submit" aria-label="Keluar" title="Keluar">
+            <svg viewBox="0 0 24 24" aria-hidden="true" width="16" height="16">
+              <path d="M10 17l5-5-5-5M15 12H3m9-7h6a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2h-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </button>
+        </form>
       {% else %}
-        <span>Guest</span>
+        <a class="navbar__account" href="{% url 'user_page:login' %}?next={{ request.get_full_path|urlencode }}">Masuk</a>
+        <a class="navbar__account navbar__account--accent" href="{% url 'user_page:register' %}">Daftar</a>
       {% endif %}
-      <svg class="navbar__avatar" viewBox="0 0 24 24" aria-hidden="true">
-        <circle cx="12" cy="8" r="4" fill="currentColor"/>
-        <path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7z" fill="currentColor"/>
-      </svg>
+      <a class="navbar__avatar-link" href="{% if user.is_authenticated %}{% url 'user_page:profile' %}{% else %}{% url 'user_page:login' %}?next={{ request.get_full_path|urlencode }}{% endif %}" aria-label="Profil akun">
+        <svg class="navbar__avatar" viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="8" r="4" fill="currentColor"/>
+          <path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7z" fill="currentColor"/>
+        </svg>
+      </a>
     </div>
   </header>
 
@@ -185,7 +82,7 @@
         <span class="badge">{{ item.get_category_display }} &bull; {{ item.get_condition_display }}</span>
         <h1 style="margin: 0; font-size: 1.75rem; text-transform: uppercase;">{{ item.title }}</h1>
         <p style="font-size: 1.4rem; font-weight: bold; margin: 0;">
-          {% if item.is_free %}Gratis (Hibah){% else %}Rp{{ item.price|floatformat:"0g" }}{% endif %}
+          {% if item.is_free %}Gratis (Rp0){% else %}Rp{{ item.price|floatformat:"0g" }}{% endif %}
         </p>
 
         <hr style="border: 0; border-top: 1px solid; margin-block: var(--space-2); opacity: 0.2;">
@@ -195,52 +92,94 @@
           <p>
             <strong>Titik Temu COD Kampus:</strong> 
             <span id="pickup-location-display">{{ item.pickup_location }}</span>
-            <button onclick="checkOsmLocation('{{ item.pickup_location|escapejs }}')" class="btn" style="padding: 2px 8px; font-size: 0.7rem; margin-left: 6px; cursor: pointer;">
-              📍 Cek di Peta (OSM)
-            </button>
           </p>
-          <div id="osm-result" style="display: none; background: #f0f9ff; border: 1px solid #bae6fd; padding: 8px; border-radius: 6px; font-size: 0.8rem; margin: 6px 0;"></div>
           <p><strong>Status Ketersediaan:</strong> {{ item.get_status_display }}</p>
-          <p style="margin-top: var(--space-2); font-family: sans-serif; white-space: pre-line; font-size: 0.95rem;">
+
+          {% if not item.is_free and item.payout_account_number %}
+          <div style="background: var(--salink-white); border-radius: 12px; padding: 12px 14px; margin: 10px 0;">
+            <p style="margin: 0; font-size: 0.85rem;">
+              <strong>🛡️ Rekening Pencairan Penjual (Terdaftar di SaLink):</strong><br>
+              <span style="font-family: var(--font-body);">{{ item.payout_method }} &bull; No: <strong>{{ item.payout_account_number }}</strong> (a.n. {{ item.payout_account_name|default:item.user.username }})</span>
+            </p>
+          </div>
+          {% endif %}
+
+          <p style="margin-top: var(--space-2); font-family: var(--font-body); white-space: pre-line; font-size: 0.95rem;">
             {{ item.description }}
           </p>
 
           {% if user == item.user %}
           <!-- Fitur Upload Foto Khusus Penjual Barang -->
-          <div style="margin-top: 10px; padding: 10px; background: #fdf6b2; border: 1px solid #facc15; border-radius: 6px;">
-            <p style="margin: 0 0 6px 0; font-weight: bold; font-size: 0.85rem;">📸 Unggah / Ganti Foto Barang Anda:</p>
-            <form id="upload-image-form" onsubmit="uploadItemPicture(event)" enctype="multipart/form-data" style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
+          <div style="margin-top: 10px; padding: 12px; background: var(--salink-white); border-radius: 12px;">
+            <p style="margin: 0 0 6px 0; font-weight: bold; font-size: 0.85rem; text-transform: uppercase;">📸 Unggah / Ganti Foto Barang Anda:</p>
+            <form id="upload-image-form" onsubmit="uploadItemPicture(event)" enctype="multipart/form-data" style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
               {% csrf_token %}
-              <input type="file" id="item-picture-input" name="image" accept="image/*" required style="font-size: 0.8rem;">
-              <button type="submit" class="btn" style="padding: 4px 10px; font-size: 0.8rem; background: #000; color: #fff;">Upload Foto</button>
+              <input type="file" id="item-picture-input" name="image" accept="image/*" required style="font-size: 0.8rem; font-family: var(--font-body);">
+              <button type="submit" class="btn" style="padding: 6px 14px; font-size: 0.85rem;">Upload Foto</button>
             </form>
             <p id="upload-status" style="margin: 4px 0 0; font-size: 0.75rem;"></p>
           </div>
           {% endif %}
         </div>
 
-        <!-- Bagian Pembayaran Transfer Langsung -->
-        <div class="payment-box">
-          <h3>Mekanisme Pembayaran Langsung</h3>
-          <div class="payment-info">
-            <p>Pembayaran dilakukan dengan <strong>Transfer Langsung ke Penjual</strong> (Bank Transfer / QRIS / e-Wallet):</p>
-            <div style="margin-block: 4px;">
-              <span>No. Rekening / Virtual Rekening Penjual:</span><br>
-              <span class="copy-pill" onclick="copyRekening()">
-                <span id="rekening-text">BCA / Mandiri: 70012-{{ item.user.username }}</span>
-                <small>(Klik Salin)</small>
-              </span>
-            </div>
-            <p style="font-size: 0.75rem; opacity: 0.8;">
-              * Setelah transfer, kirim bukti pembayaran saat bertemu di titik COD kampus ({{ item.pickup_location }}) atau kirim via konfirmasi ke penjual.
+        {% if not item.is_free %}
+        <!-- Bagian Pembayaran Garansi QRIS SaLink Escrow -->
+        <div class="payment-box" style="border-radius: 16px; padding: 16px; background: var(--salink-white); margin-block: var(--space-3);">
+          <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+            <span style="font-size: 1.4rem;">🛡️</span>
+            <h3 style="margin: 0; font-size: 1.05rem; text-transform: uppercase;">Garansi Pembayaran Aman: QRIS SaLink Escrow</h3>
+          </div>
+          <div class="payment-info" style="font-family: var(--font-body); font-size: 0.85rem; line-height: 1.5;">
+            <p style="margin: 0 0 8px 0;">
+              Untuk melindungi mahasiswa dari risiko penipuan COD, seluruh pembayaran ditransfer terlebih dahulu ke <strong>QRIS Resmi SaLink</strong> (Penampung Aman).
             </p>
+            <div style="display: flex; gap: 14px; align-items: center; background: var(--salink-cream); border-radius: 12px; padding: 12px; flex-wrap: wrap;">
+              <div style="text-align: center; padding: 8px; border-radius: 10px; background: var(--salink-white);">
+                <!-- QR Code Visual -->
+                <svg width="90" height="90" viewBox="0 0 100 100" style="display: block; margin: 0 auto;">
+                  <rect width="100" height="100" fill="#fff"/>
+                  <rect x="10" y="10" width="30" height="30" fill="#4D2A00"/>
+                  <rect x="15" y="15" width="20" height="20" fill="#fff"/>
+                  <rect x="20" y="20" width="10" height="10" fill="#4D2A00"/>
+                  <rect x="60" y="10" width="30" height="30" fill="#4D2A00"/>
+                  <rect x="65" y="15" width="20" height="20" fill="#fff"/>
+                  <rect x="70" y="20" width="10" height="10" fill="#4D2A00"/>
+                  <rect x="10" y="60" width="30" height="30" fill="#4D2A00"/>
+                  <rect x="15" y="65" width="20" height="20" fill="#fff"/>
+                  <rect x="20" y="70" width="10" height="10" fill="#4D2A00"/>
+                  <rect x="45" y="45" width="12" height="12" fill="#4D2A00"/>
+                  <rect x="55" y="65" width="10" height="15" fill="#4D2A00"/>
+                  <rect x="75" y="55" width="15" height="10" fill="#4D2A00"/>
+                  <rect x="45" y="20" width="10" height="15" fill="#4D2A00"/>
+                  <rect x="65" y="80" width="20" height="10" fill="#4D2A00"/>
+                </svg>
+                <span style="font-size: 0.65rem; font-weight: bold; text-transform: uppercase;">QRIS SALINK UI</span>
+              </div>
+              <div style="flex: 1; min-width: 180px;">
+                <p style="margin: 0; font-size: 0.85rem;"><strong>NMID:</strong> ID1024592019920</p>
+                <p style="margin: 2px 0;"><strong>Merchant:</strong> SALINK OFFICIAL UI</p>
+                <p style="margin: 2px 0;"><strong>Nominal:</strong> Rp{{ item.price|floatformat:"0g" }}</p>
+                <p style="margin: 4px 0 0; font-size: 0.78rem; opacity: 0.9;">
+                  ✅ Dana Anda ditahan aman oleh SaLink. Saat Anda telah bertemu di titik COD dan mengonfirmasi barang diterima, sistem SaLink otomatis mentransfer dana ke rekening penjual.
+                </p>
+              </div>
+            </div>
           </div>
         </div>
+        {% else %}
+        <!-- Box Gratis -->
+        <div style="border-radius: 14px; padding: 14px; background: var(--salink-white); margin-block: var(--space-3); font-family: var(--font-body); font-size: 0.85rem;">
+          <strong style="text-transform: uppercase;">🎁 Barang Gratis (Rp0)</strong>
+          <p style="margin: 4px 0 0;">
+            Barang ini dibagikan gratis oleh sesama mahasiswa UI. Tidak ada biaya sepeser pun. Silakan hubungi pemilik via chat atau klik 'Ambil Barang' untuk mengatur jadwal COD.
+          </p>
+        </div>
+        {% endif %}
 
         <div class="actions-bar">
           <div class="btn-group">
-            <button onclick="openPaymentModal()" class="btn" style="flex: 2; padding: 10px 16px; font-size: 0.95rem; cursor: pointer;">
-              💳 Beli Sekarang
+            <button onclick="openPaymentModal()" class="btn" style="flex: 2; padding: 10px 16px; font-size: 0.95rem; cursor: pointer; background: #000; color: #fff;">
+              {% if item.is_free %}🎁 Ambil Barang (Gratis){% else %}💳 Beli Sekarang (QRIS){% endif %}
             </button>
             {% if not item.is_free %}
             <button onclick="openNegoModal()" class="btn" style="flex: 1.5; padding: 10px 16px; font-size: 0.95rem; cursor: pointer; background: #fafafa;">
@@ -259,29 +198,31 @@
 
         <!-- Section Riwayat Tawaran Nego -->
         {% if offers %}
-        <div style="margin-top: var(--space-4); border-top: 2px dashed rgba(0,0,0,0.15); padding-top: var(--space-3); font-family: sans-serif;">
-          <h4 style="margin: 0 0 var(--space-2); text-transform: uppercase; font-size: 0.95rem;">🤝 Daftar Penawaran Nego</h4>
+        <!-- Section Riwayat Tawaran Nego -->
+        {% if offers %}
+        <div style="margin-top: var(--space-4); border-top: 2px dashed rgba(77, 42, 0, 0.2); padding-top: var(--space-3); font-family: var(--font-body);">
+          <h4 style="margin: 0 0 var(--space-2); text-transform: uppercase; font-size: 1rem; color: var(--salink-dark);">🤝 Daftar Penawaran Nego</h4>
           <div style="display: flex; flex-direction: column; gap: 8px;">
             {% for off in offers %}
-            <div style="border: 1px solid #e0e0e0; border-radius: 6px; padding: 10px; background: #fafafa; font-size: 0.85rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 6px;">
+            <div style="border-radius: 12px; padding: 12px; background: var(--salink-white); font-size: 0.85rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
               <div>
                 <strong>@{{ off.buyer.username }}</strong> menawar <strong>Rp{{ off.offered_price|floatformat:"0g" }}</strong>
-                {% if off.note %}<span style="opacity: 0.75;">- "{{ off.note }}"</span>{% endif %}
-                <div style="font-size: 0.75rem; margin-top: 2px;">
+                {% if off.note %}<span style="opacity: 0.8;">- "{{ off.note }}"</span>{% endif %}
+                <div style="font-size: 0.75rem; margin-top: 3px;">
                   Status: 
                   {% if off.status == 'ACCEPTED' %}
-                    <span style="color: green; font-weight: bold;">Disetujui</span>
+                    <span style="color: var(--salink-primary); font-weight: bold;">Disetujui</span>
                   {% elif off.status == 'REJECTED' %}
-                    <span style="color: red; font-weight: bold;">Ditolak</span>
+                    <span style="color: #c62828; font-weight: bold;">Ditolak</span>
                   {% else %}
-                    <span style="color: orange; font-weight: bold;">Menunggu Respon</span>
+                    <span style="color: var(--salink-primary); font-weight: bold;">Menunggu Respon</span>
                   {% endif %}
                 </div>
               </div>
               {% if user == item.user and off.status == 'PENDING' %}
               <div style="display: flex; gap: 6px;">
-                <button onclick="respondOffer('{{ off.id }}', 'accept')" class="btn" style="padding: 4px 10px; font-size: 0.75rem; background: #2e7d32; color: #fff; cursor: pointer;">Terima</button>
-                <button onclick="respondOffer('{{ off.id }}', 'reject')" class="btn" style="padding: 4px 10px; font-size: 0.75rem; background: #c62828; color: #fff; cursor: pointer;">Tolak</button>
+                <button onclick="respondOffer('{{ off.id }}', 'accept')" class="btn" style="padding: 6px 12px; font-size: 0.75rem;">Terima</button>
+                <button onclick="respondOffer('{{ off.id }}', 'reject')" class="btn" style="padding: 6px 12px; font-size: 0.75rem; background: var(--salink-primary);">Tolak</button>
               </div>
               {% endif %}
             </div>
@@ -292,14 +233,14 @@
 
         <!-- Section Order Tracker COD Kampus -->
         {% if orders %}
-        <div style="margin-top: var(--space-4); border-top: 2px dashed rgba(0,0,0,0.15); padding-top: var(--space-3); font-family: sans-serif;">
-          <h4 style="margin: 0 0 var(--space-2); text-transform: uppercase; font-size: 0.95rem;">📦 Status & Tracker Transaksi COD</h4>
+        <div style="margin-top: var(--space-4); border-top: 2px dashed rgba(77, 42, 0, 0.2); padding-top: var(--space-3); font-family: var(--font-body);">
+          <h4 style="margin: 0 0 var(--space-2); text-transform: uppercase; font-size: 1rem; color: var(--salink-dark);">📦 Status & Tracker Transaksi COD</h4>
           <div style="display: flex; flex-direction: column; gap: 12px;">
             {% for ord in orders %}
-            <div style="border: 2px solid; border-radius: 8px; padding: 12px; background: #fff; font-size: 0.85rem;">
-              <div style="display: flex; justify-content: space-between; margin-bottom: 8px; border-bottom: 1px solid #eee; padding-bottom: 6px;">
+            <div style="border-radius: 14px; padding: 14px; background: var(--salink-white); font-size: 0.85rem;">
+              <div style="display: flex; justify-content: space-between; margin-bottom: 8px; border-bottom: 1px solid rgba(77, 42, 0, 0.1); padding-bottom: 6px;">
                 <span><strong>Order #{{ ord.id|stringformat:'s'|slice:':8' }}</strong></span>
-                <span style="font-weight: 600; color: #0070f3;">{{ ord.get_stage_display }}</span>
+                <span style="font-weight: bold; color: var(--salink-primary);">{{ ord.get_stage_display }}</span>
               </div>
               <p style="margin: 2px 0;">Pembeli: <strong>@{{ ord.buyer.username }}</strong> | Penjual: <strong>@{{ ord.seller.username }}</strong></p>
               <p style="margin: 2px 0;">Nominal Sepakat: <strong>Rp{{ ord.agreed_price|floatformat:"0g" }}</strong></p>
@@ -345,20 +286,36 @@
     </article>
   </main>
 
-  <!-- Modal Konfirmasi Transfer Langsung -->
+  <!-- Modal Konfirmasi Transfer Garansi QRIS SaLink -->
   <div id="paymentModal" class="modal-overlay" onclick="closeModalOnBg(event)">
-    <div class="modal-content">
-      <h2 style="margin: 0; font-size: 1.25rem; text-transform: uppercase;">Konfirmasi Pembayaran Transfer</h2>
+    <div class="modal-content" style="border: 2px solid #000; border-radius: 16px; box-shadow: 6px 6px 0px #000;">
+      <h2 style="margin: 0; font-size: 1.25rem; text-transform: uppercase;">
+        🛡️ {% if item.is_free %}Konfirmasi Ambil Barang Gratis{% else %}Pembayaran QRIS SaLink (Aman Anti-Penipuan){% endif %}
+      </h2>
       <div style="font-family: sans-serif; font-size: 0.9rem; line-height: 1.5;">
-        <p>Anda akan membeli: <strong>{{ item.title }}</strong></p>
-        <p>Total Tagihan: <strong>{% if item.is_free %}Gratis{% else %}Rp{{ item.price|floatformat:"0g" }}{% endif %}</strong></p>
-        <p>Silakan lakukan transfer ke penjual (<strong>{{ item.user.username }}</strong>) dan tentukan waktu serah-terima di <strong>{{ item.pickup_location }}</strong>.</p>
+        <p style="margin: 6px 0;">Barang: <strong>{{ item.title }}</strong></p>
+        <p style="margin: 6px 0;">Total Bayar: <strong>{% if item.is_free %}Gratis (Rp0){% else %}Rp{{ item.price|floatformat:"0g" }}{% endif %}</strong></p>
+        <p style="margin: 6px 0;">Titik Temu COD: <strong>{{ item.pickup_location }}</strong></p>
+
+        {% if not item.is_free %}
+        <div style="background: #f0fdf4; border: 1.5px solid #000; border-radius: 8px; padding: 10px; margin: 8px 0; font-size: 0.8rem;">
+          <p style="margin: 0;">
+            1. Pindai QRIS <strong>SALINK OFFICIAL UI</strong> dengan m-banking/e-wallet Anda.<br>
+            2. Dana Anda disimpan aman oleh pihak SaLink.<br>
+            3. Saat COD berlangsung dan barang sudah Anda terima & cek, klik <strong>'Selesaikan Transaksi'</strong> di tracker, lalu SaLink meneruskan dana ke: <strong>{{ item.payout_method }} {{ item.payout_account_number }} (a.n. {{ item.payout_account_name|default:item.user.username }})</strong>.
+          </p>
+        </div>
+        {% else %}
+        <p style="font-size: 0.85rem; color: #555;">
+          Pesanan barang gratis akan dibuat di sistem SaLink. Silakan hubungi pemilik via chat atau atur waktu janji temu COD di kampus.
+        </p>
+        {% endif %}
       </div>
 
       <div style="display: flex; gap: var(--space-2); justify-content: flex-end; margin-top: var(--space-2);">
         <button class="btn" onclick="closePaymentModal()" style="padding: 6px 14px; width: auto;">Batal</button>
-        <button class="btn" onclick="confirmTransferOrder()" style="padding: 6px 14px; width: auto; background: currentColor; color: #fff;">
-          Saya Sudah Siap Transfer
+        <button class="btn" onclick="confirmTransferOrder()" style="padding: 6px 14px; width: auto; background: #000; color: #fff;">
+          {% if item.is_free %}Konfirmasi Ambil Barang{% else %}Konfirmasi Bayar QRIS & Buat Pesanan{% endif %}
         </button>
       </div>
       <p id="order-message" style="font-family: sans-serif; font-size: 0.8rem; color: green; margin: 0;"></p>
@@ -593,31 +550,6 @@
       statusEl.textContent = 'Barang berhasil disimpan di riwayat favorit browser Anda (Cookie)!';
     }
 
-    function checkOsmLocation(locName) {
-      const resEl = document.getElementById('osm-result');
-      resEl.style.display = 'block';
-      resEl.innerHTML = '<em>Mencari data lokasi dari OpenStreetMap Nominatim...</em>';
-
-      fetch(`{% url 'saling_beli:location-search' %}?q=${encodeURIComponent(locName)}`)
-        .then(res => res.json())
-        .then(data => {
-          if (data.success && data.locations.length > 0) {
-            const loc = data.locations[0];
-            resEl.innerHTML = `
-              <strong>✅ Ditemukan di OpenStreetMap:</strong><br>
-              <span>${loc.display_name}</span><br>
-              <small style="color: #555;">Koordinat: ${loc.lat}, ${loc.lon}</small> | 
-              <a href="https://www.openstreetmap.org/?mlat=${loc.lat}&mlon=${loc.lon}#map=17/${loc.lat}/${loc.lon}" target="_blank" rel="noopener noreferrer" style="color: #0284c7; text-decoration: underline;">Buka Peta Publik &rarr;</a>
-            `;
-          } else {
-            resEl.innerHTML = `⚠️ Lokasi spesifik belum terindeks penuh di OpenStreetMap. Titik perkiraan kampus UI tetap berlaku.`;
-          }
-        })
-        .catch(err => {
-          resEl.innerHTML = `⚠️ Gagal menghubungi layanan OpenStreetMap.`;
-        });
-    }
-
     function uploadItemPicture(e) {
       e.preventDefault();
       const statusEl = document.getElementById('upload-status');
@@ -848,6 +780,8 @@
       });
     }
   </script>
+  {% include "_footer.html" %}
+
 </body>
 </html>
 

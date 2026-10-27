@@ -7,6 +7,7 @@ from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_http_methods
 
+from .forms import ItemListingForm
 from .models import ItemChatMessage, ItemListing, PriceOffer, TransactionOrder, UserNotification
 
 EDITABLE_FIELDS = {
@@ -18,6 +19,9 @@ EDITABLE_FIELDS = {
 	'price',
 	'image_url',
 	'pickup_location',
+	'payout_method',
+	'payout_account_name',
+	'payout_account_number',
 	'status',
 }
 
@@ -36,6 +40,9 @@ def _listing_data(listing):
 		'image': listing.image.url if listing.image else None,
 		'display_image': listing.display_image,
 		'pickup_location': listing.pickup_location,
+		'payout_method': listing.payout_method,
+		'payout_account_name': listing.payout_account_name,
+		'payout_account_number': listing.payout_account_number,
 		'status': listing.status,
 		'created_at': listing.created_at.isoformat(),
 		'updated_at': listing.updated_at.isoformat(),
@@ -122,6 +129,37 @@ def index(request):
 	return response
 
 
+def item_create_page(request):
+	"""
+	Halaman Form Tambah Barang / Hibah bagi Penjual / Pemberi (HTML).
+	Mendukung upload foto dari galeri/perangkat dan integrasi OpenStreetMap.
+	"""
+	from django.contrib.auth.models import User
+
+	if request.method == 'POST':
+		form = ItemListingForm(request.POST, request.FILES)
+		if form.is_valid():
+			listing = form.save(commit=False)
+			if request.user.is_authenticated:
+				listing.user = request.user
+			else:
+				# Fallback ke user pertama atau buat default jika guest
+				listing.user = User.objects.first() or User.objects.create_user('penjual_ui', 'penjual@ui.ac.id')
+
+			if listing.is_free:
+				listing.price = 0
+
+			listing.save()
+			return redirect('saling_beli:item_detail', listing_id=listing.id)
+	else:
+		form = ItemListingForm()
+
+	context = {
+		'form': form,
+	}
+	return render(request, 'saling_beli/saling-beli-form.html', context)
+
+
 def item_detail(request, listing_id):
 	"""
 	Halaman detail barang prelove (HTML).
@@ -160,6 +198,9 @@ def make_offer(request, listing_id):
 		return JsonResponse({'error': 'Silakan login terlebih dahulu untuk menawar harga.'}, status=401)
 
 	item = get_object_or_404(ItemListing, pk=listing_id)
+	if item.is_free or item.price <= 0:
+		return JsonResponse({'error': 'Barang gratis tidak dapat dinego.'}, status=400)
+
 	if item.user == request.user:
 		return JsonResponse({'error': 'Anda tidak bisa menawar barang milik sendiri.'}, status=400)
 
@@ -436,49 +477,6 @@ def _update_listing(request, listing_id):
 
 	listing.save()
 	return JsonResponse(_listing_data(listing))
-
-
-@require_http_methods(['GET'])
-def location_search(request):
-	"""
-	Integrasi Public OpenStreetMap (Nominatim API - Free & No API Key Required)
-	Digunakan untuk mencari titik temu / COD kampus UI atau drop-point secara real-time.
-	"""
-	import urllib.parse
-	import urllib.request
-
-	query = request.GET.get('q', '').strip()
-	if not query:
-		query = 'Universitas Indonesia'
-
-	# Parameterized search prioritizing UI / Depok
-	params = {
-		'format': 'json',
-		'q': f"{query}, Depok",
-		'addressdetails': 1,
-		'limit': 5,
-	}
-	url = f"https://nominatim.openstreetmap.org/search?{urllib.parse.urlencode(params)}"
-	req = urllib.request.Request(
-		url,
-		headers={'User-Agent': 'SaLink-StudentApp/1.0 (cs-ui-pbp@salink.ui.ac.id)'}
-	)
-
-	try:
-		with urllib.request.urlopen(req, timeout=5) as resp:
-			data = json.loads(resp.read().decode('utf-8'))
-			results = [
-				{
-					'display_name': item.get('display_name'),
-					'lat': item.get('lat'),
-					'lon': item.get('lon'),
-					'type': item.get('type'),
-				}
-				for item in data
-			]
-			return JsonResponse({'success': True, 'query': query, 'locations': results})
-	except Exception as e:
-		return JsonResponse({'success': False, 'error': str(e), 'locations': []}, status=502)
 
 
 @require_http_methods(['POST'])

@@ -1,7 +1,14 @@
+@import url('../navbar-footer.css');
+
 :root {
-    --black: #000;
-    --white: #fff;
-    --grey: #D9D9D9;
+    --salink-dark: #4D2A00;
+    --salink-primary: #CC6F00;
+    --salink-accent: #F2A900;
+    --salink-light: #F9E6A8;
+    --salink-cream: #FFF6DC;
+    --salink-white: #FFFFFF;
+    --salink-muted: #8C5A1F;
+
     --font: "Anton", sans-serif;
     --max-width: 1320px;
 }
@@ -12,8 +19,8 @@
 
 body {
     margin: 0;
-    background: var(--white);
-    color: var(--black);
+    background: var(--salink-light);
+    color: var(--salink-dark);
     font-family: var(--font);
     font-weight: 400;
 }
@@ -28,47 +35,49 @@ a {
     display: grid;
     grid-template-columns: 1fr auto 1fr;
     align-items: center;
-    height: 78px;
-    padding: 0 24px;
-    border-bottom: 3px solid var(--black);
+    margin: 16px 16px 0;
+    padding: 10px 24px;
+    background: var(--salink-dark);
+    border-radius: 20px;
 }
 
 .navbar__logo {
-    font-size: 40px;
+    font-size: 38px;
     line-height: 1;
+    color: var(--salink-accent);
 }
 
 .navbar__menu {
     display: flex;
     align-items: center;
-    gap: 48px;
+    gap: 40px;
 }
 
 .navbar__link {
     position: relative;
-    font-size: 22px;
+    font-size: 20px;
+    color: var(--salink-white);
+    padding-bottom: 4px;
+    border-bottom: 3px solid transparent;
+    transition: color 0.15s ease;
+}
+
+.navbar__link:hover {
+    color: var(--salink-accent);
 }
 
 .navbar__link--active {
-    font-size: 26px;
-}
-
-.navbar__link--active::after {
-    content: "";
-    position: absolute;
-    left: 50%;
-    bottom: -9px;
-    width: 89px;
-    height: 5px;
-    background: var(--black);
-    transform: translateX(-50%);
+    font-size: 22px;
+    color: var(--salink-accent);
+    border-bottom: 4px solid var(--salink-accent);
 }
 
 .navbar__profile {
     display: flex;
     align-items: center;
     justify-content: flex-end;
-    gap: 12px;
+    gap: 10px;
+    color: var(--salink-white);
 }
 
 .navbar__profile-text {
@@ -79,32 +88,33 @@ a {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 46px;
-    height: 46px;
-    background: var(--grey);
-    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    color: var(--salink-white);
 }
 
 .navbar__avatar svg {
-    width: 30px;
-    height: 30px;
-    fill: var(--black);
+    width: 32px;
+    height: 32px;
+    fill: currentColor;
 }
 
 /* ---------- LAYOUT UTAMA ---------- */
 .pinjam {
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(0, 540px);
-    gap: 24px;
+    gap: 28px;
     max-width: var(--max-width);
     margin: 0 auto;
-    padding: 16px 24px 32px;
+    padding: 24px 20px 40px;
 }
 
 .section-title {
     margin: 0 0 12px;
-    font-size: 25px;
+    font-size: 24px;
     font-weight: 400;
+    color: var(--salink-dark);
+    letter-spacing: 0.02em;
 }
 
 .section-title--center {
@@ -113,57 +123,61 @@ a {
 
 .empty-text {
     margin: 0;
-    padding: 12px;
-    font-size: 16px;
-    color: #555;
+    padding: 14px;
+    font-size: 15px;
+    color: var(--salink-muted);
 }
 
 /* ---------- JADWAL PINJAM ---------- */
 .today {
-    margin: 0 0 8px;
-    font-size: 30px;
+    margin: 0 0 10px;
+    font-size: 28px;
     font-weight: 400;
+    letter-spacing: 0.02em;
+    color: var(--salink-dark);
 }
 
 .calendar__days {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
-    margin-bottom: 8px;
-    font-size: 15px;
+    margin-bottom: 10px;
+    font-size: 14px;
     text-align: center;
+    color: var(--salink-primary);
 }
 
 .calendar__grid {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
-    border-top: 2px solid var(--black);
-    border-left: 2px solid var(--black);
+    gap: 8px;
 }
 
 .calendar__cell {
     position: relative;
     aspect-ratio: 1 / 1;
-    background: var(--grey);
-    border-right: 2px solid var(--black);
-    border-bottom: 2px solid var(--black);
+    background: var(--salink-cream);
+    border-radius: 12px;
+    display: flex;
+    align-items: flex-start;
+    padding: 6px 8px;
+    transition: transform 0.15s ease;
 }
 
 .calendar__date {
-    position: absolute;
-    top: 6px;
-    left: 8px;
     font-size: 14px;
+    color: var(--salink-dark);
 }
 
 .calendar__cell--muted {
-    background: #efefef;
-    color: #9a9a9a;
+    background: rgba(255, 246, 220, 0.45);
+    color: var(--salink-muted);
+    opacity: 0.6;
 }
 
 .calendar__cell--today {
-    background: var(--white);
-    outline: 3px solid var(--black);
-    outline-offset: -3px;
+    background: var(--salink-cream);
+    outline: 3px solid var(--salink-primary);
+    outline-offset: -1px;
 }
 
 /* ---------- SIDEBAR ---------- */
@@ -177,17 +191,18 @@ a {
 .barang__list {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 12px;
+    gap: 14px;
 }
 
 .item-card {
     display: flex;
     flex-direction: column;
-    height: 309px;
-    padding: 5px;
-    background: var(--grey);
+    height: 310px;
+    padding: 6px;
+    background: var(--salink-accent);
     border-radius: 20px;
     transition: transform 0.15s ease;
+    overflow: hidden;
 }
 
 .item-card:hover {
@@ -196,34 +211,74 @@ a {
 
 .item-card__image {
     flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--salink-accent);
+    position: relative;
+}
+
+.item-card__image::before {
+    content: "";
+    width: 60px;
+    height: 50px;
+    opacity: 0.35;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%234D2A00'%3E%3Cpath d='M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: contain;
 }
 
 .item-card__info {
     display: flex;
     flex-direction: column;
     gap: 6px;
-    height: 141px;
-    padding: 14px;
-    background: var(--white);
-    border-radius: 15px;
+    height: 125px;
+    padding: 12px 14px;
+    background: var(--salink-cream);
+    border-radius: 14px;
     overflow: hidden;
+    position: relative;
 }
 
 .item-card__name {
-    font-size: 20px;
+    font-size: 19px;
+    color: var(--salink-dark);
+    text-transform: uppercase;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .item-card__meta {
-    font-size: 14px;
-    color: #555;
+    font-size: 13px;
+    color: var(--salink-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.item-card__status {
+    align-self: flex-end;
+    margin-top: auto;
+    font-size: 12px;
+    padding: 3px 12px;
+    background: var(--salink-dark);
+    color: var(--salink-white);
+    border-radius: 999px;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
 }
 
 /* Pinjaman Saya */
 .pinjaman-saya__box {
-    min-height: 203px;
-    padding: 8px;
-    background: var(--grey);
+    min-height: 180px;
+    padding: 12px;
+    background: var(--salink-primary);
     border-radius: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
 }
 
 .pinjaman-saya__row {
@@ -231,20 +286,26 @@ a {
     justify-content: space-between;
     align-items: center;
     gap: 12px;
-    padding: 10px 12px;
-    font-size: 18px;
-    border-radius: 12px;
+    padding: 10px 16px;
+    font-size: 17px;
+    background: var(--salink-cream);
+    color: var(--salink-dark);
+    border-radius: 999px;
+    transition: transform 0.12s ease;
 }
 
 .pinjaman-saya__row:hover {
-    background: rgba(255, 255, 255, 0.6);
+    transform: scale(1.01);
 }
 
 .pinjaman-saya__status {
-    font-size: 14px;
-    padding: 3px 10px;
-    background: var(--white);
+    font-size: 12px;
+    padding: 4px 12px;
+    background: var(--salink-accent);
+    color: var(--salink-dark);
     border-radius: 999px;
+    font-weight: bold;
+    text-transform: uppercase;
 }
 
 /* ---------- RESPONSIVE ---------- */
