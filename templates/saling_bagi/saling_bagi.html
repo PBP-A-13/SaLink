@@ -5,21 +5,32 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SaLink - Bagi</title>
+    
+    <!-- INI YANG TADI KURANG: Pemanggil Font dan CSS kelompok lu -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Anton&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="{% static 'style.css' %}">
+    <link rel="stylesheet" href="{% static 'navbar-footer.css' %}">
+    
+    <!-- Kalau lu punya CSS khusus saling bagi, panggil di sini -->
+    <link rel="stylesheet" href="{% static 'saling_bagi/saling_bagi.css' %}">
 </head>
 <body>
     
-    <!-- Ini cara kelompok lu manggil Navbar dari luar -->
+    <!-- Navbar -->
     {% include "_navbar.html" with active_nav="bagi" %}
 
-    <!-- KONTEN UTAMA SALING BAGI LU -->
+    <!-- KONTEN UTAMA -->
     <main class="page" style="padding: 20px;">
-        <h2>Saling Bagi - Makanan Berlebih</h2>
+        <h2 style="font-family: 'Anton', sans-serif;">Saling Bagi - Makanan Berlebih</h2>
         
         <a href="{% url 'saling_bagi:tambah_makanan' %}" style="display: inline-block; padding: 10px 15px; background: black; color: white; text-decoration: none; border-radius: 5px; margin-bottom: 20px;">
             + Tambah Makanan
         </a>
 
-        <h3>Baru Saja di Upload</h3>
+        <h3 style="font-family: 'Anton', sans-serif;">Baru Saja di Upload</h3>
         
         {% if makanan_list %}
             <div style="display: flex; gap: 20px; flex-wrap: wrap;">
