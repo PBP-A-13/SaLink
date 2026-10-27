@@ -1,10 +1,12 @@
 from django.urls import path
 
 from . import views
+from user_page.views import module_login
 
 app_name = 'saling_beli'
 
 urlpatterns = [
+    path('login/', module_login, name='login'),
     # Halaman HTML & Detail
     path('', views.index, name='index'),
     path('tambah/', views.item_create_page, name='item_create'),
