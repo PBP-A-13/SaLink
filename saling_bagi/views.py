@@ -38,7 +38,7 @@ def index(request):
         'makanan_list': makanan_list,
         'markers': markers,
     }
-    return render(request, 'saling_bagi/index.html', context)
+    return render(request, 'saling_bagi/saling_bagi.html', context)
 
 
 @login_required
