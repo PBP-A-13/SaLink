@@ -33,6 +33,7 @@ class SaLinkLoginView(LoginView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        context['active_nav'] = 'login'
         next_path = self.request.GET.get('next') or self.request.POST.get('next', '')
         module_paths = (
             ('/saling-beli/', 'Saling Beli'),
@@ -60,6 +61,7 @@ def register(request):
     return render(request, 'user_page/register.html', {
         'form': form,
         'next': request.GET.get('next') or request.POST.get('next', ''),
+        'active_nav': 'register',
     })
 
 
