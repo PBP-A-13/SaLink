@@ -1,10 +1,22 @@
+import io
 import json
+from unittest import mock
 
 from django.contrib.auth.models import User
+from django.core.files.storage import FileSystemStorage
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 from django.urls import reverse
+from PIL import Image
 
-from .models import ItemListing
+from .models import (
+	Conversation,
+	ItemChatMessage,
+	ItemListing,
+	PriceOffer,
+	TransactionOrder,
+	UserNotification,
+)
 
 
 class ListingApiTests(TestCase):
@@ -69,3 +81,348 @@ class ListingApiTests(TestCase):
 		self.assertEqual(update_response.json()['title'], 'Reading lamp')
 		self.assertEqual(delete_response.status_code, 204)
 		self.assertFalse(ItemListing.objects.filter(pk=listing_id).exists())
+
+
+class OrderFlowTests(TestCase):
+	def setUp(self):
+		self.seller = User.objects.create_user(username='penjual', password='test-password')
+		self.buyer = User.objects.create_user(username='pembeli', password='test-password')
+		self.other = User.objects.create_user(username='pembeli-lain', password='test-password')
+		self.item = ItemListing.objects.create(
+			user=self.seller,
+			title='Kalkulator',
+			description='Mulus, lengkap',
+			price=100000,
+		)
+		self.offer_url = reverse('saling_beli:make-offer', args=[self.item.id])
+		self.order_url = reverse('saling_beli:create-order', args=[self.item.id])
+
+	def _make_offer(self, price=75000):
+		self.client.force_login(self.buyer)
+		response = self.client.post(
+			self.offer_url,
+			data=json.dumps({'offered_price': price}),
+			content_type='application/json',
+		)
+		return response, PriceOffer.objects.get(item=self.item, buyer=self.buyer)
+
+	def _accept_offer(self, offer):
+		self.client.force_login(self.seller)
+		return self.client.post(
+			reverse('saling_beli:respond-offer', args=[offer.id]),
+			data=json.dumps({'action': 'accept'}),
+			content_type='application/json',
+		)
+
+	def _set_stage(self, order, user, stage, **extra):
+		self.client.force_login(user)
+		payload = {'stage': stage}
+		payload.update(extra)
+		return self.client.post(
+			reverse('saling_beli:update-order-stage', args=[order.id]),
+			data=json.dumps(payload),
+			content_type='application/json',
+		)
+
+	def test_accept_offer_creates_order_and_reserves_item(self):
+		_, offer = self._make_offer()
+		response = self._accept_offer(offer)
+
+		self.assertEqual(response.status_code, 200)
+		order = TransactionOrder.objects.get(item=self.item)
+		self.assertEqual(order.agreed_price, 75000)
+		self.item.refresh_from_db()
+		self.assertEqual(self.item.status, ItemListing.Status.RESERVED)
+
+	def test_accepting_twice_does_not_create_second_order(self):
+		_, offer = self._make_offer()
+		first = self._accept_offer(offer)
+		second = self._accept_offer(offer)
+
+		self.assertEqual(first.status_code, 200)
+		self.assertEqual(second.status_code, 400)
+		self.assertEqual(TransactionOrder.objects.filter(item=self.item).count(), 1)
+
+	def test_second_buyer_cannot_order_reserved_item(self):
+		self.client.force_login(self.buyer)
+		first = self.client.post(self.order_url)
+
+		self.client.force_login(self.other)
+		second = self.client.post(self.order_url)
+
+		self.assertEqual(first.status_code, 200)
+		self.assertEqual(second.status_code, 400)
+		self.assertEqual(TransactionOrder.objects.filter(item=self.item).count(), 1)
+
+	def test_same_buyer_order_is_idempotent(self):
+		self.client.force_login(self.buyer)
+		first = self.client.post(self.order_url)
+		second = self.client.post(self.order_url)
+
+		self.assertEqual(second.status_code, 200)
+		self.assertEqual(first.json()['order_id'], second.json()['order_id'])
+		self.assertTrue(second.json()['already_exists'])
+		self.assertEqual(TransactionOrder.objects.filter(item=self.item).count(), 1)
+
+	def test_accept_offer_rejected_when_item_reserved_by_other(self):
+		self.client.force_login(self.buyer)
+		self.client.post(self.order_url)
+
+		offer = PriceOffer.objects.create(
+			item=self.item,
+			buyer=self.other,
+			offered_price=50000,
+		)
+		response = self._accept_offer(offer)
+
+		self.assertEqual(response.status_code, 400)
+		self.assertEqual(TransactionOrder.objects.filter(item=self.item).count(), 1)
+
+	def test_stage_cannot_be_skipped(self):
+		order = TransactionOrder.objects.create(
+			item=self.item,
+			buyer=self.buyer,
+			seller=self.seller,
+			agreed_price=100000,
+		)
+
+		response = self._set_stage(order, self.buyer, 'SELESAI')
+
+		self.assertEqual(response.status_code, 400)
+		order.refresh_from_db()
+		self.assertEqual(order.stage, TransactionOrder.Stage.MENUNGGU_TRANSFER)
+
+	def test_only_buyer_can_upload_payment_proof(self):
+		order = TransactionOrder.objects.create(
+			item=self.item,
+			buyer=self.buyer,
+			seller=self.seller,
+			agreed_price=100000,
+		)
+
+		seller_response = self._set_stage(order, self.seller, 'BUKTI_DIUNGGAH')
+		buyer_response = self._set_stage(
+			order,
+			self.buyer,
+			'BUKTI_DIUNGGAH',
+			note='BCA 12345',
+		)
+
+		self.assertEqual(seller_response.status_code, 403)
+		self.assertEqual(buyer_response.status_code, 200)
+		order.refresh_from_db()
+		self.assertEqual(order.payment_proof_note, 'BCA 12345')
+
+	def test_full_flow_marks_item_sold(self):
+		order = TransactionOrder.objects.create(
+			item=self.item,
+			buyer=self.buyer,
+			seller=self.seller,
+			agreed_price=100000,
+		)
+
+		self.assertEqual(self._set_stage(order, self.buyer, 'BUKTI_DIUNGGAH', note='REF-1').status_code, 200)
+		self.assertEqual(self._set_stage(order, self.seller, 'DIKONFIRMASI').status_code, 200)
+		self.assertEqual(self._set_stage(
+			order, self.seller, 'JANJI_TEMU_COD', cod_meeting_time='Jumat 10.00, Perpusat'
+		).status_code, 200)
+		self.assertEqual(self._set_stage(order, self.buyer, 'SELESAI').status_code, 200)
+
+		order.refresh_from_db()
+		self.item.refresh_from_db()
+		self.assertEqual(order.stage, TransactionOrder.Stage.SELESAI)
+		self.assertEqual(self.item.status, ItemListing.Status.SOLD)
+
+	def test_cancel_releases_reserved_item(self):
+		self.client.force_login(self.buyer)
+		self.client.post(self.order_url)
+		order = TransactionOrder.objects.get(item=self.item)
+
+		response = self._set_stage(order, self.buyer, 'BATAL')
+
+		self.assertEqual(response.status_code, 200)
+		self.item.refresh_from_db()
+		self.assertEqual(self.item.status, ItemListing.Status.AVAILABLE)
+
+
+class ChatThreadTests(TestCase):
+	def setUp(self):
+		self.seller = User.objects.create_user(username='penjual', password='test-password')
+		self.buyer_a = User.objects.create_user(username='pembeli-a', password='test-password')
+		self.buyer_b = User.objects.create_user(username='pembeli-b', password='test-password')
+		self.item = ItemListing.objects.create(
+			user=self.seller,
+			title='Buku Kalkulus',
+			description='Edisi 14',
+			price=120000,
+		)
+		self.chat_url = reverse('saling_beli:item-chats', args=[self.item.id])
+
+	def _send(self, user, message, peer=None):
+		self.client.force_login(user)
+		payload = {'message': message}
+		if peer is not None:
+			payload['peer'] = peer
+		return self.client.post(
+			self.chat_url,
+			data=json.dumps(payload),
+			content_type='application/json',
+		)
+
+	def test_each_buyer_gets_own_thread(self):
+		self._send(self.buyer_a, 'Halo, masih ada?')
+		self._send(self.buyer_b, 'Saya mau beli')
+
+		self.client.force_login(self.seller)
+		response_a = self.client.get(self.chat_url, {'peer': self.buyer_a.id})
+		response_b = self.client.get(self.chat_url, {'peer': self.buyer_b.id})
+
+		messages_a = [c['message'] for c in response_a.json()['chats']]
+		messages_b = [c['message'] for c in response_b.json()['chats']]
+		self.assertEqual(messages_a, ['Halo, masih ada?'])
+		self.assertEqual(messages_b, ['Saya mau beli'])
+
+	def test_seller_reply_goes_to_selected_buyer(self):
+		self._send(self.buyer_a, 'Halo')
+		self._send(self.seller, 'Halo juga, ada yang bisa dibantu?', peer=self.buyer_a.id)
+
+		chat = ItemChatMessage.objects.filter(sender=self.seller).get()
+		self.assertEqual(chat.recipient, self.buyer_a)
+		self.assertEqual(chat.conversation.buyer, self.buyer_a)
+
+	def test_buyer_only_sees_own_messages(self):
+		self._send(self.buyer_a, 'Pesan A')
+		self._send(self.buyer_b, 'Pesan B')
+
+		self.client.force_login(self.buyer_b)
+		response = self.client.get(self.chat_url)
+
+		messages = [c['message'] for c in response.json()['chats']]
+		self.assertEqual(messages, ['Pesan B'])
+
+	def test_seller_must_choose_buyer_without_threads(self):
+		self.client.force_login(self.seller)
+		response = self.client.post(
+			self.chat_url,
+			data=json.dumps({'message': 'Halo'}),
+			content_type='application/json',
+		)
+
+		self.assertEqual(response.status_code, 400)
+		self.assertEqual(Conversation.objects.count(), 0)
+
+
+class NotificationStreamTests(TestCase):
+	def setUp(self):
+		self.user = User.objects.create_user(username='pembeli', password='test-password')
+		self.stream_url = reverse('saling_beli:notification-stream')
+
+	def test_returns_new_notifications_immediately(self):
+		self.client.force_login(self.user)
+		UserNotification.objects.create(
+			user=self.user,
+			title='Tawaran masuk',
+			message='Ada yang menawar barangmu.',
+			notification_type=UserNotification.NotifType.OFFER,
+		)
+
+		response = self.client.get(self.stream_url)
+		payload = response.json()
+
+		self.assertEqual(response.status_code, 200)
+		self.assertEqual(len(payload['notifications']), 1)
+		self.assertEqual(payload['notifications'][0]['title'], 'Tawaran masuk')
+		self.assertIsNotNone(payload['cursor'])
+
+	def test_anonymous_gets_empty_payload(self):
+		response = self.client.get(self.stream_url)
+
+		self.assertEqual(response.status_code, 200)
+		self.assertEqual(response.json()['notifications'], [])
+
+
+class UploadValidationTests(TestCase):
+	def setUp(self):
+		self.seller = User.objects.create_user(username='penjual', password='test-password')
+		self.item = ItemListing.objects.create(
+			user=self.seller,
+			title='Lampu',
+			description='Lampu belajar',
+			price=35000,
+		)
+		self.upload_url = reverse('saling_beli:upload-image', args=[self.item.id])
+		self.client.force_login(self.seller)
+
+	def _upload(self, name, content, content_type):
+		return self.client.post(
+			self.upload_url,
+			data={'image': SimpleUploadedFile(name, content, content_type=content_type)},
+		)
+
+	def test_valid_png_is_accepted(self):
+		buffer = io.BytesIO()
+		Image.new('RGB', (16, 16), 'white').save(buffer, format='PNG')
+
+		# Penyimpanan fisik diganti mock agar tes tidak menulis ke disk.
+		with mock.patch.object(FileSystemStorage, '_save', return_value='item_images/foto.png'):
+			response = self._upload('foto.png', buffer.getvalue(), 'image/png')
+
+		self.assertEqual(response.status_code, 200)
+		self.assertTrue(response.json()['success'])
+
+	def test_oversized_file_is_rejected(self):
+		response = self._upload('besar.png', b'x' * (5 * 1024 * 1024 + 1), 'image/png')
+
+		self.assertEqual(response.status_code, 400)
+		self.assertIn('maksimal', response.json()['error'])
+
+	def test_fake_image_is_rejected(self):
+		response = self._upload('palsu.jpg', b'bukan gambar sama sekali', 'image/jpeg')
+
+		self.assertEqual(response.status_code, 400)
+
+	def test_wrong_content_type_is_rejected(self):
+		response = self._upload('dokumen.pdf', b'%PDF-1.4', 'application/pdf')
+
+		self.assertEqual(response.status_code, 400)
+
+
+class CreatePageAuthTests(TestCase):
+	def test_anonymous_redirected_to_login(self):
+		response = self.client.get(reverse('saling_beli:item_create'))
+
+		self.assertEqual(response.status_code, 302)
+		self.assertIn('/akun/login/', response.url)
+
+
+class PageRenderTests(TestCase):
+	def setUp(self):
+		self.seller = User.objects.create_user(username='penjual', password='test-password')
+		self.buyer = User.objects.create_user(username='pembeli', password='test-password')
+		self.item = ItemListing.objects.create(
+			user=self.seller,
+			title='Meja Belajar',
+			description='Kayu minimalis',
+			price=45000,
+		)
+
+	def test_detail_page_renders_for_buyer(self):
+		self.client.force_login(self.buyer)
+		response = self.client.get(reverse('saling_beli:item_detail', args=[self.item.id]))
+
+		self.assertEqual(response.status_code, 200)
+		self.assertContains(response, 'Chat Penjual')
+
+	def test_detail_page_renders_seller_peer_selector(self):
+		self.client.force_login(self.seller)
+		response = self.client.get(reverse('saling_beli:item_detail', args=[self.item.id]))
+
+		self.assertEqual(response.status_code, 200)
+		self.assertContains(response, 'chat-peer-select')
+
+	def test_create_page_renders_for_logged_in_user(self):
+		self.client.force_login(self.seller)
+		response = self.client.get(reverse('saling_beli:item_create'))
+
+		self.assertEqual(response.status_code, 200)
+		self.assertContains(response, 'Form Penjual')
