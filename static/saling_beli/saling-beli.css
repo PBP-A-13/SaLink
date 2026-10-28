@@ -694,3 +694,71 @@ a {
     grid-template-columns: 1fr;
   }
 }
+
+/* ---------- Filter Pills & Sorting ---------- */
+.filter-bar {
+  background: var(--salink-cream);
+  border: var(--border-thick);
+  border-radius: var(--radius-card);
+  padding: 14px 16px;
+  box-shadow: 3px 3px 0px var(--salink-dark);
+}
+
+.filter-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.filter-label {
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--salink-dark);
+}
+
+.filter-pills {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.pill-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 5px 12px;
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  font-weight: 600;
+  border-radius: var(--radius-pill);
+  border: 1.5px solid var(--salink-dark);
+  background: var(--salink-white);
+  color: var(--salink-dark);
+  cursor: pointer;
+  transition: all 0.12s ease;
+  white-space: nowrap;
+}
+
+.pill-btn:hover {
+  background: var(--salink-accent);
+  transform: translateY(-1px);
+}
+
+.pill-btn.is-active {
+  background: var(--salink-dark);
+  color: var(--salink-white);
+  box-shadow: 1.5px 1.5px 0px rgba(0, 0, 0, 0.4);
+}
+
+.pill-btn--reset {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.pill-btn--reset:hover {
+  background: #fecaca !important;
+}

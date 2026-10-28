@@ -16,21 +16,67 @@
 
   <main class="page">
 
+    <!-- Form Pencarian & Tombol Jual -->
     <div class="catalog-actions">
-      <form class="search" method="get" action="">
+      <form class="search" method="get" action="" id="catalogFilterForm">
         <div class="search__field">
           <svg class="search__icon" viewBox="0 0 24 24" aria-hidden="true">
             <circle cx="10" cy="10" r="6" fill="none" stroke="currentColor" stroke-width="2"/>
             <line x1="14.5" y1="14.5" x2="20" y2="20" stroke="currentColor" stroke-width="2"/>
           </svg>
-          <input type="text" name="q" value="{{ request.GET.q }}" placeholder="Cari Barang Prelove UI..." aria-label="Cari barang">
+          <input type="text" name="q" value="{{ query }}" placeholder="Cari Barang Prelove UI..." aria-label="Cari barang">
         </div>
+
+        <!-- Hidden input untuk mempertahankan filter pills saat search dijalankan -->
+        <input type="hidden" name="category" id="filterCategoryInput" value="{{ category }}">
+        <input type="hidden" name="condition" id="filterConditionInput" value="{{ condition }}">
+        <input type="hidden" name="sort" id="filterSortInput" value="{{ sort }}">
+
         <button type="submit" class="search__button">Search</button>
       </form>
 
       <a href="{% url 'saling_beli:item_create' %}" class="btn-salink btn-salink--primary" style="height: 48px; padding-inline: 20px; font-size: 0.95rem;">
         ➕ Jual / Berbagi Gratis
       </a>
+    </div>
+
+    <!-- Filter Pills & Sorting Bar -->
+    <div class="filter-bar" style="margin-bottom: var(--space-4);">
+      <!-- Urutan (A-Z, Z-A, Terbaru, Terlama) -->
+      <div class="filter-row" style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 10px;">
+        <span class="filter-label" style="font-size: 0.8rem; font-weight: bold; text-transform: uppercase; color: var(--salink-dark); min-width: 75px;">Urutkan:</span>
+        <div class="filter-pills" style="display: flex; gap: 6px; flex-wrap: wrap;">
+          <button type="button" class="pill-btn {% if sort == 'newest' %}is-active{% endif %}" onclick="setFilter('sort', 'newest')">⚡ Terbaru</button>
+          <button type="button" class="pill-btn {% if sort == 'oldest' %}is-active{% endif %}" onclick="setFilter('sort', 'oldest')">⏳ Paling Lama</button>
+          <button type="button" class="pill-btn {% if sort == 'name_asc' %}is-active{% endif %}" onclick="setFilter('sort', 'name_asc')">🔤 A - Z</button>
+          <button type="button" class="pill-btn {% if sort == 'name_desc' %}is-active{% endif %}" onclick="setFilter('sort', 'name_desc')">🔤 Z - A</button>
+        </div>
+      </div>
+
+      <!-- Kategori Barang -->
+      <div class="filter-row" style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 10px;">
+        <span class="filter-label" style="font-size: 0.8rem; font-weight: bold; text-transform: uppercase; color: var(--salink-dark); min-width: 75px;">Kategori:</span>
+        <div class="filter-pills" style="display: flex; gap: 6px; flex-wrap: wrap;">
+          <button type="button" class="pill-btn {% if not category %}is-active{% endif %}" onclick="setFilter('category', '')">Semua Kategori</button>
+          {% for cat_val, cat_label in categories %}
+          <button type="button" class="pill-btn {% if category == cat_val %}is-active{% endif %}" onclick="setFilter('category', '{{ cat_val }}')">{{ cat_label }}</button>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Kondisi Fisik Barang -->
+      <div class="filter-row" style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+        <span class="filter-label" style="font-size: 0.8rem; font-weight: bold; text-transform: uppercase; color: var(--salink-dark); min-width: 75px;">Kondisi:</span>
+        <div class="filter-pills" style="display: flex; gap: 6px; flex-wrap: wrap;">
+          <button type="button" class="pill-btn {% if not condition %}is-active{% endif %}" onclick="setFilter('condition', '')">Semua Kondisi</button>
+          {% for cond_val, cond_label in conditions %}
+          <button type="button" class="pill-btn {% if condition == cond_val %}is-active{% endif %}" onclick="setFilter('condition', '{{ cond_val }}')">{{ cond_label }}</button>
+          {% endfor %}
+          {% if query or category or condition or sort != 'newest' %}
+          <a href="{% url 'saling_beli:index' %}" class="pill-btn pill-btn--reset" style="text-decoration: none; color: #b91c1c; background: #fee2e2; border-color: #fca5a5;">✕ Reset Filter</a>
+          {% endif %}
+        </div>
+      </div>
     </div>
 
     <section class="grid" aria-label="Daftar barang">
@@ -95,6 +141,19 @@
 
 
   <script>
+
+    // Helper untuk mengubah parameter filter pills dan men-submit form
+    function setFilter(field, value) {
+      if (field === 'category') {
+        document.getElementById('filterCategoryInput').value = value;
+      } else if (field === 'condition') {
+        document.getElementById('filterConditionInput').value = value;
+      } else if (field === 'sort') {
+        document.getElementById('filterSortInput').value = value;
+      }
+      document.getElementById('catalogFilterForm').submit();
+    }
+
     function getCookie(name) {
       let cookieValue = null;
       if (document.cookie && document.cookie !== '') {

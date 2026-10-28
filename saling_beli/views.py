@@ -178,17 +178,41 @@ def _resolve_conversation(item, user, peer_id):
 def index(request):
 	"""
 	Halaman utama katalog prelove Saling Beli (HTML).
-	Mendukung pencarian (?q=...), session view count, dan pembacaan cookie.
+	Mendukung pencarian (?q=...), filter kategori, kondisi fisik, dan pengurutan (A-Z, Z-A, terbaru, terlama).
 	"""
 	query = request.GET.get('q', '').strip()
+	category = request.GET.get('category', '').strip()
+	condition = request.GET.get('condition', '').strip()
+	sort = request.GET.get('sort', 'newest').strip()
+
 	items = ItemListing.objects.all()
 
+	# Filter search query
 	if query:
 		items = items.filter(
 			Q(title__icontains=query) |
 			Q(description__icontains=query) |
 			Q(pickup_location__icontains=query)
 		)
+
+	# Filter kategori barang
+	if category and category in ItemListing.Category.values:
+		items = items.filter(category=category)
+
+	# Filter kondisi fisik barang
+	if condition and condition in ItemListing.Condition.values:
+		items = items.filter(condition=condition)
+
+	# Sorting: A-Z, Z-A, terbaru, terlama
+	if sort == 'name_asc':
+		items = items.order_by('title')
+	elif sort == 'name_desc':
+		items = items.order_by('-title')
+	elif sort == 'oldest':
+		items = items.order_by('created_at')
+	else:  # 'newest' default
+		sort = 'newest'
+		items = items.order_by('-created_at')
 
 	# Session tracking: hitung berapa kali user membuka katalog saling_beli
 	session_views = request.session.get('saling_beli_views', 0) + 1
@@ -202,13 +226,17 @@ def index(request):
 	recently_viewed_ids = request.session.get('recently_viewed_items', [])
 	recently_viewed_items = []
 	if recently_viewed_ids:
-		# Preserve order of recently viewed
 		id_map = {str(item.id): item for item in ItemListing.objects.filter(id__in=recently_viewed_ids)}
 		recently_viewed_items = [id_map[i_id] for i_id in recently_viewed_ids if i_id in id_map]
 
 	context = {
 		'items': items,
 		'query': query,
+		'category': category,
+		'condition': condition,
+		'sort': sort,
+		'categories': ItemListing.Category.choices,
+		'conditions': ItemListing.Condition.choices,
 		'session_views': session_views,
 		'last_visit_cookie': last_visit_cookie,
 		'last_login_cookie': last_login_cookie,
@@ -217,7 +245,6 @@ def index(request):
 
 	response = render(request, 'saling_beli/saling-beli.html', context)
 
-	# Set cookie kunjungan terakhir untuk tracking user preference
 	now_str = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 	response.set_cookie('saling_beli_last_visit', now_str, max_age=60 * 60 * 24 * 7)
 
