@@ -3,6 +3,7 @@ from .models import ItemListing
 
 
 class ItemListingForm(forms.ModelForm):
+    """Form untuk input dan validasi barang prelove atau gratis dari penjual/pemberi."""
     PAYOUT_METHOD_CHOICES = [
         ('BCA', 'Bank BCA'),
         ('Mandiri', 'Bank Mandiri'),
@@ -58,9 +59,10 @@ class ItemListingForm(forms.ModelForm):
             }),
             'price': forms.NumberInput(attrs={
                 'class': 'form-input',
-                'placeholder': '0 jika gratis',
-                'min': '0',
                 'id': 'id_price',
+                'min': '0',
+                'step': '1000',
+                'placeholder': 'Contoh: 50000',
             }),
             'description': forms.Textarea(attrs={
                 'class': 'form-textarea',
@@ -70,19 +72,16 @@ class ItemListingForm(forms.ModelForm):
             }),
             'pickup_location': forms.TextInput(attrs={
                 'class': 'form-input',
-                'id': 'id_pickup_location',
-                'placeholder': 'Contoh: Perpustakaan Pusat UI / Stasiun Pocin / Kutek',
+                'placeholder': 'Contoh: Perpusat UI / Kantin Dallas / Balairung',
                 'required': True,
             }),
             'payout_account_name': forms.TextInput(attrs={
                 'class': 'form-input',
-                'id': 'id_payout_account_name',
-                'placeholder': 'Nama sesuai rekening / e-wallet (Contoh: Budi Santoso)',
+                'placeholder': 'Nama sesuai buku tabungan atau akun e-wallet',
             }),
             'payout_account_number': forms.TextInput(attrs={
                 'class': 'form-input',
-                'id': 'id_payout_account_number',
-                'placeholder': 'Nomor rekening atau nomor HP e-wallet (Contoh: 08123456789 / 5210123456)',
+                'placeholder': 'Nomor rekening atau nomor handphone e-wallet',
             }),
             'image': forms.FileInput(attrs={
                 'class': 'form-file-input',
@@ -90,7 +89,7 @@ class ItemListingForm(forms.ModelForm):
             }),
             'image_url': forms.URLInput(attrs={
                 'class': 'form-input',
-                'placeholder': 'https://images.unsplash.com/... (opsional jika tidak upload foto)',
+                'placeholder': 'https://example.com/foto-barang.jpg (Opsional jika upload foto)',
             }),
         }
         labels = {
@@ -101,10 +100,25 @@ class ItemListingForm(forms.ModelForm):
             'price': 'Harga (Rp)',
             'description': 'Deskripsi Lengkap',
             'pickup_location': 'Titik Temu COD Kampus UI',
-            'payout_method': 'Bank / E-Wallet Penerima Dana Penjualan',
-            'payout_account_name': 'Atas Nama Rekening / Akun E-Wallet Penjual',
+            'payout_account_name': 'Nama Pemilik Rekening / Akun E-Wallet',
             'payout_account_number': 'Nomor Rekening / No. HP E-Wallet',
-            'image': 'Upload Foto dari Galeri/Perangkat (Disarankan)',
-            'image_url': 'Atau Masukkan URL Foto Eksternal',
+            'image': 'Upload Foto Barang (Dari Perangkat)',
+            'image_url': 'Atau URL Foto Eksternal (Opsional)',
         }
 
+    def clean(self):
+        """Validasi logika: jika gratis maka harga = 0, jika berbayar wajib isi rekening pencairan."""
+        cleaned_data = super().clean()
+        is_free = cleaned_data.get('is_free')
+        price = cleaned_data.get('price')
+        payout_number = cleaned_data.get('payout_account_number')
+
+        if is_free:
+            cleaned_data['price'] = 0
+        else:
+            if price is None or price <= 0:
+                self.add_error('price', 'Untuk barang berbayar, harga harus lebih dari 0.')
+            if not payout_number:
+                self.add_error('payout_account_number', 'Nomor rekening/e-wallet wajib diisi untuk pencairan dana penjualan.')
+
+        return cleaned_data

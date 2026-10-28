@@ -1,8 +1,10 @@
 import uuid
-from django.db import models
 from django.contrib.auth.models import User
+from django.db import models
+
 
 class ItemListing(models.Model):
+    """Model data barang prelove atau gratis (hibah) yang ditawarkan pengguna."""
     class Category(models.TextChoices):
         FURNITURE = 'FURNITURE', 'Furnitur & Perabot Kos'
         ELECTRONICS = 'ELECTRONICS', 'Elektronik & Gadget'
@@ -55,6 +57,7 @@ class ItemListing(models.Model):
 
 
 class PriceOffer(models.Model):
+    """Model penawaran nego harga dari calon pembeli ke pemilik barang."""
     class OfferStatus(models.TextChoices):
         PENDING = 'PENDING', 'Menunggu Respon'
         ACCEPTED = 'ACCEPTED', 'Diterima'
@@ -77,6 +80,7 @@ class PriceOffer(models.Model):
 
 
 class TransactionOrder(models.Model):
+    """Model tracker transaksi dan pembayaran QRIS escrow bertahap."""
     class Stage(models.TextChoices):
         MENUNGGU_TRANSFER = 'MENUNGGU_TRANSFER', 'Menunggu Transfer'
         BUKTI_DIUNGGAH = 'BUKTI_DIUNGGAH', 'Bukti Terkirim / Verifikasi'
@@ -111,10 +115,7 @@ class TransactionOrder(models.Model):
 
 
 class Conversation(models.Model):
-    """
-    Satu ruang obrolan antara penjual dan satu pembeli untuk satu barang.
-    Memisahkan thread agar pesan dari beberapa pembeli tidak tercampur.
-    """
+    """Ruang obrolan per item antara penjual dan pembeli agar thread tidak tercampur."""
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     item = models.ForeignKey(ItemListing, on_delete=models.CASCADE, related_name='conversations')
     buyer = models.ForeignKey(User, on_delete=models.CASCADE, related_name='buyer_conversations')
@@ -136,9 +137,7 @@ class Conversation(models.Model):
 
 
 class ItemChatMessage(models.Model):
-    """
-    Pesan obrolan/chat langsung antara pembeli dan penjual terkait barang tertentu.
-    """
+    """Pesan chat individual antara calon pembeli dan penjual."""
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     conversation = models.ForeignKey(
         Conversation,
@@ -163,9 +162,7 @@ class ItemChatMessage(models.Model):
 
 
 class UserNotification(models.Model):
-    """
-    Notifikasi realtime/in-app ketika ada update status tracker transaksi atau chat baru.
-    """
+    """Model notifikasi in-app realtime untuk chat baru, penawaran nego, dan update order."""
     class NotifType(models.TextChoices):
         CHAT = 'CHAT', 'Pesan Baru'
         TRACKER_UPDATE = 'TRACKER_UPDATE', 'Pembaruan Status Tracker'

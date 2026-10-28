@@ -413,6 +413,39 @@ class PageRenderTests(TestCase):
 		self.assertEqual(response.status_code, 200)
 		self.assertContains(response, 'Chat Penjual')
 
+	def test_transaction_is_hidden_from_anonymous_and_unrelated_users(self):
+		order = TransactionOrder.objects.create(
+			item=self.item,
+			buyer=self.buyer,
+			seller=self.seller,
+			agreed_price=45000,
+		)
+
+		anonymous_response = self.client.get(reverse('saling_beli:item_detail', args=[self.item.id]))
+		self.client.force_login(User.objects.create_user(username='pengunjung-lain'))
+		unrelated_response = self.client.get(reverse('saling_beli:item_detail', args=[self.item.id]))
+
+		for response in (anonymous_response, unrelated_response):
+			self.assertEqual(response.status_code, 200)
+			self.assertNotContains(response, str(order.id)[:8])
+			self.assertNotContains(response, 'Tracker Transaksi COD')
+
+		self.client.force_login(self.buyer)
+		buyer_response = self.client.get(reverse('saling_beli:item_detail', args=[self.item.id]))
+		self.assertContains(buyer_response, str(order.id)[:8])
+
+	def test_reserved_item_hides_buy_and_nego_actions(self):
+		self.item.status = ItemListing.Status.RESERVED
+		self.item.save(update_fields=['status'])
+		self.client.force_login(self.buyer)
+
+		response = self.client.get(reverse('saling_beli:item_detail', args=[self.item.id]))
+
+		self.assertEqual(response.status_code, 200)
+		self.assertNotContains(response, 'Beli Sekarang')
+		self.assertNotContains(response, 'Ajukan Nego')
+		self.assertContains(response, 'Barang sedang diproses')
+
 	def test_detail_page_renders_seller_peer_selector(self):
 		self.client.force_login(self.seller)
 		response = self.client.get(reverse('saling_beli:item_detail', args=[self.item.id]))

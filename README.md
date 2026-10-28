@@ -1,47 +1,104 @@
-# SaLink — Student Sustainability App
+# SaLink
 
-## Deskripsi Aplikasi
-SaLink adalah platform web berbasis Django yang mempertemukan mahasiswa untuk saling berbagi dan memanfaatkan kembali sumber daya lewat lima layanan: Saling Beli (marketplace barang bekas), Saling Pinjam (peminjaman barang), Saling Bagi (berbagi makanan berlebih), Saling Tebeng (ride-sharing), dan User Page (profil, reputasi, serta pencapaian sustainability pengguna).
+SaLink adalah platform Django untuk komunitas universitas yang ingin memanfaatkan kembali sumber daya secara lokal melalui jual-beli barang bekas, peminjaman, berbagi makanan berlebih, berbagi tebengan, dan halaman akun bersama.
 
-Aplikasi ini menjawab tekanan hidup sehari-hari yang khas dialami mahasiswa: barang kos yang menumpuk tanpa saluran jual yang mudah, ketergantungan pada transportasi kampus yang tidak efisien, kebutuhan membeli barang sekali pakai yang mubazir, ongkir mahal untuk transaksi barang bekas sesama warga kampus, serta makanan sisa acara kepanitiaan/seminar yang berpotensi terbuang. Di sisi lain, mahasiswa juga menghadapi kekhawatiran keamanan, baik saat bertransaksi dengan orang asing maupun saat menebeng dengan yang belum dikenal.
+Produk ini dirancang untuk alur kampus yang sederhana: pengguna dapat menjelajah tanpa login, login hanya ketika melakukan aksi yang mengubah data, dan bertemu di titik kampus yang mudah dikenali seperti Perpusat UI dan Stasiun UI.
 
-SaLink menjawab pain tersebut lewat interaksi hyper-local antar mahasiswa terverifikasi SSO UI/KTM: transaksi COD tanpa ongkir di titik-titik populer kampus (Perpusat, Stasiun UI, Kantin Fakultas), akses tanpa perlu membeli lewat opsi pinjam, dan sistem reputasi pengguna yang mengurangi risiko penipuan maupun kecanggungan interaksi.
+## Area Produk
 
-**Manfaat bagi masyarakat (khususnya komunitas mahasiswa):**
-- **Efisiensi biaya hidup** — harga barang bekas & makanan jauh di bawah pasar, akses pinjam tanpa beli, tebengan patungan
-- **Kemudahan hyper-local** — solusi satu pintu tanpa perlu bergabung ke banyak grup chat terpisah, transaksi tanpa ongkir
-- **Dampak lingkungan terukur** — reduksi food waste, barang tak terpakai, dan emisi karbon yang bisa dilihat lewat metrik di profil pengguna
-- **Koneksi sosial kampus** — memperluas relasi lintas jurusan/angkatan lewat budaya saling bantu
+| Area | Tujuan | Alur utama |
+| --- | --- | --- |
+| Saling Beli | Marketplace barang bekas dan hibah gratis | Menjelajah, melihat detail, menawar, memesan, dan mengelola listing |
+| Saling Pinjam | Akses sementara terhadap barang yang dibutuhkan | Menjelajah, mengajukan, menyetujui, dan melacak pengembalian |
+| Saling Bagi | Redistribusi makanan berlebih | Melihat makanan tersedia dan mengambil porsi |
+| Saling Tebeng | Berbagi perjalanan di area kampus | Mencari rute, menawarkan tebengan, bergabung, dan mengelola booking |
+| User Page | Identitas dan aksi akun bersama | Mendaftar, login, mengubah profil, dan kembali ke modul asal |
 
-## Anggota Kelompok
+## Screenshot dan GIF
+
+Screenshot dan GIF untuk rilis diletakkan di [`docs/media`](docs/media/README.md). Gunakan data seed yang sudah dianonimkan dan ukuran desktop/mobile yang tercantum di sana. Jangan pernah memasukkan kredensial, cookie sesi, atau percakapan pribadi ke dalam dokumentasi.
+
+Arah visual produk juga tersedia di [file Figma SaLink](https://www.figma.com/design/mLX7a6qFC62AiaaPumui8N/SaLink).
+
+## Menjalankan Secara Lokal
+
+Persyaratan: Python 3.13+, Git, dan virtual environment.
+
+PowerShell:
+
+```powershell
+py -3.13 -m venv env
+.\env\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+pip install -r requirements.txt
+Copy-Item .env.example .env
+python manage.py migrate
+python manage.py runserver
+```
+
+Buka <http://127.0.0.1:8000/>.
+
+Untuk environment yang sudah tersedia:
+
+```powershell
+.\env\Scripts\Activate.ps1
+python manage.py check
+python manage.py test
+```
+
+## Konfigurasi Environment
+
+`SaLink.settings` tetap menjadi konfigurasi default yang kompatibel untuk development. Production menggunakan `SaLink.production_settings`:
+
+```powershell
+$env:DJANGO_SETTINGS_MODULE = "SaLink.production_settings"
+$env:DJANGO_SECRET_KEY = "gunakan-secret-random-yang-panjang"
+$env:DJANGO_ALLOWED_HOSTS = "domain-anda.example"
+$env:DJANGO_CSRF_TRUSTED_ORIGINS = "https://domain-anda.example"
+python manage.py check --deploy
+```
+
+Jangan commit `.env`, secret production, database, media upload, atau static files hasil generate. Lihat [`.env.example`](.env.example).
+
+## Arsitektur
+
+- Django 5.2 dengan template server-rendered dan namespace URL per aplikasi.
+- SQLite menjadi database default lokal; gunakan database terkelola untuk production.
+- WhiteNoise melayani static assets pada deployment sederhana.
+- Development menggunakan cache in-process. Production menggunakan file-based cache Django secara default dan dapat dikonfigurasi melalui `DJANGO_CACHE_DIR`.
+- Homepage publik dan daftar Saling Bagi memakai server-side cache berumur pendek. Aksi mutasi makanan menghapus cache publik terkait agar status ketersediaan tidak terlalu lama basi.
+- Fitur peta eksternal bersifat opsional. Halaman publik tetap dapat digunakan ketika tile map atau API pihak ketiga sedang tidak tersedia; informasi lokasi penting tetap disimpan di data aplikasi.
+
+## Standar Aksesibilitas dan Interaksi
+
+UI bersama menyediakan skip navigation untuk keyboard, focus state yang terlihat, layout desktop/mobile responsif, dukungan `prefers-reduced-motion`, heading dan label semantik, serta autentikasi hanya pada aksi yang mengubah data.
+
+Saat menambahkan komponen baru, pertahankan akses keyboard, kontras focus yang terbaca, label yang bermakna, dan fallback tanpa animasi.
+
+## CI/CD
+
+GitHub Actions berjalan pada push dan pull request melalui [`.github/workflows/ci.yml`](.github/workflows/ci.yml): memasang dependency, menjalankan Django check, mendeteksi migration drift pada modul yang dikelola, dan menjalankan test suite. Deployment tetap terpisah dan sebaiknya menjalankan migration, `collectstatic`, `check --deploy`, serta smoke test dengan environment production sebelum traffic dialihkan.
+
+## Disclosure AI
+
+AI digunakan sebagai asisten untuk eksplorasi, penyusunan kode, pembuatan test, dan dokumentasi. AI tidak diperlakukan sebagai sumber kebenaran atau pengganti maintainer.
+
+Review manual tetap wajib karena AI dapat salah memahami batas kepemilikan modul, menghasilkan routing yang menunjuk template atau migration yang tidak ada, membocorkan data pada screenshot/log, menyebabkan data cache basi, atau melebih-lebihkan kualitas aksesibilitas dan keamanan production. Keamanan production juga bergantung pada infrastruktur, secret, konfigurasi database, HTTPS, backup, dan monitoring di luar sesi coding.
+
+Keputusan yang harus dipelihara manusia meliputi batas modul, kebijakan autentikasi, TTL dan titik invalidation cache, default environment, perintah CI, dan dokumentasi akhir. Setiap perubahan berbantuan AI tetap harus melewati review, system check, test, dan smoke test browser manual.
+
+## Tim
+
 | Nama | NPM |
-|---|---|
+| --- | --- |
 | KEIZORA JELITA WOHINGATI | 2506597510 |
 | HADYASALHA ALINA ANINDYA | 2506620406 |
 | MUHAMMAD HASBI ASSIDDIQ | 2506624360 |
 | BALQIS RAIHANA | 2506625981 |
 | BAGAS MAHENDRA SRIKASTA | 2506656551 |
 
-## Daftar Modul & Pembagian Kerja
-| Modul | Deskripsi | Penanggung Jawab |
-|---|---|---|
-| Saling Beli (Marketplace Secondhand) | CRUD listing barang bekas mahasiswa (jual/kasih) — furnitur, elektronik, dsb — dengan kategori, kondisi barang, dan filter harga, memungkinkan barang kos yang menumpuk tetap punya nilai guna | Balqis |
-| Saling Pinjam | CRUD request pinjam-meminjam barang antar mahasiswa (jas, koper, alat elektronik) beserta status dan jadwal pengembalian, sehingga tidak perlu membeli barang yang hanya dipakai 1-2 kali | Bagas |
-| Saling Bagi (Makanan) | CRUD listing makanan berlebih dari acara kepanitiaan/seminar yang bisa diklaim mahasiswa lain sebelum terbuang, dengan filter lokasi dan waktu | Hasbi |
-| Saling Tebeng | CRUD posting & request tebengan antar mahasiswa berdasarkan rute dan jadwal, terintegrasi OpenStreetMap untuk menekan ketergantungan pada antrean Bikun dan ojol mahal | Hadya |
-| User Page | CRUD profil pengguna (bio, fakultas, foto), rating/review antar pengguna pasca-transaksi, dan badge/achievement sustainability (estimasi reduksi emisi CO2 & food waste) sebagai dasar kepercayaan lintas modul | Keizora |
+## Tautan
 
-## Sumber Public API
-**OpenStreetMap (Overpass API)** — digunakan untuk menampilkan lokasi terkait (misalnya titik pengambilan barang/makanan, lokasi drop-point) berdasarkan data peta nyata.
-
-Dokumentasi: https://wiki.openstreetmap.org/wiki/Overpass_API
-
-## Jenis/Peran Pengguna
-1. **Pemberi/Penjual** — memposting barang untuk dijual/dikasih (Saling Beli), menawarkan barang untuk dipinjamkan (Saling Pinjam), membagikan makanan berlebih (Saling Bagi), atau membuka tebengan (Saling Tebeng).
-2. **Penerima/Pencari** — mencari dan membeli/mengambil barang bekas (Saling Beli), meminjam barang yang dibutuhkan sementara (Saling Pinjam), mengklaim makanan berlebih (Saling Bagi), atau memesan tebengan yang tersedia (Saling Tebeng)
-
-## Tautan Deployment
-🔗 *https://pws.cs.ui.ac.id/muhammad.hasbi52/salink*
-
-## Tautan Desain Figma
-🔗 *https://www.figma.com/design/mLX7a6qFC62AiaaPumui8N/SaLink?node-id=0-1&t=JJDhM32RmaUpT8tI-1*
+- Deployment: <https://pws.cs.ui.ac.id/muhammad.hasbi52/salink>
+- Design: <https://www.figma.com/design/mLX7a6qFC62AiaaPumui8N/SaLink>
+- OpenStreetMap Overpass API: <https://wiki.openstreetmap.org/wiki/Overpass_API>

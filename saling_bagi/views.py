@@ -1,22 +1,27 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.core.cache import cache
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
 from .models import Makanan
 from .forms import MakananForm # Import form yang baru kita buat
+from SaLink.cache_keys import SALING_BAGI_INDEX, invalidate_public_pages
 
 def index(request):
     """
     Halaman utama Bagi: daftar makanan yang baru diupload. (Map dihapus)
     """
-    makanan_list = (
-        Makanan.objects
-        .filter(is_available=True, batas_layak_konsumsi__gt=timezone.now())
-        .select_related('pemberi')
-        .order_by('-id')
-    )
+    makanan_list = cache.get(SALING_BAGI_INDEX)
+    if makanan_list is None:
+        makanan_list = list(
+            Makanan.objects
+            .filter(is_available=True, batas_layak_konsumsi__gt=timezone.now())
+            .select_related('pemberi')
+            .order_by('-id')
+        )
+        cache.set(SALING_BAGI_INDEX, makanan_list, timeout=30)
 
     # Context sekarang lebih bersih karena tidak bawa markers map
     context = {
@@ -40,6 +45,7 @@ def ambil_makanan(request, id):
     else:
         makanan.is_available = False
         makanan.save()
+        invalidate_public_pages(cache)
         messages.success(
             request,
             f'Makanan "{makanan.nama_makanan}" berhasil diambil! Temui pemberi di: {makanan.lokasi_pengambilan}.'
@@ -60,6 +66,7 @@ def tambah_makanan(request):
             makanan_baru = form.save(commit=False)
             makanan_baru.pemberi = request.user
             makanan_baru.save()
+            invalidate_public_pages(cache)
             messages.success(request, 'Makanan berhasil dibagikan ke mahasiswa lain!')
             return redirect('saling_bagi:index')
     else:

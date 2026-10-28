@@ -10,9 +10,9 @@
   <link href="https://fonts.googleapis.com/css2?family=Anton&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="{% static 'saling_beli/saling-beli.css' %}?v=20261027_02">
 </head>
-<body>
+<body data-user-auth="{{ user.is_authenticated|yesno:'true,false' }}">
 
-  {% include "_navbar.html" with active_nav="beli" %}
+  {% include "_navbar.html" with active_nav="beli" show_notifications=True %}
 
   <main class="page">
 
@@ -92,6 +92,193 @@
     {% endif %}
 
   </main>
+
+
+  <script>
+    function getCookie(name) {
+      let cookieValue = null;
+      if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+          const cookie = cookies[i].trim();
+          if (cookie.substring(0, name.length + 1) === (name + '=')) {
+            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+            break;
+          }
+        }
+      }
+      return cookieValue;
+    }
+    const csrftoken = getCookie('csrftoken');
+
+    function escapeHtml(value) {
+      return String(value === null || value === undefined ? '' : value)
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#39;');
+    }
+
+    function toggleNotifDropdown() {
+      const dd = document.getElementById('notif-dropdown');
+      if (!dd) return;
+      dd.style.display = (dd.style.display === 'none' || dd.style.display === '') ? 'block' : 'none';
+      if (dd.style.display === 'block') {
+        fetchNotifications();
+      }
+    }
+
+    let seenNotifIds = new Set();
+    let isFirstNotifLoad = true;
+    let notifCursor = null;
+    let notifLoopTimer = null;
+
+    function updateNotifBadge(count) {
+      const badge = document.getElementById('notif-badge');
+      if (!badge) return;
+      if (count > 0) {
+        badge.style.display = 'inline-block';
+        badge.textContent = count;
+      } else {
+        badge.style.display = 'none';
+      }
+    }
+
+    function showSalinkToast(title, message, link, type) {
+      let container = document.getElementById('salink-toast-container');
+      if (!container) {
+        container = document.createElement('div');
+        container.id = 'salink-toast-container';
+        container.className = 'salink-toast-container';
+        document.body.appendChild(container);
+      }
+
+      const toast = document.createElement('div');
+      toast.className = 'salink-toast';
+
+      let icon = '🔔';
+      if (type === 'CHAT') icon = '💬';
+      else if (type === 'OFFER') icon = '🤝';
+      else if (type === 'TRACKER_UPDATE') icon = '📦';
+
+      toast.innerHTML = `
+        <div class="salink-toast__icon">${escapeHtml(icon)}</div>
+        <div class="salink-toast__body">
+          <h5 class="salink-toast__title">${escapeHtml(title)}</h5>
+          <p class="salink-toast__desc">${escapeHtml(message)}</p>
+        </div>
+        <button class="salink-toast__close" onclick="this.parentElement.remove()">&times;</button>
+      `;
+
+      if (link && link !== '#' && String(link).startsWith('/')) {
+        toast.style.cursor = 'pointer';
+        toast.onclick = function(e) {
+          if (e.target.classList.contains('salink-toast__close')) return;
+          window.location.href = link;
+        };
+      }
+
+      container.appendChild(toast);
+
+      setTimeout(() => {
+        toast.classList.add('is-hiding');
+        setTimeout(() => toast.remove(), 250);
+      }, 5000);
+    }
+
+    function renderNotificationList(notifications) {
+      const list = document.getElementById('notif-list');
+      if (!list) return;
+      if (notifications && notifications.length > 0) {
+        list.innerHTML = notifications.map(n => `
+          <div style="padding: 6px; border-radius: 4px; background: ${n.is_read ? '#f9fafb' : '#eff6ff'}; border: 1px solid ${n.is_read ? '#e5e7eb' : '#bfdbfe'};">
+            <a href="${escapeHtml(n.link || '#')}" style="text-decoration: none; color: inherit; display: block;">
+              <strong style="color: #111;">${escapeHtml(n.title)}</strong>
+              <p style="margin: 2px 0 0 0; color: #4b5563;">${escapeHtml(n.message)}</p>
+              <small style="color: #9ca3af; font-size: 0.65rem;">${escapeHtml(n.created_at)}</small>
+            </a>
+          </div>
+        `).join('');
+      } else {
+        list.innerHTML = '<p style="text-align: center; color: #777; margin: 8px 0;">Tidak ada notifikasi baru.</p>';
+      }
+    }
+
+    function fetchNotifications() {
+      return fetch('{% url "saling_beli:user-notifications" %}')
+        .then(res => res.json())
+        .then(data => {
+          updateNotifBadge(data.unread_count);
+          if (data.cursor) notifCursor = data.cursor;
+          if (data.notifications && data.notifications.length) {
+            data.notifications.forEach(n => seenNotifIds.add(n.id));
+          }
+          renderNotificationList(data.notifications);
+        })
+        .catch(() => {});
+    }
+
+    async function longPollNotifications() {
+      try {
+        const url = new URL('{% url "saling_beli:notification-stream" %}', window.location.origin);
+        if (notifCursor) url.searchParams.set('after', notifCursor);
+
+        const res = await fetch(url.toString(), { headers: { 'Accept': 'application/json' } });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const data = await res.json();
+
+        if (data.cursor) notifCursor = data.cursor;
+        updateNotifBadge(data.unread_count);
+
+        if (data.notifications && data.notifications.length) {
+          let hasNew = false;
+          data.notifications.forEach(n => {
+            if (!seenNotifIds.has(n.id)) {
+              seenNotifIds.add(n.id);
+              hasNew = true;
+              if (!isFirstNotifLoad && !n.is_read) {
+                showSalinkToast(n.title, n.message, n.link, n.type);
+              }
+            }
+          });
+          if (hasNew) fetchNotifications();
+        }
+        isFirstNotifLoad = false;
+      } catch (err) {
+        await new Promise(resolve => setTimeout(resolve, 3000));
+      }
+      notifLoopTimer = setTimeout(longPollNotifications, 300);
+    }
+
+    function markAllNotifsRead() {
+      fetch('{% url "saling_beli:mark-notifications-read" %}', {
+        method: 'POST',
+        headers: {
+          'X-CSRFToken': csrftoken
+        }
+      })
+      .then(res => res.json())
+      .then(() => {
+        fetchNotifications();
+      });
+    }
+
+    // Inisialisasi notifikasi realtime jika user sedang login (cek dataset body)
+    const isUserAuth = document.body.dataset.userAuth === 'true';
+    if (isUserAuth) {
+      (async function initNotifications() {
+        try {
+          await fetchNotifications();
+        } catch (err) {
+          console.warn('Initial notifications fetch failed:', err);
+        } finally {
+          isFirstNotifLoad = false;
+          longPollNotifications();
+        }
+      })();
+    }
+  </script>
 
   {% include "_footer.html" %}
 

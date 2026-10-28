@@ -1,4 +1,4 @@
-{% load static %}
+﻿{% load static %}
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -10,7 +10,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Anton&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="{% static 'saling_beli/saling-beli.css' %}?v=20261027_02">
 </head>
-<body>
+<body data-user-auth="{{ user.is_authenticated|yesno:'true,false' }}">
 
 {% include "_navbar.html" with active_nav="beli" show_notifications=True %}
 
@@ -128,13 +128,19 @@
 
         <div class="actions-bar">
           <div class="btn-group">
+            {% if can_purchase %}
             <button onclick="openPaymentModal()" class="btn" style="flex: 2; padding: 10px 16px; font-size: 0.95rem; cursor: pointer; background: #000; color: #fff;">
               {% if item.is_free %}🎁 Ambil Barang (Gratis){% else %}💳 Beli Sekarang (QRIS){% endif %}
             </button>
-            {% if not item.is_free %}
-            <button onclick="openNegoModal()" class="btn" style="flex: 1.5; padding: 10px 16px; font-size: 0.95rem; cursor: pointer; background: #fafafa;">
+            {% if can_negotiate %}
+            <button onclick="openNegoModal()" class="btn" style="flex: 1.5; padding: 10px 16px; font-size: 0.95rem; cursor: pointer; background: #fafafa; color: #000">
               🤝 Ajukan Nego
             </button>
+            {% endif %}
+            {% elif item.status == 'RESERVED' %}
+            <span class="btn" style="flex: 2; cursor: default; background: var(--salink-muted);">Barang sedang diproses</span>
+            {% elif item.status == 'SOLD' %}
+            <span class="btn" style="flex: 2; cursor: default; background: var(--salink-dark);">Transaksi selesai</span>
             {% endif %}
             <button onclick="openChatModal()" class="btn" style="flex: 1; padding: 10px 16px; font-size: 0.85rem; cursor: pointer;">
               💬 Chat Penjual
@@ -235,6 +241,7 @@
   </main>
 
   <!-- Modal Konfirmasi Transfer Garansi QRIS SaLink -->
+  {% if can_purchase %}
   <div id="paymentModal" class="modal-overlay" onclick="closeModalOnBg(event)">
     <div class="modal-content" style="border: 2px solid #000; border-radius: 16px; box-shadow: 6px 6px 0px #000;">
       <h2 style="margin: 0; font-size: 1.25rem; text-transform: uppercase;">
@@ -269,8 +276,10 @@
       <p id="order-message" style="font-family: sans-serif; font-size: 0.8rem; color: green; margin: 0;"></p>
     </div>
   </div>
+  {% endif %}
 
   <!-- Modal Nego Harga -->
+  {% if can_negotiate %}
   <div id="negoModal" class="modal-overlay" onclick="closeNegoModalOnBg(event)" style="display: none;">
     <div class="modal-content">
       <h2 style="margin: 0; font-size: 1.25rem; text-transform: uppercase;">🤝 Ajukan Nego Harga</h2>
@@ -299,6 +308,7 @@
       <p id="nego-message" style="font-family: sans-serif; font-size: 0.8rem; margin: 8px 0 0;"></p>
     </div>
   </div>
+  {% endif %}
 
   <!-- Modal Chat Interaktif -->
   <div id="chatModal" class="modal-overlay" onclick="closeChatModalOnBg(event)" style="display: none;">
@@ -697,12 +707,20 @@
       });
     }
 
-    {% if user.is_authenticated %}
-    fetchNotifications().finally(() => {
-      isFirstNotifLoad = false;
-      longPollNotifications();
-    });
-    {% endif %}
+    // Inisialisasi notifikasi realtime jika user sedang login (cek dataset body)
+    const isUserAuth = document.body.dataset.userAuth === 'true';
+    if (isUserAuth) {
+      (async function initNotifications() {
+        try {
+          await fetchNotifications();
+        } catch (err) {
+          console.warn('Initial notifications fetch failed:', err);
+        } finally {
+          isFirstNotifLoad = false;
+          longPollNotifications();
+        }
+      })();
+    }
 
     // Chat Functions
     let chatPollInterval = null;

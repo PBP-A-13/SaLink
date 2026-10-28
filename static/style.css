@@ -48,6 +48,28 @@ a {
   text-decoration: none;
 }
 
+.skip-link {
+  position: fixed;
+  top: 8px;
+  left: 8px;
+  z-index: 100;
+  padding: 10px 14px;
+  border-radius: var(--radius-pill);
+  background: var(--salink-dark);
+  color: var(--salink-white);
+  transform: translateY(-160%);
+  transition: transform 160ms ease;
+}
+
+.skip-link:focus {
+  transform: translateY(0);
+}
+
+:focus-visible {
+  outline: 3px solid var(--salink-primary);
+  outline-offset: 3px;
+}
+
 /* ==========================================================================
    HERO SECTION & TULISAN GEDE SALINK (ORIGINAL PROPORTIONS)
    ========================================================================== */
@@ -413,5 +435,16 @@ a {
     flex-direction: column;
     gap: 8px;
     text-align: center;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }

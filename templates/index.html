@@ -12,6 +12,8 @@
 </head>
 <body>
 
+  <a class="skip-link" href="#main-content">Lewati ke konten utama</a>
+
   <div class="hero-wrapper">
     <!-- ==================== FLOATING NAVBAR ==================== -->
     {% include "_navbar.html" with active_nav="home" %}
@@ -23,7 +25,7 @@
   </div>
 
   <!-- ==================== MAIN CONTENT SHEET (MENIMPA SAAT SCROLL) ==================== -->
-  <main class="sheet">
+  <main class="sheet" id="main-content" tabindex="-1">
     <div class="sheet-container">
 
       <!-- 4 Core Modules Showcase -->
@@ -160,4 +162,4 @@
   {% include "_footer.html" %}
 
 </body>
-</html>
+</html>

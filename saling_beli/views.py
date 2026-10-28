@@ -266,15 +266,32 @@ def item_detail(request, listing_id):
 	recently_viewed.insert(0, item_id_str)
 	request.session['recently_viewed_items'] = recently_viewed[:5]
 
-	# Ambil daftar penawaran (nego) untuk barang ini
-	offers = item.offers.select_related('buyer').all()
-	# Ambil tracker transaksi pemesanan terkait barang ini
-	orders = item.orders.select_related('buyer', 'seller').all()
+	# Data transaksi bersifat privat: hanya penjual atau pembeli terkait yang boleh melihatnya.
+	if request.user.is_authenticated:
+		orders = item.orders.filter(
+			Q(seller=request.user) | Q(buyer=request.user)
+		).select_related('buyer', 'seller').all()
+		if request.user == item.user:
+			offers = item.offers.select_related('buyer').all()
+		else:
+			offers = item.offers.filter(buyer=request.user).select_related('buyer')
+	else:
+		orders = TransactionOrder.objects.none()
+		offers = PriceOffer.objects.none()
+
+	can_purchase = (
+		request.user.is_authenticated
+		and request.user != item.user
+		and item.status == ItemListing.Status.AVAILABLE
+	)
+	can_negotiate = can_purchase and not item.is_free and item.price > 0
 
 	context = {
 		'item': item,
 		'offers': offers,
 		'orders': orders,
+		'can_purchase': can_purchase,
+		'can_negotiate': can_negotiate,
 	}
 	return render(request, 'saling_beli/saling-beli-detail.html', context)
 
