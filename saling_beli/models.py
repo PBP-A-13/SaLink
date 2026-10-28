@@ -98,9 +98,41 @@ class TransactionOrder(models.Model):
 
     class Meta:
         ordering = ['-created_at']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['item', 'buyer'],
+                condition=~models.Q(stage__in=['BATAL', 'SELESAI']),
+                name='uniq_active_order_per_item_buyer',
+            )
+        ]
 
     def __str__(self):
         return f"Order #{str(self.id)[:8]} - {self.item.title} ({self.get_stage_display()})"
+
+
+class Conversation(models.Model):
+    """
+    Satu ruang obrolan antara penjual dan satu pembeli untuk satu barang.
+    Memisahkan thread agar pesan dari beberapa pembeli tidak tercampur.
+    """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    item = models.ForeignKey(ItemListing, on_delete=models.CASCADE, related_name='conversations')
+    buyer = models.ForeignKey(User, on_delete=models.CASCADE, related_name='buyer_conversations')
+    seller = models.ForeignKey(User, on_delete=models.CASCADE, related_name='seller_conversations')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-updated_at']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['item', 'buyer'],
+                name='uniq_conversation_item_buyer',
+            )
+        ]
+
+    def __str__(self):
+        return f"Chat {self.item.title} - @{self.buyer.username} dengan @{self.seller.username}"
 
 
 class ItemChatMessage(models.Model):
@@ -108,6 +140,14 @@ class ItemChatMessage(models.Model):
     Pesan obrolan/chat langsung antara pembeli dan penjual terkait barang tertentu.
     """
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    conversation = models.ForeignKey(
+        Conversation,
+        on_delete=models.CASCADE,
+        related_name='messages',
+        null=True,
+        blank=True,
+        help_text="Thread percakapan; null hanya untuk data lama sebelum migrasi.",
+    )
     item = models.ForeignKey(ItemListing, on_delete=models.CASCADE, related_name='chat_messages')
     sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sent_chats')
     recipient = models.ForeignKey(User, on_delete=models.CASCADE, related_name='received_chats')

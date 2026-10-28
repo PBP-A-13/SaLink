@@ -30,6 +30,7 @@ urlpatterns = [
     # Chat & Notifications Endpoints
     path('detail/<uuid:listing_id>/chats/', views.item_chats, name='item-chats'),
     path('api/notifications/', views.user_notifications, name='user-notifications'),
+    path('api/notifications/stream/', views.notification_stream, name='notification-stream'),
     path('api/notifications/mark-read/', views.mark_notifications_read, name='mark-notifications-read'),
 ]
 

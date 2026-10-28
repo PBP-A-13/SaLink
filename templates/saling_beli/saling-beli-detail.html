@@ -310,6 +310,13 @@
 
       <p style="font-size: 0.75rem; color: #555; margin: 4px 0 8px;">Penjual: <strong>@{{ item.user.username }}</strong></p>
 
+      {% if user == item.user %}
+      <div id="chat-peer-wrap" style="display: none; align-items: center; gap: 8px; margin: 0 0 8px; font-size: 0.8rem;">
+        <label for="chat-peer-select" style="font-weight: bold; white-space: nowrap;">Pembeli:</label>
+        <select id="chat-peer-select" onchange="onPeerChange()" style="flex: 1; padding: 6px; border: 1.5px solid; border-radius: 4px; font: inherit; font-size: 0.8rem;"></select>
+      </div>
+      {% endif %}
+
       <!-- Kotak Isi Pesan -->
       <div id="chat-box" style="flex: 1; min-height: 200px; max-height: 260px; overflow-y: auto; border: 1.5px solid; border-radius: 6px; padding: 10px; background: #fafafa; display: flex; flex-direction: column; gap: 8px; font-family: sans-serif; font-size: 0.85rem;">
         <p style="text-align: center; color: #888;">Memuat pesan...</p>
@@ -537,6 +544,15 @@
     // ==========================================
     // Realtime Notifications & Chat Client Logic
     // ==========================================
+    function escapeHtml(value) {
+      return String(value === null || value === undefined ? '' : value)
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#39;');
+    }
+
     function toggleNotifDropdown() {
       const dd = document.getElementById('notif-dropdown');
       dd.style.display = (dd.style.display === 'none' || dd.style.display === '') ? 'block' : 'none';
@@ -547,6 +563,19 @@
 
     let seenNotifIds = new Set();
     let isFirstNotifLoad = true;
+    let notifCursor = null;
+    let notifLoopTimer = null;
+
+    function updateNotifBadge(count) {
+      const badge = document.getElementById('notif-badge');
+      if (!badge) return;
+      if (count > 0) {
+        badge.style.display = 'inline-block';
+        badge.textContent = count;
+      } else {
+        badge.style.display = 'none';
+      }
+    }
 
     function showSalinkToast(title, message, link, type) {
       let container = document.getElementById('salink-toast-container');
@@ -566,15 +595,15 @@
       else if (type === 'TRACKER_UPDATE') icon = '📦';
 
       toast.innerHTML = `
-        <div class="salink-toast__icon">${icon}</div>
+        <div class="salink-toast__icon">${escapeHtml(icon)}</div>
         <div class="salink-toast__body">
-          <h5 class="salink-toast__title">${title}</h5>
-          <p class="salink-toast__desc">${message}</p>
+          <h5 class="salink-toast__title">${escapeHtml(title)}</h5>
+          <p class="salink-toast__desc">${escapeHtml(message)}</p>
         </div>
         <button class="salink-toast__close" onclick="this.parentElement.remove()">&times;</button>
       `;
 
-      if (link && link !== '#') {
+      if (link && link !== '#' && String(link).startsWith('/')) {
         toast.style.cursor = 'pointer';
         toast.onclick = function(e) {
           if (e.target.classList.contains('salink-toast__close')) return;
@@ -590,45 +619,69 @@
       }, 5000);
     }
 
+    function renderNotificationList(notifications) {
+      const list = document.getElementById('notif-list');
+      if (!list) return;
+      if (notifications && notifications.length > 0) {
+        list.innerHTML = notifications.map(n => `
+          <div style="padding: 6px; border-radius: 4px; background: ${n.is_read ? '#f9fafb' : '#eff6ff'}; border: 1px solid ${n.is_read ? '#e5e7eb' : '#bfdbfe'};">
+            <a href="${escapeHtml(n.link || '#')}" style="text-decoration: none; color: inherit; display: block;">
+              <strong style="color: #111;">${escapeHtml(n.title)}</strong>
+              <p style="margin: 2px 0 0 0; color: #4b5563;">${escapeHtml(n.message)}</p>
+              <small style="color: #9ca3af; font-size: 0.65rem;">${escapeHtml(n.created_at)}</small>
+            </a>
+          </div>
+        `).join('');
+      } else {
+        list.innerHTML = '<p style="text-align: center; color: #777; margin: 8px 0;">Tidak ada notifikasi baru.</p>';
+      }
+    }
+
     function fetchNotifications() {
-      fetch('{% url "saling_beli:user-notifications" %}')
+      return fetch('{% url "saling_beli:user-notifications" %}')
         .then(res => res.json())
         .then(data => {
-          const badge = document.getElementById('notif-badge');
-          if (data.unread_count > 0) {
-            badge.style.display = 'inline-block';
-            badge.textContent = data.unread_count;
-          } else {
-            badge.style.display = 'none';
+          updateNotifBadge(data.unread_count);
+          if (data.cursor) notifCursor = data.cursor;
+          if (data.notifications && data.notifications.length) {
+            data.notifications.forEach(n => seenNotifIds.add(n.id));
           }
-
-          const list = document.getElementById('notif-list');
-          if (data.notifications && data.notifications.length > 0) {
-            // Trigger in-app stylized popup toast for newly arrived unread notifications
-            data.notifications.forEach(n => {
-              if (!seenNotifIds.has(n.id)) {
-                seenNotifIds.add(n.id);
-                if (!isFirstNotifLoad && !n.is_read) {
-                  showSalinkToast(n.title, n.message, n.link, n.type);
-                }
-              }
-            });
-
-            list.innerHTML = data.notifications.map(n => `
-              <div style="padding: 6px; border-radius: 4px; background: ${n.is_read ? '#f9fafb' : '#eff6ff'}; border: 1px solid ${n.is_read ? '#e5e7eb' : '#bfdbfe'};">
-                <a href="${n.link}" style="text-decoration: none; color: inherit; display: block;">
-                  <strong style="color: #111;">${n.title}</strong>
-                  <p style="margin: 2px 0 0 0; color: #4b5563;">${n.message}</p>
-                  <small style="color: #9ca3af; font-size: 0.65rem;">${n.created_at}</small>
-                </a>
-              </div>
-            `).join('');
-          } else {
-            list.innerHTML = '<p style="text-align: center; color: #777; margin: 8px 0;">Tidak ada notifikasi baru.</p>';
-          }
-          isFirstNotifLoad = false;
+          renderNotificationList(data.notifications);
         })
         .catch(() => {});
+    }
+
+    // Long-polling: request ditahan server sampai ada notifikasi baru (maks. 20 detik).
+    async function longPollNotifications() {
+      try {
+        const url = new URL('{% url "saling_beli:notification-stream" %}', window.location.origin);
+        if (notifCursor) url.searchParams.set('after', notifCursor);
+
+        const res = await fetch(url.toString(), { headers: { 'Accept': 'application/json' } });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const data = await res.json();
+
+        if (data.cursor) notifCursor = data.cursor;
+        updateNotifBadge(data.unread_count);
+
+        if (data.notifications && data.notifications.length) {
+          let hasNew = false;
+          data.notifications.forEach(n => {
+            if (!seenNotifIds.has(n.id)) {
+              seenNotifIds.add(n.id);
+              hasNew = true;
+              if (!isFirstNotifLoad && !n.is_read) {
+                showSalinkToast(n.title, n.message, n.link, n.type);
+              }
+            }
+          });
+          if (hasNew) fetchNotifications();
+        }
+        isFirstNotifLoad = false;
+      } catch (err) {
+        await new Promise(resolve => setTimeout(resolve, 3000));
+      }
+      notifLoopTimer = setTimeout(longPollNotifications, 300);
     }
 
     function markAllNotifsRead() {
@@ -644,14 +697,54 @@
       });
     }
 
-    // Polling notifikasi setiap 5 detik
-    setInterval(fetchNotifications, 5000);
-    fetchNotifications();
+    {% if user.is_authenticated %}
+    fetchNotifications().finally(() => {
+      isFirstNotifLoad = false;
+      longPollNotifications();
+    });
+    {% endif %}
 
     // Chat Functions
     let chatPollInterval = null;
+    let chatPeerId = null;
+
+    function peerFromUrl() {
+      const raw = new URLSearchParams(window.location.search).get('peer');
+      const parsed = parseInt(raw, 10);
+      return Number.isFinite(parsed) ? parsed : null;
+    }
+
+    function setupPeerSelect(threads) {
+      const wrap = document.getElementById('chat-peer-wrap');
+      const select = document.getElementById('chat-peer-select');
+      if (!wrap || !select) return;
+
+      if (!threads || threads.length === 0) {
+        wrap.style.display = 'none';
+        return;
+      }
+
+      wrap.style.display = 'flex';
+      const previous = chatPeerId || parseInt(select.value, 10);
+
+      select.innerHTML = threads.map(t =>
+        `<option value="${Number(t.buyer_id)}">@${escapeHtml(t.buyer)}</option>`
+      ).join('');
+
+      if (previous && threads.some(t => Number(t.buyer_id) === previous)) {
+        select.value = String(previous);
+      }
+      chatPeerId = parseInt(select.value, 10);
+    }
+
+    function onPeerChange() {
+      const select = document.getElementById('chat-peer-select');
+      chatPeerId = select ? parseInt(select.value, 10) : null;
+      loadChatMessages();
+    }
 
     function openChatModal() {
+      chatPeerId = chatPeerId || peerFromUrl();
       document.getElementById('chatModal').style.display = 'flex';
       loadChatMessages();
       if (!chatPollInterval) {
@@ -680,14 +773,29 @@
 
     function loadChatMessages() {
       const box = document.getElementById('chat-box');
-      fetch('{% url "saling_beli:item-chats" item.id %}')
+      if (!box) return;
+
+      let url = '{% url "saling_beli:item-chats" item.id %}';
+      if (chatPeerId) {
+        url += '?peer=' + encodeURIComponent(chatPeerId);
+      }
+
+      fetch(url)
         .then(res => res.json())
         .then(data => {
+          if (data.threads) setupPeerSelect(data.threads);
+          if (data.peer) chatPeerId = data.peer.id;
+
+          if (data.error && (!data.chats || data.chats.length === 0)) {
+            box.innerHTML = `<p style="text-align: center; color: #888; margin: auto;">${escapeHtml(data.error)}</p>`;
+            return;
+          }
+
           if (data.chats && data.chats.length > 0) {
             box.innerHTML = data.chats.map(c => `
               <div style="align-self: ${c.is_me ? 'flex-end' : 'flex-start'}; max-width: 80%; background: ${c.is_me ? '#000' : '#e5e7eb'}; color: ${c.is_me ? '#fff' : '#000'}; padding: 6px 10px; border-radius: 8px; word-break: break-word;">
-                <div style="font-size: 0.65rem; opacity: 0.75; margin-bottom: 2px;">${c.is_me ? 'Anda' : '@' + c.sender} &bull; ${c.created_at}</div>
-                <div>${c.message}</div>
+                <div style="font-size: 0.65rem; opacity: 0.75; margin-bottom: 2px;">${c.is_me ? 'Anda' : '@' + escapeHtml(c.sender)} &bull; ${escapeHtml(c.created_at)}</div>
+                <div>${escapeHtml(c.message)}</div>
               </div>
             `).join('');
             box.scrollTop = box.scrollHeight;
@@ -710,7 +818,7 @@
           'Content-Type': 'application/json',
           'X-CSRFToken': csrftoken
         },
-        body: JSON.stringify({ message: text })
+        body: JSON.stringify({ message: text, peer: chatPeerId })
       })
       .then(res => res.json())
       .then(data => {
