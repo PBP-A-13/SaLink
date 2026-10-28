@@ -1,0 +1,105 @@
+{% extends "nebeng/base_nebeng.html" %}
+
+{% block title %}Tawarkan Tebengan{% endblock %}
+
+{% block sidebar %}
+  <a class="side-item is-active" href="{% url 'saling_tebeng:tawarkan_tebengan' %}" aria-current="page">Tawarkan Tebengan</a>
+{% endblock %}
+
+{% block content %}
+<form method="post" id="offer-form" novalidate>
+  {% csrf_token %}
+  <div class="offer__grid">
+
+    <section aria-labelledby="jadwal-title">
+      <h1 class="page-title" id="jadwal-title">Jadwal Nebeng</h1>
+
+      <div class="days">
+        {% for day, formset in weeks %}
+        <article class="day">
+          <h2 class="day__name">{{ day.name }}<small>{{ day.date|date:"j M" }}</small></h2>
+
+          {# jadwal yang sudah tersimpan #}
+          {% for s in existing %}{% if s.date == day.date %}
+          <div class="slot-card">
+            {{ s.origin }} - {{ s.destination }}
+            <div class="slot-card__time">
+              <svg class="icon" aria-hidden="true"><use href="#i-clock"/></svg>{{ s.departure_time|time:"H.i" }}
+            </div>
+            <button class="slot-card__remove" type="submit" form="cancel-{{ s.id }}"
+                    aria-label="Batalkan jadwal {{ s.origin }} - {{ s.destination }} {{ s.departure_time|time:'H.i' }}"
+                    onclick="return confirm('Batalkan jadwal ini?')">
+              <svg class="icon" aria-hidden="true"><use href="#i-x"/></svg>
+            </button>
+          </div>
+          {% endif %}{% endfor %}
+
+          {# baris input baru #}
+          {{ formset.management_form }}
+          {{ formset.non_form_errors }}
+          <div class="slot-rows" id="rows-{{ formset.prefix }}">
+            {% for form in formset %}{% include "nebeng/_slot_row.html" %}{% endfor %}
+          </div>
+          <button class="add-slot" type="button" data-add="{{ formset.prefix }}"
+                  aria-label="Tambah jam untuk {{ day.name }}">
+            <svg class="icon" aria-hidden="true"><use href="#i-plus"/></svg>
+          </button>
+          <template id="tpl-{{ formset.prefix }}">
+            {% include "nebeng/_slot_row.html" with form=formset.empty_form %}
+          </template>
+        </article>
+        {% endfor %}
+      </div>
+    </section>
+
+    <aside class="vehicle" aria-labelledby="kendaraan-title">
+      <h2 id="kendaraan-title">Kendaraan</h2>
+
+      <div>
+        <label class="pill pill--lg"><span class="sr-only">Jenis kendaraan</span>{{ vehicle_form.vehicle_type }}</label>
+        {{ vehicle_form.vehicle_type.errors }}
+      </div>
+      <div>
+        <label class="pill pill--lg"><span class="sr-only">Kapasitas</span>{{ vehicle_form.capacity }}</label>
+        {{ vehicle_form.capacity.errors }}
+      </div>
+
+      <details>
+        <summary>Detail kendaraan (opsional)</summary>
+        <label class="pill pill--sm"><span class="sr-only">Merek</span>{{ vehicle_form.brand }}</label>
+        <label class="pill pill--sm"><span class="sr-only">Model</span>{{ vehicle_form.model }}</label>
+        <label class="pill pill--sm"><span class="sr-only">Plat nomor</span>{{ vehicle_form.license_plate }}</label>
+      </details>
+    </aside>
+  </div>
+
+  <div class="actions">
+    <a class="btn btn--lg" href="{% url 'saling_tebeng:index' %}">Cancel</a>
+    <button class="btn btn--lg btn--primary" type="submit">Save</button>
+  </div>
+</form>
+
+{# form pembatalan dipisah, karena form tidak boleh bersarang #}
+{% for s in existing %}
+<form id="cancel-{{ s.id }}" method="post" action="{% url 'saling_tebeng:cancel_schedule' s.id %}" hidden>{% csrf_token %}</form>
+{% endfor %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // "+" menambah satu baris jadwal baru pada hari tersebut.
+  document.querySelectorAll('[data-add]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var prefix = btn.dataset.add;
+      var total = document.getElementById('id_' + prefix + '-TOTAL_FORMS');
+      var index = parseInt(total.value, 10);
+      var html = document.getElementById('tpl-' + prefix).innerHTML.replace(/__prefix__/g, index);
+      var rows = document.getElementById('rows-' + prefix);
+      rows.insertAdjacentHTML('beforeend', html);
+      total.value = index + 1;
+      var first = rows.lastElementChild.querySelector('select, input');
+      if (first) first.focus();
+    });
+  });
+</script>
+{% endblock %}

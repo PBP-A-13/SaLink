@@ -1,0 +1,55 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Nebeng{% endblock %} | SaLink</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Oswald:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'nebeng/css/nebeng.css' %}">
+</head>
+<body>
+  {# Navbar milik tim. active_nav='tebeng' menyalakan menu NEBENG. #}
+  {% with active_nav='tebeng' %}
+    {% include "partials/navbar.html" %}
+  {% endwith %}
+
+  <div class="shell">
+    <aside class="sidebar" aria-label="Menu nebeng">
+      {% block sidebar %}{% endblock %}
+    </aside>
+    <main class="main">
+      {% if messages %}
+      <ul class="messages" role="status">
+        {% for message in messages %}
+        <li class="message {{ message.tags }}">{{ message }}</li>
+        {% endfor %}
+      </ul>
+      {% endif %}
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+
+  {% include "partials/footer.html" %}
+
+  {# Sprite ikon #}
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+    <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4.5"/><path d="M3 23c0-5.5 4-8.5 9-8.5s9 3 9 8.5z"/></symbol>
+    <symbol id="i-home" viewBox="0 0 24 24"><path d="M12 3 1.5 12.5H5V21h5v-6h4v6h5v-8.5h3.5z"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="10" cy="10" r="6" fill="none" stroke="currentColor" stroke-width="2.6"/><path d="m15 15 6 6" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></symbol>
+    <symbol id="i-pin" viewBox="0 0 24 24"><path fill-rule="evenodd" d="M12 2a7 7 0 0 0-7 7c0 5 7 13 7 13s7-8 7-13a7 7 0 0 0-7-7Zm0 9.5a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5Z"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M12 7v5.2l3.2 2" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></symbol>
+    <symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M3.5 10h17M8 3v4M16 3v4" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 5v9M12 18.5v.5" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></symbol>
+    <symbol id="i-motor" viewBox="0 0 40 28"><circle cx="8" cy="21" r="5" stroke-width="2.6"/><circle cx="32" cy="21" r="5" stroke-width="2.6"/><path d="M8 21l6-10h9l9 10M23 11l3-5h6M12 11H8" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-car" viewBox="0 0 40 28"><path d="M3 21v-6l4-7h18l7 7h5v6z" stroke-width="2.6" stroke-linejoin="round"/><circle cx="11" cy="22" r="4" fill="var(--sand)" stroke-width="2.6"/><circle cx="30" cy="22" r="4" fill="var(--sand)" stroke-width="2.6"/></symbol>
+  </svg>
+
+  {% block scripts %}{% endblock %}
+</body>
+</html>

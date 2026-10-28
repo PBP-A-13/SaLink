@@ -1,0 +1,153 @@
+{% extends "saling_tebeng/saling_tebeng.html" %}
+
+{% block title %}Cari Tebengan{% endblock %}
+
+{% block sidebar %}
+  <a class="side-item is-active" href="{% url 'saling_tebeng:index' %}" aria-current="page">
+    <svg class="icon" aria-hidden="true"><use href="#i-home"/></svg> Pesan
+  </a>
+  <a class="side-cta" href="{% url 'saling_tebeng:tawarkan_tebengan' %}">Tawarkan Tebengan</a>
+{% endblock %}
+
+{% block content %}
+<form class="filters" method="get" id="search-form" novalidate>
+  <div class="filter">
+    <label class="filter__label" for="{{ form.asal.id_for_label }}">Asal</label>
+    <div class="pill pill--filter">
+      <svg class="icon" aria-hidden="true"><use href="#i-search"/></svg>
+      {{ form.asal }}
+      <button type="button" class="pill__clear" data-clear aria-label="Hapus asal"><svg class="icon" aria-hidden="true"><use href="#i-x"/></svg></button>
+    </div>
+    {{ form.asal.errors }}
+  </div>
+
+  <div class="filter">
+    <label class="filter__label" for="{{ form.tujuan.id_for_label }}">Tujuan</label>
+    <div class="pill pill--filter">
+      <svg class="icon" aria-hidden="true"><use href="#i-pin"/></svg>
+      {{ form.tujuan }}
+      <button type="button" class="pill__clear" data-clear aria-label="Hapus tujuan"><svg class="icon" aria-hidden="true"><use href="#i-x"/></svg></button>
+    </div>
+    {{ form.tujuan.errors }}
+  </div>
+
+  <div class="filter">
+    <label class="filter__label" for="{{ form.jam.id_for_label }}">Waktu Berangkat</label>
+    <div class="pill pill--filter">
+      <svg class="icon" aria-hidden="true"><use href="#i-clock"/></svg>
+      {{ form.jam }}
+    </div>
+    {{ form.jam.errors }}
+  </div>
+
+  <div class="filter">
+    <label class="filter__label" for="{{ form.tanggal.id_for_label }}">Tanggal</label>
+    <div class="pill pill--filter">
+      <svg class="icon" aria-hidden="true"><use href="#i-calendar"/></svg>
+      {{ form.tanggal }}
+    </div>
+    {{ form.tanggal.errors }}
+  </div>
+
+  {{ form.non_field_errors }}
+  <button class="sr-only" type="submit">Cari tebengan</button>
+</form>
+
+{% if searched %}
+  <p class="results-meta">
+    {{ results|length }} tebengan untuk {{ form.cleaned_data.tanggal|date:"l, j F Y" }}
+  </p>
+
+  {% if results %}
+  <section class="results" aria-label="Hasil tebengan">
+    {% for r in results %}
+    {% with s=r.schedule %}
+    <article class="ride">
+      <div class="ride__who">
+        <span class="avatar avatar--lg"><svg aria-hidden="true"><use href="#i-user"/></svg></span>
+        <span class="ride__name">{{ r.driver.username }}</span>
+        <svg class="ride__vehicle" aria-label="{{ r.vehicle.get_vehicle_type_display }}" role="img">
+          <use href="#i-{% if r.vehicle.vehicle_type == 'motor' %}motor{% else %}car{% endif %}"/>
+        </svg>
+      </div>
+
+      <div class="ride__info">
+        <h2 class="ride__title">{{ s.origin }} → {{ s.destination }}</h2>
+        <p class="ride__detail">Jam berangkat : {{ s.departure_time|time:"H.i" }}</p>
+        <p class="ride__detail">Available Kursi : {{ s.available_seats }}</p>
+        <p class="ride__detail">Nominal : {% if s.price %}Rp{{ s.price }}{% else %}Gratis{% endif %}</p>
+      </div>
+
+      <div class="ride__route" aria-hidden="true">
+        <svg viewBox="0 0 170 60">
+          <polyline points="6,50 32,14 54,38 78,8 112,42 160,24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linejoin="round"/>
+          <circle cx="6" cy="50" r="4.5" fill="currentColor"/>
+          <circle cx="160" cy="24" r="4.5" fill="currentColor"/>
+        </svg>
+        <svg class="ride__end"><use href="#i-{% if r.vehicle.vehicle_type == 'motor' %}motor{% else %}car{% endif %}"/></svg>
+      </div>
+
+      <div class="ride__badge">
+        {% if r.matched %}
+          <span class="badge"><span class="badge__icon"><svg aria-hidden="true"><use href="#i-check"/></svg></span> MATCHED</span>
+        {% else %}
+          <span class="badge badge--warn"><span class="badge__icon"><svg aria-hidden="true"><use href="#i-alert"/></svg></span> {{ r.reasons|join:" / "|upper }}</span>
+        {% endif %}
+      </div>
+
+      <div class="ride__actions">
+        {% if r.already_booked %}
+          <span class="btn is-disabled">Sudah Bergabung</span>
+        {% elif r.matched %}
+          <form method="post" action="{% url 'saling_tebeng:join_ride' s.id %}">
+            {% csrf_token %}
+            <input type="hidden" name="asal" value="{{ form.cleaned_data.asal }}">
+            <input type="hidden" name="tujuan" value="{{ form.cleaned_data.tujuan }}">
+            <input type="hidden" name="jam" value="{{ form.cleaned_data.jam|time:'H:i' }}">
+            <input type="hidden" name="seats" value="1">
+            <button class="btn btn--primary" type="submit">Gabung Tebengan</button>
+          </form>
+        {% else %}
+          <a class="btn btn--primary" href="{% url 'saling_tebeng:ride_chat' s.id %}?asal={{ form.cleaned_data.asal|urlencode }}&tujuan={{ form.cleaned_data.tujuan|urlencode }}&jam={{ form.cleaned_data.jam|time:'H:i' }}">Sesuaikan</a>
+        {% endif %}
+        <a class="btn" href="{% url 'saling_tebeng:ride_chat' s.id %}?asal={{ form.cleaned_data.asal|urlencode }}&tujuan={{ form.cleaned_data.tujuan|urlencode }}&jam={{ form.cleaned_data.jam|time:'H:i' }}">Chat</a>
+      </div>
+    </article>
+    {% endwith %}
+    {% endfor %}
+  </section>
+  {% else %}
+  <div class="empty">
+    <strong>Belum ada tebengan yang cocok</strong>
+    Coba ganti jam atau tanggal, atau tawarkan tebengan sendiri.
+  </div>
+  {% endif %}
+{% else %}
+  <div class="empty">
+    <strong>Mau nebeng ke mana?</strong>
+    Pilih lokasi asal, tujuan, dan jam berangkat untuk melihat tebengan yang tersedia.
+  </div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+  (function () {
+    var form = document.getElementById('search-form');
+    var fields = ['asal', 'tujuan', 'jam'].map(function (n) { return form.elements[n]; });
+
+    function trySubmit() {
+      if (fields.every(function (f) { return f && f.value; })) form.submit();
+    }
+    form.addEventListener('change', trySubmit);
+
+    form.querySelectorAll('[data-clear]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var input = btn.parentElement.querySelector('select, input');
+        input.value = '';
+        input.focus();
+      });
+    });
+  })();
+</script>
+{% endblock %}
