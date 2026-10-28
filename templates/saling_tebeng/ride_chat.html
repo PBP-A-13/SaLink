@@ -1,0 +1,35 @@
+{% extends "saling_tebeng/base_tebeng.html" %}
+
+{% block title %}Chat Tebengan | SaLink{% endblock %}
+
+{% block sidebar %}
+  <div class="side-group">
+    <a class="side-item" href="{% url 'saling_tebeng:nebeng_list' %}">
+      <svg class="icon" aria-hidden="true"><use href="#i-home"/></svg>
+      <span>Pesan</span>
+    </a>
+  </div>
+  <a class="side-cta" href="{% url 'saling_tebeng:tawarkan_tebengan' %}">Tawarkan Tebengan</a>
+{% endblock %}
+
+{% block content %}
+<div style="max-width: 600px; margin: 0 auto; background: var(--salink-grey); border-radius: 20px; padding: 24px;">
+  <h2 style="font-family: var(--font-display); font-size: 1.5rem; margin-top: 0;">Chat dengan {{ driver.username }}</h2>
+  <div style="background: #FFFFFF; border-radius: 12px; padding: 16px; margin-bottom: 20px;">
+    <p style="margin: 0 0 6px 0; font-weight: bold;">Rute: {{ schedule.origin }} → {{ schedule.destination }}</p>
+    <p style="margin: 0 0 6px 0;">Jam Berangkat: {{ schedule.departure_time|time:"H.i" }}</p>
+    <p style="margin: 0;">Kendaraan: {{ schedule.ride_offer.vehicle.get_vehicle_type_display }} (Tersedia: {{ schedule.available_seats }} kursi)</p>
+  </div>
+
+  <form method="post" action="{% url 'saling_tebeng:join_from_chat' schedule.id %}" style="display: flex; gap: 12px; align-items: center;">
+    {% csrf_token %}
+    <input type="hidden" name="seats" value="1">
+    <button type="submit" class="btn-save" style="width: 100%;">Gabung Tebengan Sekarang</button>
+  </form>
+
+  <div style="margin-top: 16px; text-align: center;">
+    <a href="{% url 'saling_tebeng:nebeng_list' %}" style="text-decoration: underline; font-family: var(--font-ui); font-size: 0.9rem;">Kembali ke Daftar Tebengan</a>
+  </div>
+</div>
+{% endblock %}
+
