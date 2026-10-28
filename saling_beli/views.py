@@ -43,10 +43,11 @@ MAX_IMAGE_BYTES = 5 * 1024 * 1024
 ALLOWED_IMAGE_EXTENSIONS = ('.jpg', '.jpeg', '.png', '.webp', '.gif')
 ALLOWED_IMAGE_CONTENT_TYPES = {'image/jpeg', 'image/png', 'image/webp', 'image/gif'}
 
-# Transisi tahap yang sah. Urutan tracker tidak boleh dilompati.
+# Transisi tahap yang sah. Urutan tracker tidak boleh dilompati (kecuali barang gratis bisa langsung atur COD).
 STAGE_TRANSITIONS = {
 	TransactionOrder.Stage.MENUNGGU_TRANSFER: {
 		TransactionOrder.Stage.BUKTI_DIUNGGAH,
+		TransactionOrder.Stage.JANJI_TEMU_COD,
 		TransactionOrder.Stage.BATAL,
 	},
 	TransactionOrder.Stage.BUKTI_DIUNGGAH: {
@@ -348,6 +349,12 @@ def make_offer(request, listing_id):
 	except (ValueError, TypeError, json.JSONDecodeError):
 		return JsonResponse({'error': 'Harga penawaran harus berupa angka valid.'}, status=400)
 
+	if offered_price <= 0:
+		return JsonResponse({'error': 'Harga penawaran harus lebih besar dari Rp 0.'}, status=400)
+
+	if offered_price >= item.price:
+		return JsonResponse({'error': 'Harga penawaran harus lebih rendah dari harga asli. Gunakan tombol Pesan Sekarang jika ingin membeli dengan harga normal.'}, status=400)
+
 	offer = PriceOffer.objects.create(
 		item=item,
 		buyer=request.user,
@@ -432,6 +439,22 @@ def respond_offer(request, offer_id):
 			offer.status = PriceOffer.OfferStatus.ACCEPTED
 			offer.save(update_fields=['status', 'updated_at'])
 
+			# Tolak otomatis penawaran pending lain untuk barang ini agar pembeli lain mendapat kepastian
+			other_offers = PriceOffer.objects.filter(
+				item=item,
+				status=PriceOffer.OfferStatus.PENDING
+			).exclude(pk=offer.pk)
+			for pending_offer in other_offers:
+				pending_offer.status = PriceOffer.OfferStatus.REJECTED
+				pending_offer.save(update_fields=['status', 'updated_at'])
+				UserNotification.objects.create(
+					user=pending_offer.buyer,
+					title='Tawaran Nego Ditolak',
+					message=f'Penjual @{request.user.username} telah menerima penawaran lain untuk "{item.title}".',
+					notification_type=UserNotification.NotifType.OFFER,
+					link=f'/saling-beli/detail/{item.id}/'
+				)
+
 			if item.status == ItemListing.Status.AVAILABLE:
 				item.status = ItemListing.Status.RESERVED
 				item.save(update_fields=['status', 'updated_at'])
@@ -515,6 +538,22 @@ def create_order(request, listing_id):
 		# Barang dikunci selama transaksi berjalan.
 		item.status = ItemListing.Status.RESERVED
 		item.save(update_fields=['status', 'updated_at'])
+
+		# Tolak otomatis penawaran pending untuk barang ini karena sudah dipesan
+		other_offers = PriceOffer.objects.filter(
+			item=item,
+			status=PriceOffer.OfferStatus.PENDING
+		)
+		for pending_offer in other_offers:
+			pending_offer.status = PriceOffer.OfferStatus.REJECTED
+			pending_offer.save(update_fields=['status', 'updated_at'])
+			UserNotification.objects.create(
+				user=pending_offer.buyer,
+				title='Tawaran Nego Ditolak',
+				message=f'Barang "{item.title}" telah dipesan oleh pembeli lain.',
+				notification_type=UserNotification.NotifType.OFFER,
+				link=f'/saling-beli/detail/{item.id}/'
+			)
 
 		# Notifikasi ke Penjual
 		UserNotification.objects.create(

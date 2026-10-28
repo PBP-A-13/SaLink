@@ -196,17 +196,26 @@
 
               {% if user == ord.buyer or user == ord.seller %}
               <div style="margin-top: 10px; display: flex; gap: 6px; flex-wrap: wrap; align-items: center;">
-                {% if user == ord.buyer and ord.stage == 'MENUNGGU_TRANSFER' %}
-                  <button onclick="updateOrderPrompt('{{ ord.id }}', 'BUKTI_DIUNGGAH', 'Masukkan nomor referensi transfer / nama bank/e-wallet pengirim:')" class="btn" style="padding: 4px 10px; font-size: 0.75rem; background: #000; color: #fff;">📤 Konfirmasi Sudah Transfer</button>
-                {% endif %}
-                {% if user == ord.seller and ord.stage == 'BUKTI_DIUNGGAH' %}
-                  <button onclick="updateOrder('{{ ord.id }}', 'DIKONFIRMASI')" class="btn" style="padding: 4px 10px; font-size: 0.75rem; background: #2e7d32; color: #fff;">✅ Konfirmasi Dana Sudah Masuk</button>
-                {% endif %}
-                {% if ord.stage == 'DIKONFIRMASI' or ord.stage == 'BUKTI_DIUNGGAH' %}
-                  <button onclick="updateOrderPrompt('{{ ord.id }}', 'JANJI_TEMU_COD', 'Tentukan hari & jam pertemuan COD kampus:', 'cod_time')" class="btn" style="padding: 4px 10px; font-size: 0.75rem;">📍 Atur Jadwal COD</button>
-                {% endif %}
-                {% if ord.stage == 'JANJI_TEMU_COD' %}
-                  <button onclick="updateOrder('{{ ord.id }}', 'SELESAI')" class="btn" style="padding: 4px 10px; font-size: 0.75rem; background: #1565c0; color: #fff;">🎉 Selesaikan Transaksi (Barang Diterima)</button>
+                {% if ord.item.is_free %}
+                  {% if ord.stage == 'MENUNGGU_TRANSFER' or ord.stage == 'JANJI_TEMU_COD' %}
+                    <button onclick="updateOrderPrompt('{{ ord.id }}', 'JANJI_TEMU_COD', 'Tentukan hari & jam pertemuan serah terima barang di kampus:', 'cod_time')" class="btn" style="padding: 4px 10px; font-size: 0.75rem; background: #000; color: #fff;">Atur Waktu Janji Temu</button>
+                  {% endif %}
+                  {% if ord.stage == 'JANJI_TEMU_COD' %}
+                    <button onclick="updateOrder('{{ ord.id }}', 'SELESAI')" class="btn" style="padding: 4px 10px; font-size: 0.75rem; background: #1565c0; color: #fff;">Konfirmasi Barang Sudah Diambil</button>
+                  {% endif %}
+                {% else %}
+                  {% if user == ord.buyer and ord.stage == 'MENUNGGU_TRANSFER' %}
+                    <button onclick="updateOrderPrompt('{{ ord.id }}', 'BUKTI_DIUNGGAH', 'Masukkan nomor referensi transfer / nama bank/e-wallet pengirim:')" class="btn" style="padding: 4px 10px; font-size: 0.75rem; background: #000; color: #fff;">Konfirmasi Sudah Transfer</button>
+                  {% endif %}
+                  {% if user == ord.seller and ord.stage == 'BUKTI_DIUNGGAH' %}
+                    <button onclick="updateOrder('{{ ord.id }}', 'DIKONFIRMASI')" class="btn" style="padding: 4px 10px; font-size: 0.75rem; background: #2e7d32; color: #fff;">Konfirmasi Dana Masuk</button>
+                  {% endif %}
+                  {% if ord.stage == 'DIKONFIRMASI' or ord.stage == 'BUKTI_DIUNGGAH' %}
+                    <button onclick="updateOrderPrompt('{{ ord.id }}', 'JANJI_TEMU_COD', 'Tentukan hari & jam pertemuan COD kampus:', 'cod_time')" class="btn" style="padding: 4px 10px; font-size: 0.75rem;">Atur Jadwal COD</button>
+                  {% endif %}
+                  {% if ord.stage == 'JANJI_TEMU_COD' %}
+                    <button onclick="updateOrder('{{ ord.id }}', 'SELESAI')" class="btn" style="padding: 4px 10px; font-size: 0.75rem; background: #1565c0; color: #fff;">Selesaikan Transaksi (Barang Diterima)</button>
+                  {% endif %}
                 {% endif %}
                 {% if ord.stage != 'SELESAI' and ord.stage != 'BATAL' %}
                   <button onclick="if(confirm('Yakin ingin membatalkan pesanan ini?')) updateOrder('{{ ord.id }}', 'BATAL')" class="btn" style="padding: 4px 10px; font-size: 0.75rem; background: #fee2e2; color: #b91c1c; border-color: #fca5a5;">Batalkan Pesanan</button>

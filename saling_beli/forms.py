@@ -99,7 +99,7 @@ class ItemListingForm(forms.ModelForm):
             'is_free': 'Bagikan Secara Gratis (Rp0)?',
             'price': 'Harga (Rp)',
             'description': 'Deskripsi Lengkap',
-            'pickup_location': 'Titik Temu COD Kampus UI',
+            'pickup_location': 'Titik Temu COD',
             'payout_account_name': 'Nama Pemilik Rekening / Akun E-Wallet',
             'payout_account_number': 'Nomor Rekening / No. HP E-Wallet Penjual',
             'image': 'Upload Foto Barang (Dari Perangkat)',

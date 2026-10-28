@@ -700,65 +700,106 @@ a {
   background: var(--salink-cream);
   border: var(--border-thick);
   border-radius: var(--radius-card);
-  padding: 14px 16px;
-  box-shadow: 3px 3px 0px var(--salink-dark);
+  padding: 16px 20px;
+  box-shadow: 4px 4px 0px var(--salink-dark);
+  margin-bottom: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
 .filter-row {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   flex-wrap: wrap;
 }
 
 .filter-label {
   font-family: var(--font-display);
   font-size: 0.85rem;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
   color: var(--salink-dark);
+  min-width: 80px;
+  opacity: 0.85;
 }
 
 .filter-pills {
   display: flex;
-  gap: 6px;
+  gap: 8px;
   flex-wrap: wrap;
+  align-items: center;
 }
 
 .pill-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 5px 12px;
+  padding: 6px 14px;
   font-family: var(--font-body);
-  font-size: 0.8rem;
+  font-size: 0.82rem;
   font-weight: 600;
   border-radius: var(--radius-pill);
   border: 1.5px solid var(--salink-dark);
   background: var(--salink-white);
   color: var(--salink-dark);
   cursor: pointer;
-  transition: all 0.12s ease;
+  transition: transform 0.1s ease, box-shadow 0.1s ease, background 0.15s ease, color 0.15s ease;
   white-space: nowrap;
+  box-shadow: 1.5px 1.5px 0px var(--salink-dark);
 }
 
 .pill-btn:hover {
   background: var(--salink-accent);
-  transform: translateY(-1px);
+  transform: translate(-1px, -1px);
+  box-shadow: 2.5px 2.5px 0px var(--salink-dark);
 }
 
-.pill-btn.is-active {
+.pill-btn:active {
+  transform: translate(1px, 1px);
+  box-shadow: 0 0 0 transparent;
+}
+
+/* Kategori Pills Tone */
+.pill-btn--category.is-active {
+  background: var(--salink-primary);
+  color: var(--salink-white);
+  border-color: var(--salink-dark);
+  box-shadow: 2px 2px 0px var(--salink-dark);
+}
+
+/* Sorting Pills Tone */
+.pill-btn--sort.is-active {
   background: var(--salink-dark);
   color: var(--salink-white);
-  box-shadow: 1.5px 1.5px 0px rgba(0, 0, 0, 0.4);
+  border-color: var(--salink-dark);
+  box-shadow: 2px 2px 0px var(--salink-accent);
+}
+
+/* Condition Pills Tone */
+.pill-btn--condition.is-active {
+  background: #3f6212;
+  color: #ffffff;
+  border-color: var(--salink-dark);
+  box-shadow: 2px 2px 0px var(--salink-dark);
 }
 
 .pill-btn--reset {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  padding: 6px 14px;
+  color: #991b1b;
+  background: #fee2e2;
+  border-color: #f87171;
+  text-decoration: none;
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  font-weight: 600;
+  border-radius: var(--radius-pill);
 }
 
 .pill-btn--reset:hover {
-  background: #fecaca !important;
+  background: #fca5a5 !important;
+  color: #7f1d1d !important;
 }

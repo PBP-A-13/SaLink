@@ -41,39 +41,39 @@
     </div>
 
     <!-- Filter Pills & Sorting Bar -->
-    <div class="filter-bar" style="margin-bottom: var(--space-4);">
+    <div class="filter-bar">
       <!-- Urutan (A-Z, Z-A, Terbaru, Terlama) -->
-      <div class="filter-row" style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 10px;">
-        <span class="filter-label" style="font-size: 0.8rem; font-weight: bold; text-transform: uppercase; color: var(--salink-dark); min-width: 75px;">Urutkan:</span>
-        <div class="filter-pills" style="display: flex; gap: 6px; flex-wrap: wrap;">
-          <button type="button" class="pill-btn {% if sort == 'newest' %}is-active{% endif %}" onclick="setFilter('sort', 'newest')">⚡ Terbaru</button>
-          <button type="button" class="pill-btn {% if sort == 'oldest' %}is-active{% endif %}" onclick="setFilter('sort', 'oldest')">⏳ Paling Lama</button>
-          <button type="button" class="pill-btn {% if sort == 'name_asc' %}is-active{% endif %}" onclick="setFilter('sort', 'name_asc')">🔤 A - Z</button>
-          <button type="button" class="pill-btn {% if sort == 'name_desc' %}is-active{% endif %}" onclick="setFilter('sort', 'name_desc')">🔤 Z - A</button>
+      <div class="filter-row">
+        <span class="filter-label">Urutkan</span>
+        <div class="filter-pills">
+          <button type="button" class="pill-btn pill-btn--sort {% if sort == 'newest' %}is-active{% endif %}" onclick="setFilter('sort', 'newest')">Terbaru</button>
+          <button type="button" class="pill-btn pill-btn--sort {% if sort == 'oldest' %}is-active{% endif %}" onclick="setFilter('sort', 'oldest')">Paling Lama</button>
+          <button type="button" class="pill-btn pill-btn--sort {% if sort == 'name_asc' %}is-active{% endif %}" onclick="setFilter('sort', 'name_asc')">Nama A - Z</button>
+          <button type="button" class="pill-btn pill-btn--sort {% if sort == 'name_desc' %}is-active{% endif %}" onclick="setFilter('sort', 'name_desc')">Nama Z - A</button>
         </div>
       </div>
 
       <!-- Kategori Barang -->
-      <div class="filter-row" style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 10px;">
-        <span class="filter-label" style="font-size: 0.8rem; font-weight: bold; text-transform: uppercase; color: var(--salink-dark); min-width: 75px;">Kategori:</span>
-        <div class="filter-pills" style="display: flex; gap: 6px; flex-wrap: wrap;">
-          <button type="button" class="pill-btn {% if not category %}is-active{% endif %}" onclick="setFilter('category', '')">Semua Kategori</button>
+      <div class="filter-row">
+        <span class="filter-label">Kategori</span>
+        <div class="filter-pills">
+          <button type="button" class="pill-btn pill-btn--category {% if not category %}is-active{% endif %}" onclick="setFilter('category', '')">Semua</button>
           {% for cat_val, cat_label in categories %}
-          <button type="button" class="pill-btn {% if category == cat_val %}is-active{% endif %}" onclick="setFilter('category', '{{ cat_val }}')">{{ cat_label }}</button>
+          <button type="button" class="pill-btn pill-btn--category {% if category == cat_val %}is-active{% endif %}" onclick="setFilter('category', '{{ cat_val }}')">{{ cat_label }}</button>
           {% endfor %}
         </div>
       </div>
 
       <!-- Kondisi Fisik Barang -->
-      <div class="filter-row" style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-        <span class="filter-label" style="font-size: 0.8rem; font-weight: bold; text-transform: uppercase; color: var(--salink-dark); min-width: 75px;">Kondisi:</span>
-        <div class="filter-pills" style="display: flex; gap: 6px; flex-wrap: wrap;">
-          <button type="button" class="pill-btn {% if not condition %}is-active{% endif %}" onclick="setFilter('condition', '')">Semua Kondisi</button>
+      <div class="filter-row">
+        <span class="filter-label">Kondisi</span>
+        <div class="filter-pills">
+          <button type="button" class="pill-btn pill-btn--condition {% if not condition %}is-active{% endif %}" onclick="setFilter('condition', '')">Semua</button>
           {% for cond_val, cond_label in conditions %}
-          <button type="button" class="pill-btn {% if condition == cond_val %}is-active{% endif %}" onclick="setFilter('condition', '{{ cond_val }}')">{{ cond_label }}</button>
+          <button type="button" class="pill-btn pill-btn--condition {% if condition == cond_val %}is-active{% endif %}" onclick="setFilter('condition', '{{ cond_val }}')">{{ cond_label }}</button>
           {% endfor %}
           {% if query or category or condition or sort != 'newest' %}
-          <a href="{% url 'saling_beli:index' %}" class="pill-btn pill-btn--reset" style="text-decoration: none; color: #b91c1c; background: #fee2e2; border-color: #fca5a5;">✕ Reset Filter</a>
+          <a href="{% url 'saling_beli:index' %}" class="pill-btn pill-btn--reset">Reset Filter</a>
           {% endif %}
         </div>
       </div>
