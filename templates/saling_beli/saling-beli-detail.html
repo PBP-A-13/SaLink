@@ -64,9 +64,25 @@
           </p>
 
           {% if user == item.user %}
-          <!-- Fitur Upload Foto Khusus Penjual Barang -->
-          <div style="margin-top: 10px; padding: 12px; background: var(--salink-white); border-radius: 12px;">
-            <p style="margin: 0 0 6px 0; font-weight: bold; font-size: 0.85rem; text-transform: uppercase;">📸 Unggah / Ganti Foto Barang Anda:</p>
+          <!-- Panel Manajemen Penjual (Edit, Hapus, Upload Foto) -->
+          <div style="margin-top: 12px; padding: 14px; background: var(--salink-white); border-radius: 12px; border: 2px solid var(--salink-dark);">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 10px;">
+              <span style="font-weight: bold; font-size: 0.85rem; text-transform: uppercase;">⚙️ Kelola Barang Dagangan Anda</span>
+              <div style="display: flex; gap: 8px;">
+                <a href="{% url 'saling_beli:item_edit' item.id %}" class="btn" style="padding: 6px 12px; font-size: 0.8rem; background: var(--salink-light); text-decoration: none; color: inherit;">
+                  ✏️ Edit Detail
+                </a>
+                <form method="post" action="{% url 'saling_beli:item_delete' item.id %}" onsubmit="return confirm('Apakah Anda yakin ingin menghapus barang ini secara permanen? Data dan chat terkait akan ikut terhapus.');" style="display: inline; margin: 0;">
+                  {% csrf_token %}
+                  <button type="submit" class="btn" style="padding: 6px 12px; font-size: 0.8rem; background: #c62828; color: #fff; cursor: pointer;">
+                    🗑️ Hapus Barang
+                  </button>
+                </form>
+              </div>
+            </div>
+
+            <!-- Upload / Ganti Foto -->
+            <p style="margin: 0 0 6px 0; font-weight: 600; font-size: 0.8rem; text-transform: uppercase; opacity: 0.85;">📸 Unggah / Ganti Foto Barang:</p>
             <form id="upload-image-form" onsubmit="uploadItemPicture(event)" enctype="multipart/form-data" style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
               {% csrf_token %}
               <input type="file" id="item-picture-input" name="image" accept="image/*" required style="font-size: 0.8rem; font-family: var(--font-body);">
@@ -278,7 +294,7 @@
   {% if can_negotiate %}
   <div id="negoModal" class="modal-overlay" onclick="closeNegoModalOnBg(event)" style="display: none;">
     <div class="modal-content">
-      <h2 style="margin: 0; font-size: 1.25rem; text-transform: uppercase;">🤝 Ajukan Nego Harga</h2>
+      <h2 style="margin: 0; font-size: 1.25rem; text-transform: uppercase; ">🤝 Ajukan Nego Harga</h2>
       <p style="font-family: sans-serif; font-size: 0.85rem; color: #555; margin: 6px 0 12px;">
         Harga awal barang: <strong>Rp{{ item.price|floatformat:"0g" }}</strong>
       </p>
@@ -296,7 +312,7 @@
 
         <div style="display: flex; gap: var(--space-2); justify-content: flex-end; margin-top: var(--space-2);">
           <button type="button" class="btn" onclick="closeNegoModal()" style="padding: 6px 14px; width: auto;">Batal</button>
-          <button type="submit" class="btn" style="padding: 6px 14px; width: auto; background: currentColor; color: #fff;">
+          <button type="submit" class="btn" style="padding: 6px 14px; width: auto; background: #F9E6A8; color: #000">
             Kirim Penawaran
           </button>
         </div>

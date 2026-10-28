@@ -8,10 +8,12 @@ urlpatterns = [
     # Alias login modul bersama (redirect ke login user_page)
     path('login/', module_login, name='login'),
 
-    # Halaman HTML Web (Katalog, Form Tambah Barang, dan Detail)
+    # Halaman HTML Web (Katalog, Form Tambah Barang, Edit, Hapus, dan Detail)
     path('', views.index, name='index'),
     path('tambah/', views.item_create_page, name='item_create'),
     path('detail/<uuid:listing_id>/', views.item_detail, name='item_detail'),
+    path('edit/<uuid:listing_id>/', views.item_edit_page, name='item_edit'),
+    path('hapus/<uuid:listing_id>/', views.item_delete_page, name='item_delete'),
 
     # Endpoint Fitur Nego Harga & Transaksi COD
     path('detail/<uuid:listing_id>/offer/', views.make_offer, name='make-offer'),

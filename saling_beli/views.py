@@ -186,7 +186,12 @@ def index(request):
 	condition = request.GET.get('condition', '').strip()
 	sort = request.GET.get('sort', 'newest').strip()
 
-	items = ItemListing.objects.all()
+	show_sold = request.GET.get('show_sold', '').strip() == '1'
+	# Secara default sembunyikan barang yang sudah berstatus SOLD agar katalog hanya menampilkan barang yang tersedia/aktif
+	if show_sold:
+		items = ItemListing.objects.all()
+	else:
+		items = ItemListing.objects.exclude(status=ItemListing.Status.SOLD)
 
 	# Filter search query
 	if query:
@@ -236,6 +241,7 @@ def index(request):
 		'category': category,
 		'condition': condition,
 		'sort': sort,
+		'show_sold': show_sold,
 		'categories': ItemListing.Category.choices,
 		'conditions': ItemListing.Condition.choices,
 		'session_views': session_views,
@@ -276,6 +282,43 @@ def item_create_page(request):
 		'form': form,
 	}
 	return render(request, 'saling_beli/saling-beli-form.html', context)
+
+@login_required
+def item_edit_page(request, listing_id):
+	"""
+	Halaman Form Edit Barang bagi Penjual / Pemilik Barang (HTML).
+	"""
+	listing = get_object_or_404(ItemListing, pk=listing_id, user=request.user)
+
+	if request.method == 'POST':
+		form = ItemListingForm(request.POST, request.FILES, instance=listing)
+		if form.is_valid():
+			item = form.save(commit=False)
+			if item.is_free:
+				item.price = 0
+			item.save()
+			return redirect('saling_beli:item_detail', listing_id=item.id)
+	else:
+		form = ItemListingForm(instance=listing)
+
+	context = {
+		'form': form,
+		'is_edit': True,
+		'listing': listing,
+	}
+	return render(request, 'saling_beli/saling-beli-form.html', context)
+
+
+@login_required
+@require_http_methods(['POST'])
+def item_delete_page(request, listing_id):
+	"""
+	Menghapus barang dagangan oleh pemiliknya (HTML Form POST).
+	"""
+	listing = get_object_or_404(ItemListing, pk=listing_id, user=request.user)
+	listing.delete()
+	return redirect('saling_beli:index')
+
 
 
 def item_detail(request, listing_id):
