@@ -10,7 +10,7 @@ from django.utils import timezone
 from django.utils.dateparse import parse_date, parse_time
 from django.views.decorators.http import require_POST
 from .models import RideBooking, RideOffer, RideRequest, RideSchedule, Vehicle
-
+from .forms import DAY_NAMES, LOCATIONS, PRICE_BY_TYPE, JoinRideForm, OfferVehicleForm, RideSearchForm, SeatsForm, build_week_formsets
 
 LOCATIONS = {
     'Fakultas Teknik',
@@ -126,15 +126,16 @@ def nebeng_list(request):
     Halaman utama NEBENG. Input: asal, tujuan, jam (+ tanggal, default hari ini).
     Hasil: tawaran dengan status matched / tidak (beserta alasannya).
     """
-    origin = request.GET.get('asal', '').strip()
-    destination = request.GET.get('tujuan', '').strip()
-    req_time = parse_time(request.GET.get('jam', ''))
-    req_date = parse_date(request.GET.get('tanggal', '')) or timezone.localdate()
-
+    form = RideSearchForm(request.GET or None)
     results = []
-    searched = bool(origin and destination and req_time)
+    searched = form.is_bound and form.is_valid()
 
     if searched:
+        origin = form.cleaned_data['asal']
+        destination = form.cleaned_data['tujuan']
+        req_time = form.cleaned_data['jam']
+        req_date = form.cleaned_data['tanggal']
+
         o_lat, o_lng = LOCATIONS.get(origin, (None, None))
         d_lat, d_lng = LOCATIONS.get(destination, (None, None))
         RideRequest.objects.get_or_create(
@@ -177,11 +178,7 @@ def nebeng_list(request):
         results.sort(key=lambda r: (not r['matched'], len(r['reasons']), r['time_diff']))
 
     return render(request, 'nebeng/nebeng_list.html', {
-        'locations': list(LOCATIONS.keys()),
-        'results': results,
-        'searched': searched,
-        'asal': origin, 'tujuan': destination,
-        'jam': request.GET.get('jam', ''), 'tanggal': req_date,
+        'form': form, 'results': results, 'searched': searched,
     })
 
 
@@ -205,6 +202,9 @@ def tawarkan_tebengan(request):
     price: 'paid' (tarif standar) atau 'free'.
     """
     days = _week_days()
+    is_post = request.method == 'POST'
+    vehicle_form = OfferVehicleForm(request.POST if is_post else None)
+    weeks = build_week_formsets(days, request.POST if is_post else None)
     existing = RideSchedule.objects.filter(
         ride_offer__driver=request.user, is_active=True,
         date__gte=days[0]['date'], date__lte=days[-1]['date'],
@@ -212,52 +212,31 @@ def tawarkan_tebengan(request):
 
     ctx = {
         'days': days,
-        'locations': list(LOCATIONS.keys()),
-        'vehicle_types': Vehicle.VEHICLE_TYPE_CHOICES,
+        'weeks': weeks,
+        'vehicle_form': vehicle_form,
         'existing': existing,
-        'posted': request.POST,
     }
-    if request.method != 'POST':
-        return render(request, 'nebeng/offer_ride.html', ctx)
+    if not is_post:
+        return render(request, 'nebeng/tawarkan_tebengan.html', ctx)
 
-    errors = []
-    vehicle_type = request.POST.get('vehicle_type', '')
-    if vehicle_type not in PRICE_BY_TYPE:
-        errors.append('Pilih jenis kendaraan.')
-    try:
-        capacity = int(request.POST.get('capacity', ''))
-        if capacity < 1:
-            raise ValueError
-    except ValueError:
-        capacity = 0
-        errors.append('Kapasitas minimal 1.')
+    valid = vehicle_form.is_valid()
+    for _, fs in weeks:
+        valid = fs.is_valid() and valid 
 
-    # kumpulkan slot per hari
     slots = []
-    for d in days:
-        iso = d['date'].isoformat()
-        rows = zip(
-            request.POST.getlist(f'time_{iso}'),
-            request.POST.getlist(f'origin_{iso}'),
-            request.POST.getlist(f'destination_{iso}'),
-            request.POST.getlist(f'price_{iso}') or ['paid'] * 50,
-        )
-        for t, o, dest, p in rows:
-            if not (t or o or dest):
-                continue  # baris kosong
-            label = f'{d["name"]} {d["date"]:%d/%m}'
-            tm = parse_time(t)
-            if not tm or o not in LOCATIONS or dest not in LOCATIONS:
-                errors.append(f'{label}: jam, asal, dan tujuan wajib diisi.')
-            elif o == dest:
-                errors.append(f'{label}: asal dan tujuan tidak boleh sama.')
-            else:
-                slots.append((d['date'], tm, o, dest, p))
+    if valid:
+        for d, fs in weeks:
+            for f in fs:
+                cd = f.cleaned_data
+                if cd:
+                    slots.append((d['date'], cd['time'], cd['origin'], cd['destination'], cd['price']))
+        if not slots:
+            messages.error(request, 'Isi minimal satu jadwal.')
+            valid = False
 
-    if not slots and not errors:
-        errors.append('Isi minimal satu jadwal.')
-
-    if not errors:
+    if valid:
+        vcd = vehicle_form.cleaned_data
+        vehicle_type, capacity = vcd['vehicle_type'], vcd['capacity']
         try:
             with transaction.atomic():
                 vehicle = Vehicle.objects.filter(
@@ -269,13 +248,11 @@ def tawarkan_tebengan(request):
                 else:
                     vehicle = Vehicle.objects.create(
                         owner=request.user, vehicle_type=vehicle_type,
-                        capacity=capacity,
-                        brand=request.POST.get('brand', '').strip(),
-                        model=request.POST.get('model', '').strip(),
-                        license_plate=request.POST.get('license_plate', '').strip(),
+                        capacity=capacity, brand=vcd['brand'],
+                        model=vcd['model'], license_plate=vcd['license_plate'],
                     )
                 offer = RideOffer.objects.create(driver=request.user, vehicle=vehicle)
-
+ 
                 slot_errors = []
                 for dt, tm, o, dest, p in slots:
                     label = f'{dt:%d/%m} {tm:%H:%M}'
@@ -303,15 +280,15 @@ def tawarkan_tebengan(request):
                 if slot_errors:
                     raise _SlotError(slot_errors)
         except _SlotError as e:
-            errors.extend(e.errors)
+            for m in e.errors:
+                messages.error(request, m)
+            valid = False
+ 
+    if valid:
+        messages.success(request, 'Tawaran tebengan berhasil disimpan.')
+        return redirect('nebeng_list')
+    return render(request, 'nebeng/tawarkan_tebengan.html', ctx)
 
-    if errors:
-        for e in errors:
-            messages.error(request, e)
-        return render(request, 'nebeng/tawarkan_tebengan.html', ctx)
-
-    messages.success(request, 'Tawaran tebengan berhasil disimpan.')
-    return redirect('nebeng_list')
 
 
 @login_required
@@ -324,7 +301,7 @@ def cancel_schedule(request, schedule_id):
     schedule.save(update_fields=['is_active'])
     schedule.bookings.exclude(status='completed').update(status='cancelled')
     messages.success(request, 'Jadwal dibatalkan.')
-    return redirect('offer_ride')
+    return redirect('tawarkan_tebengan')
 
 
 # ---------------------------------------------------------------------------
@@ -340,14 +317,14 @@ def join_ride(request, schedule_id):
     Jika tidak matched -> arahkan ke chat untuk menyesuaikan.
     """
     schedule = get_object_or_404(RideSchedule, pk=schedule_id)
-    origin = request.POST.get('asal', '')
-    destination = request.POST.get('tujuan', '')
-    req_time = parse_time(request.POST.get('jam', ''))
-    seats = int(request.POST.get('seats', 1) or 1)
-
-    if not (origin and destination and req_time):
+    form = JoinRideForm(request.POST)
+    if not form.is_valid():
         messages.error(request, 'Data pencarian tidak lengkap.')
         return redirect('nebeng_list')
+    origin = form.cleaned_data['asal']
+    destination = form.cleaned_data['tujuan']
+    req_time = form.cleaned_data['jam']
+    seats = form.cleaned_data['kapasitas']
 
     if not evaluate_matched(schedule, origin, destination, req_time)['matched']:
         messages.info(request, 'Belum cocok, sesuaikan dulu lewat chat.')
@@ -387,8 +364,11 @@ def ride_chat(request, schedule_id):
 @require_POST
 def join_from_chat(request, schedule_id):
     """Gabung setelah sepakat di chat (tanpa syarat matched)."""
-    seats = int(request.POST.get('seats', 1) or 1)
-    booking, err = _create_booking(request.user, schedule_id, seats)
+    form = SeatsForm(request.POST)
+    if not form.is_valid():
+        messages.error(request, 'Kapasitas tidak valid.')
+        return redirect('ride_chat', schedule_id=schedule_id)
+    booking, err = _create_booking(request.user, schedule_id, form.cleaned_data['seats'])
     if err:
         messages.error(request, err)
         return redirect('ride_chat', schedule_id=schedule_id)
