@@ -23,9 +23,9 @@
 
     <section class="form-shell">
       <header class="form-shell__header">
-        <h1 class="form-shell__title">➕ Form Penjual / Pemberi</h1>
+        <h1 class="form-shell__title">{% if is_edit %}✏️ Edit Barang Dagangan{% else %}➕ Form Penjual / Pemberi{% endif %}</h1>
         <p class="form-shell__subtitle">
-          Jual barang prelove atau bagikan barang secara gratis bagi sesama mahasiswa UI.
+          {% if is_edit %}Perbarui detail informasi barang prelove atau hibah Anda.{% else %}Jual barang prelove atau bagikan barang secara gratis bagi sesama mahasiswa UI.{% endif %}
         </p>
       </header>
 
@@ -42,7 +42,7 @@
         </div>
       {% endif %}
 
-      <form method="post" enctype="multipart/form-data" action="{% url 'saling_beli:item_create' %}">
+      <form method="post" enctype="multipart/form-data" action="{% if is_edit %}{% url 'saling_beli:item_edit' listing.id %}{% else %}{% url 'saling_beli:item_create' %}{% endif %}">
         {% csrf_token %}
 
         <!-- Judul Barang -->
@@ -88,14 +88,14 @@
           {{ form.pickup_location }}
         </div>
 
-        <!-- Rekening / E-Wallet Penjual (Escrow Salink QRIS Guarantee) -->
+        <!-- Rekening / E-Wallet Penjual untuk Pembayaran Pembeli -->
         <div id="payout-box" style="border: 2px solid #000; border-radius: 12px; padding: 16px; background: #fdfbf7; margin-bottom: 20px;">
           <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
-            <span style="font-size: 1.2rem;">🛡️</span>
+            <span style="font-size: 1.2rem;">💳</span>
             <div>
-              <strong style="font-size: 0.95rem; text-transform: uppercase;">Rekening / E-Wallet Pencairan (Garansi QRIS SaLink)</strong>
+              <strong style="font-size: 0.95rem; text-transform: uppercase;">Rekening / E-Wallet Pembayaran Langsung</strong>
               <p style="margin: 2px 0 0; font-family: sans-serif; font-size: 0.78rem; color: #555;">
-                Untuk menghindari penipuan, pembeli akan membayar via <strong>QRIS SaLink</strong>. Setelah barang diterima pembeli saat COD, SaLink akan langsung mentransfer dana ke rekening/e-wallet Anda.
+                Rekening tujuan transfer untuk pembeli. Pembeli akan mengonfirmasi sudah transfer, lalu Anda dapat memverifikasi dana masuk sebelum bertemu COD.
               </p>
             </div>
           </div>
@@ -140,9 +140,9 @@
 
         <!-- Action Buttons -->
         <div class="form-actions">
-          <a href="{% url 'saling_beli:index' %}" class="btn-salink">Batal</a>
+          <a href="{% if is_edit %}{% url 'saling_beli:item_detail' listing.id %}{% else %}{% url 'saling_beli:index' %}{% endif %}" class="btn-salink">Batal</a>
           <button type="submit" class="btn-salink btn-salink--primary">
-            🚀 Terbitkan Barang
+            {% if is_edit %}💾 Simpan Perubahan{% else %}🚀 Terbitkan Barang{% endif %}
           </button>
         </div>
       </form>

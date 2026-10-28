@@ -46,11 +46,16 @@
           <p><strong>Status Ketersediaan:</strong> {{ item.get_status_display }}</p>
 
           {% if not item.is_free and item.payout_account_number %}
-          <div style="background: var(--salink-white); border-radius: 12px; padding: 12px 14px; margin: 10px 0;">
-            <p style="margin: 0; font-size: 0.85rem;">
-              <strong>🛡️ Rekening Pencairan Penjual (Terdaftar di SaLink):</strong><br>
-              <span style="font-family: var(--font-body);">{{ item.payout_method }} &bull; No: <strong>{{ item.payout_account_number }}</strong> (a.n. {{ item.payout_account_name|default:item.user.username }})</span>
-            </p>
+          <div style="background: var(--salink-white); border-radius: 12px; padding: 12px 14px; margin: 10px 0; border: 1.5px solid var(--salink-dark);">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+              <div>
+                <p style="margin: 0; font-size: 0.85rem;">
+                  <strong>💳 Rekening Pembayaran Penjual (@{{ item.user.username }}):</strong><br>
+                  <span style="font-family: var(--font-body);">{{ item.payout_method }} &bull; No: <strong id="rekening-text">{{ item.payout_account_number }}</strong> (a.n. {{ item.payout_account_name|default:item.user.username }})</span>
+                </p>
+              </div>
+              <button type="button" onclick="copyRekening()" class="btn" style="padding: 4px 10px; font-size: 0.75rem;">📋 Salin No. Rekening</button>
+            </div>
           </div>
           {% endif %}
 
@@ -59,9 +64,25 @@
           </p>
 
           {% if user == item.user %}
-          <!-- Fitur Upload Foto Khusus Penjual Barang -->
-          <div style="margin-top: 10px; padding: 12px; background: var(--salink-white); border-radius: 12px;">
-            <p style="margin: 0 0 6px 0; font-weight: bold; font-size: 0.85rem; text-transform: uppercase;">📸 Unggah / Ganti Foto Barang Anda:</p>
+          <!-- Panel Manajemen Penjual (Edit, Hapus, Upload Foto) -->
+          <div style="margin-top: 12px; padding: 14px; background: var(--salink-white); border-radius: 12px; border: 2px solid var(--salink-dark);">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 10px;">
+              <span style="font-weight: bold; font-size: 0.85rem; text-transform: uppercase;">⚙️ Kelola Barang Dagangan Anda</span>
+              <div style="display: flex; gap: 8px;">
+                <a href="{% url 'saling_beli:item_edit' item.id %}" class="btn" style="padding: 6px 12px; font-size: 0.8rem; background: var(--salink-light); text-decoration: none; color: inherit;">
+                  ✏️ Edit Detail
+                </a>
+                <form method="post" action="{% url 'saling_beli:item_delete' item.id %}" onsubmit="return confirm('Apakah Anda yakin ingin menghapus barang ini secara permanen? Data dan chat terkait akan ikut terhapus.');" style="display: inline; margin: 0;">
+                  {% csrf_token %}
+                  <button type="submit" class="btn" style="padding: 6px 12px; font-size: 0.8rem; background: #c62828; color: #fff; cursor: pointer;">
+                    🗑️ Hapus Barang
+                  </button>
+                </form>
+              </div>
+            </div>
+
+            <!-- Upload / Ganti Foto -->
+            <p style="margin: 0 0 6px 0; font-weight: 600; font-size: 0.8rem; text-transform: uppercase; opacity: 0.85;">📸 Unggah / Ganti Foto Barang:</p>
             <form id="upload-image-form" onsubmit="uploadItemPicture(event)" enctype="multipart/form-data" style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
               {% csrf_token %}
               <input type="file" id="item-picture-input" name="image" accept="image/*" required style="font-size: 0.8rem; font-family: var(--font-body);">
@@ -73,47 +94,22 @@
         </div>
 
         {% if not item.is_free %}
-        <!-- Bagian Pembayaran Garansi QRIS SaLink Escrow -->
-        <div class="payment-box" style="border-radius: 16px; padding: 16px; background: var(--salink-white); margin-block: var(--space-3);">
+        <!-- Alur Pembayaran Langsung ke Rekening Penjual -->
+        <div class="payment-box" style="border-radius: 16px; padding: 16px; background: var(--salink-white); margin-block: var(--space-3); border: 2px solid var(--salink-dark);">
           <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
-            <span style="font-size: 1.4rem;">🛡️</span>
-            <h3 style="margin: 0; font-size: 1.05rem; text-transform: uppercase;">Garansi Pembayaran Aman: QRIS SaLink Escrow</h3>
+            <span style="font-size: 1.4rem;">🤝</span>
+            <h3 style="margin: 0; font-size: 1.05rem; text-transform: uppercase;">Alur Pembayaran & Konfirmasi 2 Arah</h3>
           </div>
           <div class="payment-info" style="font-family: var(--font-body); font-size: 0.85rem; line-height: 1.5;">
             <p style="margin: 0 0 8px 0;">
-              Untuk melindungi mahasiswa dari risiko penipuan COD, seluruh pembayaran ditransfer terlebih dahulu ke <strong>QRIS Resmi SaLink</strong> (Penampung Aman).
+              Transaksi dilakukan secara transparan antara pembeli dan penjual:
             </p>
-            <div style="display: flex; gap: 14px; align-items: center; background: var(--salink-cream); border-radius: 12px; padding: 12px; flex-wrap: wrap;">
-              <div style="text-align: center; padding: 8px; border-radius: 10px; background: var(--salink-white);">
-                <!-- QR Code Visual -->
-                <svg width="90" height="90" viewBox="0 0 100 100" style="display: block; margin: 0 auto;">
-                  <rect width="100" height="100" fill="#fff"/>
-                  <rect x="10" y="10" width="30" height="30" fill="#4D2A00"/>
-                  <rect x="15" y="15" width="20" height="20" fill="#fff"/>
-                  <rect x="20" y="20" width="10" height="10" fill="#4D2A00"/>
-                  <rect x="60" y="10" width="30" height="30" fill="#4D2A00"/>
-                  <rect x="65" y="15" width="20" height="20" fill="#fff"/>
-                  <rect x="70" y="20" width="10" height="10" fill="#4D2A00"/>
-                  <rect x="10" y="60" width="30" height="30" fill="#4D2A00"/>
-                  <rect x="15" y="65" width="20" height="20" fill="#fff"/>
-                  <rect x="20" y="70" width="10" height="10" fill="#4D2A00"/>
-                  <rect x="45" y="45" width="12" height="12" fill="#4D2A00"/>
-                  <rect x="55" y="65" width="10" height="15" fill="#4D2A00"/>
-                  <rect x="75" y="55" width="15" height="10" fill="#4D2A00"/>
-                  <rect x="45" y="20" width="10" height="15" fill="#4D2A00"/>
-                  <rect x="65" y="80" width="20" height="10" fill="#4D2A00"/>
-                </svg>
-                <span style="font-size: 0.65rem; font-weight: bold; text-transform: uppercase;">QRIS SALINK UI</span>
-              </div>
-              <div style="flex: 1; min-width: 180px;">
-                <p style="margin: 0; font-size: 0.85rem;"><strong>NMID:</strong> ID1024592019920</p>
-                <p style="margin: 2px 0;"><strong>Merchant:</strong> SALINK OFFICIAL UI</p>
-                <p style="margin: 2px 0;"><strong>Nominal:</strong> Rp{{ item.price|floatformat:"0g" }}</p>
-                <p style="margin: 4px 0 0; font-size: 0.78rem; opacity: 0.9;">
-                  ✅ Dana Anda ditahan aman oleh SaLink. Saat Anda telah bertemu di titik COD dan mengonfirmasi barang diterima, sistem SaLink otomatis mentransfer dana ke rekening penjual.
-                </p>
-              </div>
-            </div>
+            <ol style="margin: 0 0 0 18px; padding: 0;">
+              <li>Pembeli memesan dan mentransfer dana ke <strong>{{ item.payout_method }} {{ item.payout_account_number }}</strong>.</li>
+              <li>Pembeli memasukkan nomor referensi/bukti transfer di tracker.</li>
+              <li><strong>Penjual mengonfirmasi langsung</strong> bila uang sudah masuk ke rekening/e-walletnya.</li>
+              <li>Kedua pihak mengatur janji temu COD di kampus untuk serah terima barang.</li>
+            </ol>
           </div>
         </div>
         {% else %}
@@ -130,7 +126,7 @@
           <div class="btn-group">
             {% if can_purchase %}
             <button onclick="openPaymentModal()" class="btn" style="flex: 2; padding: 10px 16px; font-size: 0.95rem; cursor: pointer; background: #000; color: #fff;">
-              {% if item.is_free %}🎁 Ambil Barang (Gratis){% else %}💳 Beli Sekarang (QRIS){% endif %}
+              {% if item.is_free %}🎁 Ambil Barang (Gratis){% else %}💳 Beli & Buat Pesanan{% endif %}
             </button>
             {% if can_negotiate %}
             <button onclick="openNegoModal()" class="btn" style="flex: 1.5; padding: 10px 16px; font-size: 0.95rem; cursor: pointer; background: #fafafa; color: #000">
@@ -215,18 +211,30 @@
               </div>
 
               {% if user == ord.buyer or user == ord.seller %}
-              <div style="margin-top: 10px; display: flex; gap: 6px; flex-wrap: wrap;">
-                {% if user == ord.buyer and ord.stage == 'MENUNGGU_TRANSFER' %}
-                  <button onclick="updateOrderPrompt('{{ ord.id }}', 'BUKTI_DIUNGGAH', 'Masukkan no. referensi transfer / nama bank pengirim:')" class="btn" style="padding: 4px 10px; font-size: 0.75rem;">Konfirmasi Sudah Transfer</button>
+              <div style="margin-top: 10px; display: flex; gap: 6px; flex-wrap: wrap; align-items: center;">
+                {% if ord.item.is_free %}
+                  {% if ord.stage == 'MENUNGGU_TRANSFER' or ord.stage == 'JANJI_TEMU_COD' %}
+                    <button onclick="updateOrderPrompt('{{ ord.id }}', 'JANJI_TEMU_COD', 'Tentukan hari & jam pertemuan serah terima barang di kampus:', 'cod_time')" class="btn" style="padding: 4px 10px; font-size: 0.75rem; background: #000; color: #fff;">Atur Waktu Janji Temu</button>
+                  {% endif %}
+                  {% if ord.stage == 'JANJI_TEMU_COD' %}
+                    <button onclick="updateOrder('{{ ord.id }}', 'SELESAI')" class="btn" style="padding: 4px 10px; font-size: 0.75rem; background: #1565c0; color: #fff;">Konfirmasi Barang Sudah Diambil</button>
+                  {% endif %}
+                {% else %}
+                  {% if user == ord.buyer and ord.stage == 'MENUNGGU_TRANSFER' %}
+                    <button onclick="updateOrderPrompt('{{ ord.id }}', 'BUKTI_DIUNGGAH', 'Masukkan nomor referensi transfer / nama bank/e-wallet pengirim:')" class="btn" style="padding: 4px 10px; font-size: 0.75rem; background: #000; color: #fff;">Konfirmasi Sudah Transfer</button>
+                  {% endif %}
+                  {% if user == ord.seller and ord.stage == 'BUKTI_DIUNGGAH' %}
+                    <button onclick="updateOrder('{{ ord.id }}', 'DIKONFIRMASI')" class="btn" style="padding: 4px 10px; font-size: 0.75rem; background: #2e7d32; color: #fff;">Konfirmasi Dana Masuk</button>
+                  {% endif %}
+                  {% if ord.stage == 'DIKONFIRMASI' or ord.stage == 'BUKTI_DIUNGGAH' %}
+                    <button onclick="updateOrderPrompt('{{ ord.id }}', 'JANJI_TEMU_COD', 'Tentukan hari & jam pertemuan COD kampus:', 'cod_time')" class="btn" style="padding: 4px 10px; font-size: 0.75rem;">Atur Jadwal COD</button>
+                  {% endif %}
+                  {% if ord.stage == 'JANJI_TEMU_COD' %}
+                    <button onclick="updateOrder('{{ ord.id }}', 'SELESAI')" class="btn" style="padding: 4px 10px; font-size: 0.75rem; background: #1565c0; color: #fff;">Selesaikan Transaksi (Barang Diterima)</button>
+                  {% endif %}
                 {% endif %}
-                {% if user == ord.seller and ord.stage == 'BUKTI_DIUNGGAH' %}
-                  <button onclick="updateOrder('{{ ord.id }}', 'DIKONFIRMASI')" class="btn" style="padding: 4px 10px; font-size: 0.75rem; background: #2e7d32; color: #fff;">Verifikasi Dana Masuk</button>
-                {% endif %}
-                {% if ord.stage == 'DIKONFIRMASI' or ord.stage == 'BUKTI_DIUNGGAH' %}
-                  <button onclick="updateOrderPrompt('{{ ord.id }}', 'JANJI_TEMU_COD', 'Tentukan hari & jam pertemuan COD kampus:', 'cod_time')" class="btn" style="padding: 4px 10px; font-size: 0.75rem;">Atur Waktu COD</button>
-                {% endif %}
-                {% if ord.stage == 'JANJI_TEMU_COD' %}
-                  <button onclick="updateOrder('{{ ord.id }}', 'SELESAI')" class="btn" style="padding: 4px 10px; font-size: 0.75rem; background: #1565c0; color: #fff;">Selesaikan Transaksi (Barang Diterima)</button>
+                {% if ord.stage != 'SELESAI' and ord.stage != 'BATAL' %}
+                  <button onclick="if(confirm('Yakin ingin membatalkan pesanan ini?')) updateOrder('{{ ord.id }}', 'BATAL')" class="btn" style="padding: 4px 10px; font-size: 0.75rem; background: #fee2e2; color: #b91c1c; border-color: #fca5a5;">Batalkan Pesanan</button>
                 {% endif %}
               </div>
               {% endif %}
@@ -240,12 +248,12 @@
     </article>
   </main>
 
-  <!-- Modal Konfirmasi Transfer Garansi QRIS SaLink -->
+  <!-- Modal Konfirmasi Pemesanan & Pembayaran Langsung ke Penjual -->
   {% if can_purchase %}
   <div id="paymentModal" class="modal-overlay" onclick="closeModalOnBg(event)">
     <div class="modal-content" style="border: 2px solid #000; border-radius: 16px; box-shadow: 6px 6px 0px #000;">
       <h2 style="margin: 0; font-size: 1.25rem; text-transform: uppercase;">
-        🛡️ {% if item.is_free %}Konfirmasi Ambil Barang Gratis{% else %}Pembayaran QRIS SaLink (Aman Anti-Penipuan){% endif %}
+        {% if item.is_free %}🎁 Konfirmasi Ambil Barang Gratis{% else %}💳 Konfirmasi Pesanan & Transfer Penjual{% endif %}
       </h2>
       <div style="font-family: sans-serif; font-size: 0.9rem; line-height: 1.5;">
         <p style="margin: 6px 0;">Barang: <strong>{{ item.title }}</strong></p>
@@ -253,11 +261,15 @@
         <p style="margin: 6px 0;">Titik Temu COD: <strong>{{ item.pickup_location }}</strong></p>
 
         {% if not item.is_free %}
-        <div style="background: #f0fdf4; border: 1.5px solid #000; border-radius: 8px; padding: 10px; margin: 8px 0; font-size: 0.8rem;">
-          <p style="margin: 0;">
-            1. Pindai QRIS <strong>SALINK OFFICIAL UI</strong> dengan m-banking/e-wallet Anda.<br>
-            2. Dana Anda disimpan aman oleh pihak SaLink.<br>
-            3. Saat COD berlangsung dan barang sudah Anda terima & cek, klik <strong>'Selesaikan Transaksi'</strong> di tracker, lalu SaLink meneruskan dana ke: <strong>{{ item.payout_method }} {{ item.payout_account_number }} (a.n. {{ item.payout_account_name|default:item.user.username }})</strong>.
+        <div style="background: #f0fdf4; border: 1.5px solid #000; border-radius: 8px; padding: 10px; margin: 8px 0; font-size: 0.82rem;">
+          <p style="margin: 0 0 6px 0; font-weight: bold;">Tujuan Transfer Penjual (@{{ item.user.username }}):</p>
+          <p style="margin: 0; font-size: 0.9rem;">
+            <strong>{{ item.payout_method }}</strong> - <strong>{{ item.payout_account_number }}</strong><br>
+            a.n. <strong>{{ item.payout_account_name|default:item.user.username }}</strong>
+          </p>
+          <hr style="margin: 8px 0; border: 0; border-top: 1px dashed #bbb;">
+          <p style="margin: 0; font-size: 0.78rem; color: #444;">
+            Setelah memesan, Anda dapat mentransfer langsung ke rekening/e-wallet di atas. Selanjutnya, klik <strong>'Konfirmasi Sudah Transfer'</strong> di tracker agar penjual dapat memverifikasi masuknya dana.
           </p>
         </div>
         {% else %}
@@ -270,7 +282,7 @@
       <div style="display: flex; gap: var(--space-2); justify-content: flex-end; margin-top: var(--space-2);">
         <button class="btn" onclick="closePaymentModal()" style="padding: 6px 14px; width: auto;">Batal</button>
         <button class="btn" onclick="confirmTransferOrder()" style="padding: 6px 14px; width: auto; background: #000; color: #fff;">
-          {% if item.is_free %}Konfirmasi Ambil Barang{% else %}Konfirmasi Bayar QRIS & Buat Pesanan{% endif %}
+          {% if item.is_free %}Konfirmasi Ambil Barang{% else %}Buat Pesanan Sekarang{% endif %}
         </button>
       </div>
       <p id="order-message" style="font-family: sans-serif; font-size: 0.8rem; color: green; margin: 0;"></p>
@@ -282,7 +294,7 @@
   {% if can_negotiate %}
   <div id="negoModal" class="modal-overlay" onclick="closeNegoModalOnBg(event)" style="display: none;">
     <div class="modal-content">
-      <h2 style="margin: 0; font-size: 1.25rem; text-transform: uppercase;">🤝 Ajukan Nego Harga</h2>
+      <h2 style="margin: 0; font-size: 1.25rem; text-transform: uppercase; ">🤝 Ajukan Nego Harga</h2>
       <p style="font-family: sans-serif; font-size: 0.85rem; color: #555; margin: 6px 0 12px;">
         Harga awal barang: <strong>Rp{{ item.price|floatformat:"0g" }}</strong>
       </p>
@@ -300,7 +312,7 @@
 
         <div style="display: flex; gap: var(--space-2); justify-content: flex-end; margin-top: var(--space-2);">
           <button type="button" class="btn" onclick="closeNegoModal()" style="padding: 6px 14px; width: auto;">Batal</button>
-          <button type="submit" class="btn" style="padding: 6px 14px; width: auto; background: currentColor; color: #fff;">
+          <button type="submit" class="btn" style="padding: 6px 14px; width: auto; background: #F9E6A8; color: #000">
             Kirim Penawaran
           </button>
         </div>

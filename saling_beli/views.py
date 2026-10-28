@@ -43,10 +43,11 @@ MAX_IMAGE_BYTES = 5 * 1024 * 1024
 ALLOWED_IMAGE_EXTENSIONS = ('.jpg', '.jpeg', '.png', '.webp', '.gif')
 ALLOWED_IMAGE_CONTENT_TYPES = {'image/jpeg', 'image/png', 'image/webp', 'image/gif'}
 
-# Transisi tahap yang sah. Urutan tracker tidak boleh dilompati.
+# Transisi tahap yang sah. Urutan tracker tidak boleh dilompati (kecuali barang gratis bisa langsung atur COD).
 STAGE_TRANSITIONS = {
 	TransactionOrder.Stage.MENUNGGU_TRANSFER: {
 		TransactionOrder.Stage.BUKTI_DIUNGGAH,
+		TransactionOrder.Stage.JANJI_TEMU_COD,
 		TransactionOrder.Stage.BATAL,
 	},
 	TransactionOrder.Stage.BUKTI_DIUNGGAH: {
@@ -178,17 +179,46 @@ def _resolve_conversation(item, user, peer_id):
 def index(request):
 	"""
 	Halaman utama katalog prelove Saling Beli (HTML).
-	Mendukung pencarian (?q=...), session view count, dan pembacaan cookie.
+	Mendukung pencarian (?q=...), filter kategori, kondisi fisik, dan pengurutan (A-Z, Z-A, terbaru, terlama).
 	"""
 	query = request.GET.get('q', '').strip()
-	items = ItemListing.objects.all()
+	category = request.GET.get('category', '').strip()
+	condition = request.GET.get('condition', '').strip()
+	sort = request.GET.get('sort', 'newest').strip()
 
+	show_sold = request.GET.get('show_sold', '').strip() == '1'
+	# Secara default sembunyikan barang yang sudah berstatus SOLD agar katalog hanya menampilkan barang yang tersedia/aktif
+	if show_sold:
+		items = ItemListing.objects.all()
+	else:
+		items = ItemListing.objects.exclude(status=ItemListing.Status.SOLD)
+
+	# Filter search query
 	if query:
 		items = items.filter(
 			Q(title__icontains=query) |
 			Q(description__icontains=query) |
 			Q(pickup_location__icontains=query)
 		)
+
+	# Filter kategori barang
+	if category and category in ItemListing.Category.values:
+		items = items.filter(category=category)
+
+	# Filter kondisi fisik barang
+	if condition and condition in ItemListing.Condition.values:
+		items = items.filter(condition=condition)
+
+	# Sorting: A-Z, Z-A, terbaru, terlama
+	if sort == 'name_asc':
+		items = items.order_by('title')
+	elif sort == 'name_desc':
+		items = items.order_by('-title')
+	elif sort == 'oldest':
+		items = items.order_by('created_at')
+	else:  # 'newest' default
+		sort = 'newest'
+		items = items.order_by('-created_at')
 
 	# Session tracking: hitung berapa kali user membuka katalog saling_beli
 	session_views = request.session.get('saling_beli_views', 0) + 1
@@ -202,13 +232,18 @@ def index(request):
 	recently_viewed_ids = request.session.get('recently_viewed_items', [])
 	recently_viewed_items = []
 	if recently_viewed_ids:
-		# Preserve order of recently viewed
 		id_map = {str(item.id): item for item in ItemListing.objects.filter(id__in=recently_viewed_ids)}
 		recently_viewed_items = [id_map[i_id] for i_id in recently_viewed_ids if i_id in id_map]
 
 	context = {
 		'items': items,
 		'query': query,
+		'category': category,
+		'condition': condition,
+		'sort': sort,
+		'show_sold': show_sold,
+		'categories': ItemListing.Category.choices,
+		'conditions': ItemListing.Condition.choices,
 		'session_views': session_views,
 		'last_visit_cookie': last_visit_cookie,
 		'last_login_cookie': last_login_cookie,
@@ -217,7 +252,6 @@ def index(request):
 
 	response = render(request, 'saling_beli/saling-beli.html', context)
 
-	# Set cookie kunjungan terakhir untuk tracking user preference
 	now_str = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 	response.set_cookie('saling_beli_last_visit', now_str, max_age=60 * 60 * 24 * 7)
 
@@ -248,6 +282,43 @@ def item_create_page(request):
 		'form': form,
 	}
 	return render(request, 'saling_beli/saling-beli-form.html', context)
+
+@login_required
+def item_edit_page(request, listing_id):
+	"""
+	Halaman Form Edit Barang bagi Penjual / Pemilik Barang (HTML).
+	"""
+	listing = get_object_or_404(ItemListing, pk=listing_id, user=request.user)
+
+	if request.method == 'POST':
+		form = ItemListingForm(request.POST, request.FILES, instance=listing)
+		if form.is_valid():
+			item = form.save(commit=False)
+			if item.is_free:
+				item.price = 0
+			item.save()
+			return redirect('saling_beli:item_detail', listing_id=item.id)
+	else:
+		form = ItemListingForm(instance=listing)
+
+	context = {
+		'form': form,
+		'is_edit': True,
+		'listing': listing,
+	}
+	return render(request, 'saling_beli/saling-beli-form.html', context)
+
+
+@login_required
+@require_http_methods(['POST'])
+def item_delete_page(request, listing_id):
+	"""
+	Menghapus barang dagangan oleh pemiliknya (HTML Form POST).
+	"""
+	listing = get_object_or_404(ItemListing, pk=listing_id, user=request.user)
+	listing.delete()
+	return redirect('saling_beli:index')
+
 
 
 def item_detail(request, listing_id):
@@ -320,6 +391,12 @@ def make_offer(request, listing_id):
 		offered_price = int(price_val)
 	except (ValueError, TypeError, json.JSONDecodeError):
 		return JsonResponse({'error': 'Harga penawaran harus berupa angka valid.'}, status=400)
+
+	if offered_price <= 0:
+		return JsonResponse({'error': 'Harga penawaran harus lebih besar dari Rp 0.'}, status=400)
+
+	if offered_price >= item.price:
+		return JsonResponse({'error': 'Harga penawaran harus lebih rendah dari harga asli. Gunakan tombol Pesan Sekarang jika ingin membeli dengan harga normal.'}, status=400)
 
 	offer = PriceOffer.objects.create(
 		item=item,
@@ -405,6 +482,22 @@ def respond_offer(request, offer_id):
 			offer.status = PriceOffer.OfferStatus.ACCEPTED
 			offer.save(update_fields=['status', 'updated_at'])
 
+			# Tolak otomatis penawaran pending lain untuk barang ini agar pembeli lain mendapat kepastian
+			other_offers = PriceOffer.objects.filter(
+				item=item,
+				status=PriceOffer.OfferStatus.PENDING
+			).exclude(pk=offer.pk)
+			for pending_offer in other_offers:
+				pending_offer.status = PriceOffer.OfferStatus.REJECTED
+				pending_offer.save(update_fields=['status', 'updated_at'])
+				UserNotification.objects.create(
+					user=pending_offer.buyer,
+					title='Tawaran Nego Ditolak',
+					message=f'Penjual @{request.user.username} telah menerima penawaran lain untuk "{item.title}".',
+					notification_type=UserNotification.NotifType.OFFER,
+					link=f'/saling-beli/detail/{item.id}/'
+				)
+
 			if item.status == ItemListing.Status.AVAILABLE:
 				item.status = ItemListing.Status.RESERVED
 				item.save(update_fields=['status', 'updated_at'])
@@ -488,6 +581,22 @@ def create_order(request, listing_id):
 		# Barang dikunci selama transaksi berjalan.
 		item.status = ItemListing.Status.RESERVED
 		item.save(update_fields=['status', 'updated_at'])
+
+		# Tolak otomatis penawaran pending untuk barang ini karena sudah dipesan
+		other_offers = PriceOffer.objects.filter(
+			item=item,
+			status=PriceOffer.OfferStatus.PENDING
+		)
+		for pending_offer in other_offers:
+			pending_offer.status = PriceOffer.OfferStatus.REJECTED
+			pending_offer.save(update_fields=['status', 'updated_at'])
+			UserNotification.objects.create(
+				user=pending_offer.buyer,
+				title='Tawaran Nego Ditolak',
+				message=f'Barang "{item.title}" telah dipesan oleh pembeli lain.',
+				notification_type=UserNotification.NotifType.OFFER,
+				link=f'/saling-beli/detail/{item.id}/'
+			)
 
 		# Notifikasi ke Penjual
 		UserNotification.objects.create(

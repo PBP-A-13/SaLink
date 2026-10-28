@@ -21,7 +21,7 @@ class ItemListingForm(forms.ModelForm):
         choices=PAYOUT_METHOD_CHOICES,
         required=False,
         widget=forms.Select(attrs={'class': 'form-select', 'id': 'id_payout_method'}),
-        label='Bank / E-Wallet Pencairan Dana',
+        label='Bank / E-Wallet Penjual',
     )
 
     class Meta:
@@ -77,7 +77,7 @@ class ItemListingForm(forms.ModelForm):
             }),
             'payout_account_name': forms.TextInput(attrs={
                 'class': 'form-input',
-                'placeholder': 'Nama sesuai buku tabungan atau akun e-wallet',
+                'placeholder': 'Nama pemilik rekening / akun e-wallet penjual',
             }),
             'payout_account_number': forms.TextInput(attrs={
                 'class': 'form-input',
@@ -99,15 +99,15 @@ class ItemListingForm(forms.ModelForm):
             'is_free': 'Bagikan Secara Gratis (Rp0)?',
             'price': 'Harga (Rp)',
             'description': 'Deskripsi Lengkap',
-            'pickup_location': 'Titik Temu COD Kampus UI',
+            'pickup_location': 'Titik Temu COD',
             'payout_account_name': 'Nama Pemilik Rekening / Akun E-Wallet',
-            'payout_account_number': 'Nomor Rekening / No. HP E-Wallet',
+            'payout_account_number': 'Nomor Rekening / No. HP E-Wallet Penjual',
             'image': 'Upload Foto Barang (Dari Perangkat)',
             'image_url': 'Atau URL Foto Eksternal (Opsional)',
         }
 
     def clean(self):
-        """Validasi logika: jika gratis maka harga = 0, jika berbayar wajib isi rekening pencairan."""
+        """Validasi logika: jika gratis maka harga = 0, jika berbayar wajib isi rekening pembayaran."""
         cleaned_data = super().clean()
         is_free = cleaned_data.get('is_free')
         price = cleaned_data.get('price')
@@ -119,6 +119,6 @@ class ItemListingForm(forms.ModelForm):
             if price is None or price <= 0:
                 self.add_error('price', 'Untuk barang berbayar, harga harus lebih dari 0.')
             if not payout_number:
-                self.add_error('payout_account_number', 'Nomor rekening/e-wallet wajib diisi untuk pencairan dana penjualan.')
+                self.add_error('payout_account_number', 'Nomor rekening/e-wallet penjual wajib diisi sebagai tujuan transfer pembeli.')
 
         return cleaned_data
