@@ -177,7 +177,7 @@ def nebeng_list(request):
         # matched dulu, lalu yang selisih jamnya paling kecil
         results.sort(key=lambda r: (not r['matched'], len(r['reasons']), r['time_diff']))
 
-    return render(request, 'nebeng/nebeng_list.html', {
+    return render(request, 'saling_tebeng/saling_tebeng.html', {
         'form': form, 'results': results, 'searched': searched,
     })
 
@@ -286,8 +286,8 @@ def tawarkan_tebengan(request):
  
     if valid:
         messages.success(request, 'Tawaran tebengan berhasil disimpan.')
-        return redirect('nebeng_list')
-    return render(request, 'nebeng/tawarkan_tebengan.html', ctx)
+        return redirect('saling_tebeng')
+    return render(request, 'saling_tebeng/tawarkan_tebengan.html', ctx)
 
 
 
