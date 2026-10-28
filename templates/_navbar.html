@@ -38,8 +38,17 @@
         </button>
       </form>
     {% else %}
-      <a class="navbar__account" href="{% url 'user_page:login' %}?next={{ request.get_full_path|urlencode }}">Masuk</a>
-      <a class="navbar__account navbar__account--accent" href="{% url 'user_page:register' %}">Daftar</a>
+      <a
+        class="navbar__account {% if active_nav == 'login' %}navbar__account--accent{% endif %}"
+        href="{% url 'user_page:login' %}?next={{ request.get_full_path|urlencode }}"
+        {% if active_nav == 'login' %}aria-current="page"{% endif %}
+      >Masuk</a>
+
+      <a
+        class="navbar__account {% if active_nav == 'register' %}navbar__account--accent{% endif %}"
+        href="{% url 'user_page:register' %}"
+        {% if active_nav == 'register' %}aria-current="page"{% endif %}
+      >Daftar</a>
     {% endif %}
     <a class="navbar__avatar-link" href="{% if user.is_authenticated %}{% url 'user_page:profile' %}{% else %}{% url 'user_page:login' %}?next={{ request.get_full_path|urlencode }}{% endif %}" aria-label="Profil akun">
       <svg class="navbar__avatar" viewBox="0 0 24 24" aria-hidden="true">
