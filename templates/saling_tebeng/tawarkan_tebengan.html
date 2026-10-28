@@ -37,7 +37,7 @@
                 <svg class="icon" aria-hidden="true"><use href="#i-clock"/></svg>
                 <span>{{ s.departure_time|time:"H.i" }}</span>
               </div>
-              <button type="button" class="saved-card__remove" onclick="cancelExistingSchedule({{ s.id }});" title="Batalkan Jadwal">
+              <button type="button" class="saved-card__remove" data-schedule-id="{{ s.id }}" title="Batalkan Jadwal">
                 <svg class="icon" aria-hidden="true"><use href="#i-x"/></svg>
               </button>
             </div>
@@ -202,6 +202,12 @@
       form.submit();
     }
   }
+
+  document.querySelectorAll('.saved-card__remove[data-schedule-id]').forEach(function (button) {
+    button.addEventListener('click', function () {
+      cancelExistingSchedule(button.dataset.scheduleId);
+    });
+  });
 
   function escapeHtml(text) {
     var div = document.createElement('div');
