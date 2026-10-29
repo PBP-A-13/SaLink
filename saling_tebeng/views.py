@@ -125,11 +125,11 @@ def _create_booking(user, schedule_id, seats=1):
 # Cari tebengan (Halaman Utama Nebeng)
 # ---------------------------------------------------------------------------
 
-@login_required
 def nebeng_list(request):
     """
     Halaman utama NEBENG. Input: asal, tujuan, jam (semua dropdown).
     Menampilkan tebengan yang tersedia beserta rute, kapasitas, harga, & status SEARAH.
+    Dapat diakses oleh publik tanpa harus login.
     """
     form = RideSearchForm(request.GET or None)
     results = []
@@ -148,9 +148,11 @@ def nebeng_list(request):
             available_seats__gt=0,
             ride_offer__is_active=True,
         )
-        .exclude(ride_offer__driver=request.user)
         .select_related('ride_offer__driver', 'ride_offer__vehicle')
     )
+
+    if request.user.is_authenticated:
+        qs = qs.exclude(ride_offer__driver=request.user)
 
     if tanggal_str:
         req_date = parse_date(tanggal_str)
@@ -165,11 +167,13 @@ def nebeng_list(request):
         if tujuan:
             qs = qs.filter(destination__icontains=tujuan)
 
-    booked_ids = set(
-        RideBooking.objects.filter(passenger=request.user)
-        .exclude(status='cancelled')
-        .values_list('ride_schedule_id', flat=True)
-    )
+    booked_ids = set()
+    if request.user.is_authenticated:
+        booked_ids = set(
+            RideBooking.objects.filter(passenger=request.user)
+            .exclude(status='cancelled')
+            .values_list('ride_schedule_id', flat=True)
+        )
 
     for s in qs:
         if searched:
