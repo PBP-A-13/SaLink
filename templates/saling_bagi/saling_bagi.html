@@ -1,58 +1,95 @@
+
 {% load static %}
 <!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SaLink - Bagi</title>
-    
-    <!-- INI YANG TADI KURANG: Pemanggil Font dan CSS kelompok lu -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Anton&display=swap" rel="stylesheet">
-    
+    <title>SaLink - Saling Bagi</title>
+
     <link rel="stylesheet" href="{% static 'style.css' %}">
     <link rel="stylesheet" href="{% static 'navbar-footer.css' %}">
-    
-    <!-- Kalau lu punya CSS khusus saling bagi, panggil di sini -->
     <link rel="stylesheet" href="{% static 'saling_bagi/saling_bagi.css' %}">
 </head>
 <body>
-    
-    <!-- Navbar -->
+
     {% include "_navbar.html" with active_nav="bagi" %}
 
-    <!-- KONTEN UTAMA -->
-    <main class="page" style="padding: 20px;">
-        <h2 style="font-family: 'Anton', sans-serif;">Saling Bagi - Makanan Berlebih</h2>
-        
-        <a href="{% url 'saling_bagi:tambah_makanan' %}" style="display: inline-block; padding: 10px 15px; background: black; color: white; text-decoration: none; border-radius: 5px; margin-bottom: 20px;">
-            + Tambah Makanan
-        </a>
+    <main class="bagi">
+        <h2 class="section-title">Saling Bagi Makanan</h2>
 
-        <h3 style="font-family: 'Anton', sans-serif;">Baru Saja di Upload</h3>
-        
-        {% if makanan_list %}
-            <div style="display: flex; gap: 20px; flex-wrap: wrap;">
-                {% for makanan in makanan_list %}
-                    <div style="border: 2px solid #ccc; padding: 15px; border-radius: 10px; width: 250px;">
-                        <h4>{{ makanan.nama_makanan }}</h4>
-                        <p><b>Porsi:</b> {{ makanan.porsi }}</p>
-                        <p><b>Lokasi:</b> {{ makanan.lokasi_pengambilan }}</p>
-                        <p><b>Exp:</b> {{ makanan.batas_layak_konsumsi|date:"d/m/Y" }}</p>
-                        
-                        <form action="{% url 'saling_bagi:ambil_makanan' makanan.id %}" method="POST">
-                            {% csrf_token %}
-                            <button type="submit" style="width: 100%; padding: 10px; background: white; border: 2px solid black; border-radius: 5px; cursor: pointer; font-weight: bold;">
-                                Ambil Makanan
-                            </button>
-                        </form>
+        {% if messages %}
+            <div class="messages">
+                {% for message in messages %}
+                    <div class="messages__item">
+                        {{ message }}
                     </div>
                 {% endfor %}
             </div>
-        {% else %}
-            <p>Belum ada makanan yang dibagikan.</p>
         {% endif %}
+
+        <a href="{% url 'saling_bagi:tambah_makanan' %}">
+            + Tambah Makanan
+        </a>
+
+        <h3 class="section-title">Baru Saja Dibagikan</h3>
+
+        <div class="food-grid">
+            {% for makanan in makanan_list %}
+                <article class="food-card">
+
+                    <div class="food-card__image">
+                        {% if makanan.foto %}
+                            <img
+                                src="{{ makanan.foto.url }}"
+                                alt="{{ makanan.nama_makanan }}"
+                            >
+                        {% endif %}
+                    </div>
+
+                    <div class="food-card__info">
+                        <h4 class="food-card__name">
+                            {{ makanan.nama_makanan }}
+                        </h4>
+
+                        <p>{{ makanan.deskripsi }}</p>
+
+                        <p class="food-card__label">
+                            Porsi: {{ makanan.porsi }}
+                        </p>
+
+                        <p class="food-card__meta">
+                            Lokasi: {{ makanan.get_lokasi_pengambilan_display }}
+                        </p>
+
+                        <p class="food-card__meta">
+                            Batas konsumsi:
+                            {{ makanan.batas_layak_konsumsi|date:"d/m/Y H:i" }}
+                        </p>
+
+                        <p class="food-card__meta">
+                            Pemberi: {{ makanan.pemberi.username }}
+                        </p>
+                    </div>
+
+                    <form
+                        class="food-card__form"
+                        action="{% url 'saling_bagi:ambil_makanan' makanan.id %}"
+                        method="POST"
+                    >
+                        {% csrf_token %}
+                        <button class="food-card__button" type="submit">
+                            Ambil Makanan
+                        </button>
+                    </form>
+
+                </article>
+            {% empty %}
+                <p class="empty-text">
+                    Belum ada makanan yang dibagikan.
+                </p>
+            {% endfor %}
+        </div>
     </main>
 
 </body>

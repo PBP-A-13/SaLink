@@ -1,0 +1,53 @@
+
+{% load static %}
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SaLink - Tambah Makanan</title>
+
+    <link rel="stylesheet" href="{% static 'style.css' %}">
+    <link rel="stylesheet" href="{% static 'navbar-footer.css' %}">
+    <link rel="stylesheet" href="{% static 'saling_bagi/saling_bagi.css' %}">
+</head>
+<body>
+
+    {% include "_navbar.html" with active_nav="bagi" %}
+
+    <main class="bagi">
+        <h2 class="section-title">Bagikan Makanan</h2>
+
+        <form method="POST" enctype="multipart/form-data">
+            {% csrf_token %}
+
+            {{ form.non_field_errors }}
+
+            {% for field in form %}
+                <div style="margin-bottom: 16px;">
+                    <label for="{{ field.id_for_label }}">
+                        {{ field.label }}
+                    </label>
+
+                    {{ field }}
+
+                    {% for error in field.errors %}
+                        <p style="color: red;">{{ error }}</p>
+                    {% endfor %}
+                </div>
+            {% endfor %}
+
+            <button type="submit" class="food-card__button">
+                Bagikan Makanan
+            </button>
+        </form>
+
+        <p>
+            <a href="{% url 'saling_bagi:index' %}">
+                Kembali ke Saling Bagi
+            </a>
+        </p>
+    </main>
+
+</body>
+</html>
