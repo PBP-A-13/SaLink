@@ -13,9 +13,9 @@
 {% endblock %}
 
 {% block content %}
-<div style="max-width: 600px; margin: 0 auto; background: var(--salink-grey); border-radius: 20px; padding: 24px;">
-  <h2 style="font-family: var(--font-display); font-size: 1.5rem; margin-top: 0;">Chat dengan {{ driver.username }}</h2>
-  <div style="background: #FFFFFF; border-radius: 12px; padding: 16px; margin-bottom: 20px;">
+<div style="max-width: 600px; margin: 0 auto; background: var(--salink-cream); border: 2px solid var(--salink-dark); box-shadow: var(--shadow-flat); border-radius: 20px; padding: 24px; color: var(--salink-dark);">
+  <h2 style="font-family: var(--font); font-size: 1.5rem; margin-top: 0; color: var(--salink-dark);">Chat dengan {{ driver.username }}</h2>
+  <div style="background: var(--salink-white); border: 2px solid var(--salink-dark); border-radius: 12px; padding: 16px; margin-bottom: 20px;">
     <p style="margin: 0 0 6px 0; font-weight: bold;">Rute: {{ schedule.origin }} → {{ schedule.destination }}</p>
     <p style="margin: 0 0 6px 0;">Jam Berangkat: {{ schedule.departure_time|time:"H.i" }}</p>
     <p style="margin: 0;">Kendaraan: {{ schedule.ride_offer.vehicle.get_vehicle_type_display }} (Tersedia: {{ schedule.available_seats }} kursi)</p>

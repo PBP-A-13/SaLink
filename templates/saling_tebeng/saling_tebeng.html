@@ -148,9 +148,9 @@
     <strong>Belum ada tawaran tebengan</strong>
     <p>Coba pilih lokasi asal, tujuan, atau jam yang berbeda, atau tawarkan tebenganmu sendiri!</p>
     {% if user.is_authenticated %}
-      <a href="{% url 'saling_tebeng:tawarkan_tebengan' %}" class="btn-white-pill" style="border: 2px solid #000; margin-top: 10px;">Tawarkan Tebengan</a>
+      <a href="{% url 'saling_tebeng:tawarkan_tebengan' %}" class="btn-white-pill" style="border: 2px solid var(--salink-dark); margin-top: 10px;">Tawarkan Tebengan</a>
     {% else %}
-      <a href="{% url 'user_page:login' %}?next={% url 'saling_tebeng:tawarkan_tebengan' %}" class="btn-white-pill" style="border: 2px solid #000; margin-top: 10px;">Tawarkan Tebengan</a>
+      <a href="{% url 'user_page:login' %}?next={% url 'saling_tebeng:tawarkan_tebengan' %}" class="btn-white-pill" style="border: 2px solid var(--salink-dark); margin-top: 10px;">Tawarkan Tebengan</a>
     {% endif %}
   </div>
 {% endif %}
