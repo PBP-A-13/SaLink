@@ -24,6 +24,14 @@ class ItemListingForm(forms.ModelForm):
         label='Bank / E-Wallet Penjual',
     )
 
+    def __init__(self, *args, **kwargs):
+        instance = kwargs.get('instance')
+        super().__init__(*args, **kwargs)
+        if not instance or instance.payout_method == 'Bank BCA':
+            self.fields['payout_method'].initial = 'BCA'
+        else:
+            self.fields['payout_method'].initial = instance.payout_method
+
     class Meta:
         model = ItemListing
         fields = [
@@ -112,6 +120,7 @@ class ItemListingForm(forms.ModelForm):
         is_free = cleaned_data.get('is_free')
         price = cleaned_data.get('price')
         payout_number = cleaned_data.get('payout_account_number')
+        payout_method = cleaned_data.get('payout_method')
 
         if is_free:
             cleaned_data['price'] = 0
@@ -120,5 +129,7 @@ class ItemListingForm(forms.ModelForm):
                 self.add_error('price', 'Untuk barang berbayar, harga harus lebih dari 0.')
             if not payout_number:
                 self.add_error('payout_account_number', 'Nomor rekening/e-wallet penjual wajib diisi sebagai tujuan transfer pembeli.')
+            if not payout_method:
+                self.add_error('payout_method', 'Pilih bank atau e-wallet tujuan transfer.')
 
         return cleaned_data

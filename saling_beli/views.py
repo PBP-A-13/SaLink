@@ -2,8 +2,10 @@ import datetime
 import json
 import time
 
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
+from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.db.models import Q
@@ -23,6 +25,7 @@ from .models import (
 	TransactionOrder,
 	UserNotification,
 )
+from SaLink.cache_keys import HOME
 
 EDITABLE_FIELDS = {
 	'title',
@@ -36,7 +39,6 @@ EDITABLE_FIELDS = {
 	'payout_method',
 	'payout_account_name',
 	'payout_account_number',
-	'status',
 }
 
 MAX_IMAGE_BYTES = 5 * 1024 * 1024
@@ -47,21 +49,16 @@ ALLOWED_IMAGE_CONTENT_TYPES = {'image/jpeg', 'image/png', 'image/webp', 'image/g
 STAGE_TRANSITIONS = {
 	TransactionOrder.Stage.MENUNGGU_TRANSFER: {
 		TransactionOrder.Stage.BUKTI_DIUNGGAH,
-		TransactionOrder.Stage.JANJI_TEMU_COD,
 		TransactionOrder.Stage.BATAL,
 	},
 	TransactionOrder.Stage.BUKTI_DIUNGGAH: {
 		TransactionOrder.Stage.DIKONFIRMASI,
-		TransactionOrder.Stage.JANJI_TEMU_COD,
-		TransactionOrder.Stage.BATAL,
 	},
 	TransactionOrder.Stage.DIKONFIRMASI: {
 		TransactionOrder.Stage.JANJI_TEMU_COD,
-		TransactionOrder.Stage.BATAL,
 	},
 	TransactionOrder.Stage.JANJI_TEMU_COD: {
 		TransactionOrder.Stage.SELESAI,
-		TransactionOrder.Stage.BATAL,
 	},
 	TransactionOrder.Stage.SELESAI: set(),
 	TransactionOrder.Stage.BATAL: set(),
@@ -92,9 +89,6 @@ def _listing_data(listing):
 		'image': listing.image.url if listing.image else None,
 		'display_image': listing.display_image,
 		'pickup_location': listing.pickup_location,
-		'payout_method': listing.payout_method,
-		'payout_account_name': listing.payout_account_name,
-		'payout_account_number': listing.payout_account_number,
 		'status': listing.status,
 		'created_at': listing.created_at.isoformat(),
 		'updated_at': listing.updated_at.isoformat(),
@@ -121,11 +115,29 @@ def _payload(request):
 
 
 def _validation_errors(listing):
+	if listing.is_free:
+		listing.price = 0
+	elif listing.payout_method == 'Bank BCA':
+		# API clients may omit the field; keep the legacy model default but
+		# normalize it to the value used by the form choices.
+		listing.payout_method = 'BCA'
 	try:
 		listing.full_clean()
 	except ValidationError as error:
 		return error.message_dict
+	if not listing.is_free:
+		allowed_methods = {value for value, _label in ItemListingForm.PAYOUT_METHOD_CHOICES}
+		if listing.payout_method not in allowed_methods:
+			return {'payout_method': ['Pilih metode pembayaran yang tersedia.']}
+		if listing.price <= 0:
+			return {'price': ['Harga barang berbayar harus lebih besar dari Rp 0.']}
+		if not (listing.payout_account_number or '').strip():
+			return {'payout_account_number': ['Barang berbayar wajib memiliki nomor rekening/e-wallet.']}
 	return None
+
+
+def _invalidate_home():
+	transaction.on_commit(lambda: cache.delete(HOME))
 
 
 def _notification_data(notification):
@@ -161,6 +173,11 @@ def _resolve_conversation(item, user, peer_id):
 		buyer = get_object_or_404(User, pk=peer_id)
 		if buyer == item.user:
 			return None, 'Penjual tidak bisa memulai chat dengan dirinya sendiri.'
+		if not Conversation.objects.filter(item=item, buyer=buyer).exists() and not (
+			TransactionOrder.objects.filter(item=item, buyer=buyer).exists()
+			or PriceOffer.objects.filter(item=item, buyer=buyer).exists()
+		):
+			return None, 'Pembeli ini belum pernah menghubungi atau memesan barang ini.'
 	else:
 		buyer = user
 
@@ -187,11 +204,11 @@ def index(request):
 	sort = request.GET.get('sort', 'newest').strip()
 
 	show_sold = request.GET.get('show_sold', '').strip() == '1'
-	# Secara default sembunyikan barang yang sudah berstatus SOLD agar katalog hanya menampilkan barang yang tersedia/aktif
+	# Katalog default hanya menampilkan barang yang benar-benar bisa dipesan.
 	if show_sold:
 		items = ItemListing.objects.all()
 	else:
-		items = ItemListing.objects.exclude(status=ItemListing.Status.SOLD)
+		items = ItemListing.objects.filter(status=ItemListing.Status.AVAILABLE)
 
 	# Filter search query
 	if query:
@@ -274,6 +291,7 @@ def item_create_page(request):
 				listing.price = 0
 
 			listing.save()
+			_invalidate_home()
 			return redirect('saling_beli:item_detail', listing_id=listing.id)
 	else:
 		form = ItemListingForm()
@@ -289,6 +307,9 @@ def item_edit_page(request, listing_id):
 	Halaman Form Edit Barang bagi Penjual / Pemilik Barang (HTML).
 	"""
 	listing = get_object_or_404(ItemListing, pk=listing_id, user=request.user)
+	if listing.orders.exclude(stage__in=[TransactionOrder.Stage.BATAL, TransactionOrder.Stage.SELESAI]).exists():
+		messages.error(request, 'Barang tidak dapat diedit selama transaksi masih berjalan.')
+		return redirect('saling_beli:item_detail', listing_id=listing.id)
 
 	if request.method == 'POST':
 		form = ItemListingForm(request.POST, request.FILES, instance=listing)
@@ -297,6 +318,7 @@ def item_edit_page(request, listing_id):
 			if item.is_free:
 				item.price = 0
 			item.save()
+			_invalidate_home()
 			return redirect('saling_beli:item_detail', listing_id=item.id)
 	else:
 		form = ItemListingForm(instance=listing)
@@ -316,7 +338,11 @@ def item_delete_page(request, listing_id):
 	Menghapus barang dagangan oleh pemiliknya (HTML Form POST).
 	"""
 	listing = get_object_or_404(ItemListing, pk=listing_id, user=request.user)
+	if listing.orders.exclude(stage__in=[TransactionOrder.Stage.BATAL, TransactionOrder.Stage.SELESAI]).exists():
+		messages.error(request, 'Barang tidak dapat dihapus selama transaksi masih berjalan.')
+		return redirect('saling_beli:item_detail', listing_id=listing.id)
 	listing.delete()
+	_invalidate_home()
 	return redirect('saling_beli:index')
 
 
@@ -354,6 +380,7 @@ def item_detail(request, listing_id):
 		request.user.is_authenticated
 		and request.user != item.user
 		and item.status == ItemListing.Status.AVAILABLE
+		and (item.is_free or bool(item.payout_account_number))
 	)
 	can_negotiate = can_purchase and not item.is_free and item.price > 0
 
@@ -381,38 +408,51 @@ def make_offer(request, listing_id):
 
 	if item.is_free or item.price <= 0:
 		return JsonResponse({'error': 'Barang gratis tidak dapat dinego.'}, status=400)
+	if not item.payout_account_number.strip():
+		return JsonResponse({'error': 'Penjual belum menambahkan rekening pembayaran.'}, status=400)
 
 	if item.user == request.user:
 		return JsonResponse({'error': 'Anda tidak bisa menawar barang milik sendiri.'}, status=400)
 
 	try:
-		price_val = request.POST.get('offered_price') or json.loads(request.body).get('offered_price')
-		note = request.POST.get('note', '') or (json.loads(request.body).get('note', '') if request.body else '')
+		body = json.loads(request.body) if request.body else {}
+		if not isinstance(body, dict):
+			body = {}
+		price_val = request.POST.get('offered_price') or body.get('offered_price')
+		note = request.POST.get('note') or body.get('note', '')
 		offered_price = int(price_val)
 	except (ValueError, TypeError, json.JSONDecodeError):
 		return JsonResponse({'error': 'Harga penawaran harus berupa angka valid.'}, status=400)
 
+	if not isinstance(note, str):
+		note = ''
 	if offered_price <= 0:
 		return JsonResponse({'error': 'Harga penawaran harus lebih besar dari Rp 0.'}, status=400)
 
 	if offered_price >= item.price:
 		return JsonResponse({'error': 'Harga penawaran harus lebih rendah dari harga asli. Gunakan tombol Pesan Sekarang jika ingin membeli dengan harga normal.'}, status=400)
 
-	offer = PriceOffer.objects.create(
-		item=item,
-		buyer=request.user,
-		offered_price=offered_price,
-		note=note.strip()
-	)
-
-	# Kirim Notifikasi ke Penjual
-	UserNotification.objects.create(
-		user=item.user,
-		title=f'Tawaran Nego Baru dari @{request.user.username}',
-		message=f'@{request.user.username} menawar "{item.title}" seharga Rp{offered_price:,}.',
-		notification_type=UserNotification.NotifType.OFFER,
-		link=f'/saling-beli/detail/{item.id}/'
-	)
+	with transaction.atomic():
+		item = ItemListing.objects.select_for_update().get(pk=listing_id)
+		if item.status != ItemListing.Status.AVAILABLE:
+			return JsonResponse({'error': 'Barang ini sedang dipesan atau sudah terjual.'}, status=400)
+		if not item.payout_account_number.strip():
+			return JsonResponse({'error': 'Penjual belum menambahkan rekening pembayaran.'}, status=400)
+		if offered_price >= item.price:
+			return JsonResponse({'error': 'Harga penawaran harus lebih rendah dari harga asli.'}, status=400)
+		offer = PriceOffer.objects.create(
+			item=item,
+			buyer=request.user,
+			offered_price=offered_price,
+			note=note.strip()[:255],
+		)
+		UserNotification.objects.create(
+			user=item.user,
+			title=f'Tawaran Nego Baru dari @{request.user.username}',
+			message=f'@{request.user.username} menawar "{item.title}" seharga Rp{offered_price:,}.',
+			notification_type=UserNotification.NotifType.OFFER,
+			link=f'/saling-beli/detail/{item.id}/',
+		)
 
 	return JsonResponse({
 		'success': True,
@@ -433,15 +473,10 @@ def respond_offer(request, offer_id):
 	if not request.user.is_authenticated:
 		return JsonResponse({'error': 'Authentication required.'}, status=401)
 
-	offer = get_object_or_404(PriceOffer.objects.select_related('item', 'buyer'), pk=offer_id)
-	if offer.item.user != request.user:
-		return JsonResponse({'error': 'Hanya penjual barang yang dapat merespon nego ini.'}, status=403)
-
-	if offer.status != PriceOffer.OfferStatus.PENDING:
-		return JsonResponse({'error': 'Penawaran ini sudah direspons sebelumnya.'}, status=400)
-
 	try:
 		body = json.loads(request.body) if request.body else {}
+		if not isinstance(body, dict):
+			body = {}
 		action = request.POST.get('action') or body.get('action')
 	except json.JSONDecodeError:
 		action = request.POST.get('action')
@@ -449,35 +484,32 @@ def respond_offer(request, offer_id):
 	if action == 'accept':
 		# Offer, order, status barang, dan notifikasi harus berhasil bersama.
 		with transaction.atomic():
-			item = ItemListing.objects.select_for_update().get(pk=offer.item_id)
-
-			existing_order = TransactionOrder.objects.filter(
+			offer_ref = get_object_or_404(PriceOffer.objects.only('pk', 'item_id'), pk=offer_id)
+			item = ItemListing.objects.select_for_update().get(pk=offer_ref.item_id)
+			offer = get_object_or_404(
+				PriceOffer.objects.select_for_update().select_related('buyer'),
+				pk=offer_id,
+			)
+			offer.item = item
+			if offer.item.user_id != request.user.pk:
+				return JsonResponse({'error': 'Hanya penjual barang yang dapat merespon nego ini.'}, status=403)
+			if offer.status != PriceOffer.OfferStatus.PENDING:
+				return JsonResponse({'error': 'Penawaran ini sudah direspons sebelumnya.'}, status=400)
+			if item.status != ItemListing.Status.AVAILABLE:
+				return JsonResponse({'error': 'Barang sudah dipesan atau terjual; penawaran tidak dapat diterima.'}, status=400)
+			if not item.payout_account_number.strip():
+				return JsonResponse({'error': 'Penjual belum menambahkan rekening pembayaran.'}, status=400)
+			if TransactionOrder.objects.filter(item=item).exclude(
+				stage__in=[TransactionOrder.Stage.BATAL, TransactionOrder.Stage.SELESAI],
+			).exists():
+				return JsonResponse({'error': 'Barang sudah memiliki pesanan aktif.'}, status=400)
+			order = TransactionOrder.objects.create(
 				item=item,
 				buyer=offer.buyer,
-			).exclude(stage=TransactionOrder.Stage.BATAL).first()
-
-			if existing_order and existing_order.stage == TransactionOrder.Stage.SELESAI:
-				return JsonResponse({'error': 'Transaksi dengan pembeli ini sudah selesai.'}, status=400)
-
-			if existing_order:
-				# Idempoten: klik "Terima" dua kali tidak membuat order kedua.
-				order = existing_order
-				if order.agreed_price != offer.offered_price:
-					order.agreed_price = offer.offered_price
-					order.save(update_fields=['agreed_price', 'updated_at'])
-			else:
-				if item.status == ItemListing.Status.SOLD:
-					return JsonResponse({'error': 'Barang sudah terjual.'}, status=400)
-				if item.status == ItemListing.Status.RESERVED:
-					return JsonResponse({'error': 'Barang sedang dipesan pembeli lain.'}, status=400)
-
-				order = TransactionOrder.objects.create(
-					item=item,
-					buyer=offer.buyer,
-					seller=item.user,
-					agreed_price=offer.offered_price,
-					stage=TransactionOrder.Stage.MENUNGGU_TRANSFER,
-				)
+				seller=item.user,
+				agreed_price=offer.offered_price,
+				stage=TransactionOrder.Stage.MENUNGGU_TRANSFER,
+			)
 
 			offer.status = PriceOffer.OfferStatus.ACCEPTED
 			offer.save(update_fields=['status', 'updated_at'])
@@ -498,9 +530,9 @@ def respond_offer(request, offer_id):
 					link=f'/saling-beli/detail/{item.id}/'
 				)
 
-			if item.status == ItemListing.Status.AVAILABLE:
-				item.status = ItemListing.Status.RESERVED
-				item.save(update_fields=['status', 'updated_at'])
+			item.status = ItemListing.Status.RESERVED
+			item.save(update_fields=['status', 'updated_at'])
+			_invalidate_home()
 
 			UserNotification.objects.create(
 				user=offer.buyer,
@@ -517,15 +549,21 @@ def respond_offer(request, offer_id):
 			'order_id': str(order.id),
 		})
 	elif action == 'reject':
-		offer.status = PriceOffer.OfferStatus.REJECTED
-		offer.save(update_fields=['status', 'updated_at'])
-		UserNotification.objects.create(
-			user=offer.buyer,
-			title='Tawaran Nego Ditolak',
-			message=f'Penjual @{request.user.username} menolak tawaran Anda untuk "{offer.item.title}".',
-			notification_type=UserNotification.NotifType.OFFER,
-			link=f'/saling-beli/detail/{offer.item.id}/'
-		)
+		with transaction.atomic():
+			offer = get_object_or_404(PriceOffer.objects.select_for_update().select_related('item', 'buyer'), pk=offer_id)
+			if offer.item.user_id != request.user.pk:
+				return JsonResponse({'error': 'Hanya penjual barang yang dapat merespon nego ini.'}, status=403)
+			if offer.status != PriceOffer.OfferStatus.PENDING:
+				return JsonResponse({'error': 'Penawaran ini sudah direspons sebelumnya.'}, status=400)
+			offer.status = PriceOffer.OfferStatus.REJECTED
+			offer.save(update_fields=['status', 'updated_at'])
+			UserNotification.objects.create(
+				user=offer.buyer,
+				title='Tawaran Nego Ditolak',
+				message=f'Penjual @{request.user.username} menolak tawaran Anda untuk "{offer.item.title}".',
+				notification_type=UserNotification.NotifType.OFFER,
+				link=f'/saling-beli/detail/{offer.item.id}/',
+			)
 		return JsonResponse({
 			'success': True,
 			'status': 'REJECTED',
@@ -550,9 +588,6 @@ def create_order(request, listing_id):
 		if item.user == request.user:
 			return JsonResponse({'error': 'Anda tidak bisa membeli barang Anda sendiri.'}, status=400)
 
-		if item.status == ItemListing.Status.SOLD:
-			return JsonResponse({'error': 'Barang ini sudah terjual.'}, status=400)
-
 		existing_order = TransactionOrder.objects.filter(
 			item=item,
 			buyer=request.user,
@@ -567,8 +602,15 @@ def create_order(request, listing_id):
 				'already_exists': True,
 			})
 
-		if item.status == ItemListing.Status.RESERVED:
+		if TransactionOrder.objects.filter(item=item).exclude(
+			stage__in=[TransactionOrder.Stage.BATAL, TransactionOrder.Stage.SELESAI],
+		).exists():
 			return JsonResponse({'error': 'Barang sedang dipesan pembeli lain.'}, status=400)
+
+		if item.status != ItemListing.Status.AVAILABLE:
+			return JsonResponse({'error': 'Barang ini sedang dipesan atau sudah tidak tersedia.'}, status=400)
+		if not item.is_free and not item.payout_account_number.strip():
+			return JsonResponse({'error': 'Penjual belum menambahkan rekening pembayaran.'}, status=400)
 
 		order = TransactionOrder.objects.create(
 			item=item,
@@ -581,6 +623,7 @@ def create_order(request, listing_id):
 		# Barang dikunci selama transaksi berjalan.
 		item.status = ItemListing.Status.RESERVED
 		item.save(update_fields=['status', 'updated_at'])
+		_invalidate_home()
 
 		# Tolak otomatis penawaran pending untuk barang ini karena sudah dipesan
 		other_offers = PriceOffer.objects.filter(
@@ -624,6 +667,8 @@ def update_order_stage(request, order_id):
 
 	try:
 		body = json.loads(request.body) if request.body else {}
+		if not isinstance(body, dict):
+			body = {}
 		stage = request.POST.get('stage') or body.get('stage')
 		note = request.POST.get('note') or body.get('note', '')
 		cod_time = request.POST.get('cod_meeting_time') or body.get('cod_meeting_time', '')
@@ -631,6 +676,10 @@ def update_order_stage(request, order_id):
 		stage = request.POST.get('stage')
 		note = request.POST.get('note', '')
 		cod_time = request.POST.get('cod_meeting_time', '')
+	if not isinstance(note, str):
+		note = ''
+	if not isinstance(cod_time, str):
+		cod_time = ''
 
 	if stage not in TransactionOrder.Stage.values:
 		return JsonResponse({'error': 'Tahapan status tidak valid.'}, status=400)
@@ -644,6 +693,53 @@ def update_order_stage(request, order_id):
 		if request.user not in [order.buyer, order.seller]:
 			return JsonResponse({'error': 'Anda tidak memiliki akses ke pesanan ini.'}, status=403)
 
+		if stage == TransactionOrder.Stage.SELESAI:
+			if order.stage == TransactionOrder.Stage.SELESAI:
+				return JsonResponse({
+					'success': True,
+					'stage': order.stage,
+					'stage_display': order.get_stage_display(),
+					'awaiting_confirmation': False,
+					'message': 'Transaksi sudah selesai.',
+				})
+			if order.stage != TransactionOrder.Stage.JANJI_TEMU_COD:
+				return JsonResponse({'error': 'Barang hanya dapat dikonfirmasi setelah jadwal COD dibuat.'}, status=400)
+			confirmation_field = 'buyer_confirmed_at' if request.user == order.buyer else 'seller_confirmed_at'
+			if getattr(order, confirmation_field) is not None:
+				return JsonResponse({
+					'success': True,
+					'stage': order.stage,
+					'stage_display': order.get_stage_display(),
+					'awaiting_confirmation': True,
+					'message': 'Konfirmasi Anda sudah tersimpan. Menunggu pihak lain.',
+				})
+			setattr(order, confirmation_field, timezone.now())
+			order.save(update_fields=[confirmation_field, 'updated_at'])
+			if order.buyer_confirmed_at and order.seller_confirmed_at:
+				order.stage = TransactionOrder.Stage.SELESAI
+				order.save(update_fields=['stage', 'updated_at'])
+				order.item.status = ItemListing.Status.SOLD
+				order.item.save(update_fields=['status', 'updated_at'])
+				_invalidate_home()
+				message = 'Kedua pihak telah mengonfirmasi serah terima. Transaksi selesai.'
+			else:
+				message = 'Konfirmasi Anda tersimpan. Transaksi selesai setelah pihak lain mengonfirmasi serah terima.'
+			recipient = order.seller if request.user == order.buyer else order.buyer
+			UserNotification.objects.create(
+				user=recipient,
+				title=f'Konfirmasi Serah Terima: {order.item.title}',
+				message=f'@{request.user.username} telah mengonfirmasi serah terima barang.',
+				notification_type=UserNotification.NotifType.TRACKER_UPDATE,
+				link=f'/saling-beli/detail/{order.item.id}/',
+			)
+			return JsonResponse({
+				'success': True,
+				'stage': order.stage,
+				'stage_display': order.get_stage_display(),
+				'awaiting_confirmation': order.stage != TransactionOrder.Stage.SELESAI,
+				'message': message,
+			})
+
 		if stage == order.stage:
 			return JsonResponse({
 				'success': True,
@@ -652,19 +748,33 @@ def update_order_stage(request, order_id):
 				'message': 'Status pesanan sudah berada di tahap ini.',
 			})
 
-		if stage not in STAGE_TRANSITIONS.get(order.stage, set()):
+		valid_transitions = STAGE_TRANSITIONS.get(order.stage, set())
+		if (
+			order.item.is_free
+			and order.stage == TransactionOrder.Stage.MENUNGGU_TRANSFER
+		):
+			valid_transitions = valid_transitions | {TransactionOrder.Stage.JANJI_TEMU_COD}
+		if stage not in valid_transitions:
 			return JsonResponse({
 				'error': (
 					f'Tahap tidak dapat berpindah dari "{order.get_stage_display()}" '
 					f'ke "{TransactionOrder.Stage(stage).label}".'
 				),
 			}, status=400)
+		if order.item.status == ItemListing.Status.SOLD:
+			return JsonResponse({'error': 'Barang ini sudah terjual.'}, status=400)
 
 		required_actor = STAGE_ACTORS.get(stage, 'BOTH')
 		if required_actor == 'BUYER' and request.user != order.buyer:
 			return JsonResponse({'error': 'Tahap ini hanya dapat diubah oleh pembeli.'}, status=403)
 		if required_actor == 'SELLER' and request.user != order.seller:
 			return JsonResponse({'error': 'Tahap ini hanya dapat diubah oleh penjual.'}, status=403)
+		if stage == TransactionOrder.Stage.BUKTI_DIUNGGAH and not str(note).strip():
+			return JsonResponse({'error': 'Masukkan nomor referensi atau catatan transfer.'}, status=400)
+		if stage == TransactionOrder.Stage.JANJI_TEMU_COD and not str(cod_time).strip():
+			return JsonResponse({'error': 'Masukkan waktu pertemuan COD yang disepakati.'}, status=400)
+		if len(str(note)) > 255 or len(str(cod_time)) > 150:
+			return JsonResponse({'error': 'Catatan terlalu panjang.'}, status=400)
 
 		order.stage = stage
 		if note:
@@ -672,11 +782,6 @@ def update_order_stage(request, order_id):
 		if cod_time:
 			order.cod_meeting_time = cod_time
 		order.save()
-
-		# Jika selesai, tandai barang sebagai SOLD
-		if stage == TransactionOrder.Stage.SELESAI:
-			order.item.status = ItemListing.Status.SOLD
-			order.item.save(update_fields=['status', 'updated_at'])
 
 		# Jika batal, lepaskan kunci barang bila tidak ada order aktif lain
 		if stage == TransactionOrder.Stage.BATAL:
@@ -688,6 +793,7 @@ def update_order_stage(request, order_id):
 			if not other_active and order.item.status == ItemListing.Status.RESERVED:
 				order.item.status = ItemListing.Status.AVAILABLE
 				order.item.save(update_fields=['status', 'updated_at'])
+				_invalidate_home()
 
 		# Kirim Notifikasi ke pihak lawan (jika pembeli update -> kirim ke penjual, vice versa)
 		recipient = order.seller if request.user == order.buyer else order.buyer
@@ -745,6 +851,7 @@ def _create_listing(request):
 		return JsonResponse({'errors': errors}, status=400)
 
 	listing.save()
+	_invalidate_home()
 	return JsonResponse(_listing_data(listing), status=201)
 
 
@@ -759,7 +866,10 @@ def listing_delete(request, listing_id):
 		return JsonResponse({'error': 'Authentication required.'}, status=401)
 
 	listing = get_object_or_404(ItemListing, pk=listing_id, user=request.user)
+	if listing.orders.exclude(stage__in=[TransactionOrder.Stage.BATAL, TransactionOrder.Stage.SELESAI]).exists():
+		return JsonResponse({'error': 'Barang tidak dapat dihapus selama transaksi masih berjalan.'}, status=409)
 	listing.delete()
+	_invalidate_home()
 	return HttpResponse(status=204)
 
 
@@ -780,6 +890,8 @@ def _update_listing(request, listing_id):
 		return JsonResponse({'error': 'Authentication required.'}, status=401)
 
 	listing = get_object_or_404(ItemListing, pk=listing_id, user=request.user)
+	if listing.orders.exclude(stage__in=[TransactionOrder.Stage.BATAL, TransactionOrder.Stage.SELESAI]).exists():
+		return JsonResponse({'error': 'Barang tidak dapat diedit selama transaksi masih berjalan.'}, status=409)
 
 	data, error_response = _payload(request)
 	if error_response:
@@ -793,6 +905,7 @@ def _update_listing(request, listing_id):
 		return JsonResponse({'errors': errors}, status=400)
 
 	listing.save()
+	_invalidate_home()
 	return JsonResponse(_listing_data(listing))
 
 
@@ -833,6 +946,7 @@ def upload_item_image(request, listing_id):
 	uploaded_file.seek(0)
 	listing.image = uploaded_file
 	listing.save()
+	_invalidate_home()
 
 	return JsonResponse({
 		'success': True,
@@ -908,6 +1022,7 @@ def item_chats(request, listing_id):
 			peer = {'id': conversation.buyer_id, 'username': conversation.buyer.username}
 		else:
 			peer = {'id': conversation.seller_id, 'username': conversation.seller.username}
+		conversation.messages.filter(recipient=request.user, is_read=False).update(is_read=True)
 
 		return JsonResponse({
 			'success': True,
@@ -920,15 +1035,21 @@ def item_chats(request, listing_id):
 	# POST: Kirim pesan
 	try:
 		body = json.loads(request.body) if request.body else {}
+		if not isinstance(body, dict):
+			return JsonResponse({'error': 'Request body must be a JSON object.'}, status=400)
 		message_text = request.POST.get('message') or body.get('message', '')
 		peer_id = request.POST.get('peer') or body.get('peer')
-	except json.JSONDecodeError:
+	except (json.JSONDecodeError, UnicodeDecodeError):
 		message_text = request.POST.get('message', '')
 		peer_id = request.POST.get('peer')
 
+	if not isinstance(message_text, str):
+		return JsonResponse({'error': 'Pesan harus berupa teks.'}, status=400)
 	message_text = message_text.strip()
 	if not message_text:
 		return JsonResponse({'error': 'Pesan tidak boleh kosong.'}, status=400)
+	if len(message_text) > 2000:
+		return JsonResponse({'error': 'Pesan maksimal 2.000 karakter.'}, status=400)
 
 	conversation, error = _resolve_conversation(item, request.user, peer_id)
 	if error:

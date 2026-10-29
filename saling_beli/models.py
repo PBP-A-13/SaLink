@@ -97,12 +97,19 @@ class TransactionOrder(models.Model):
     stage = models.CharField(max_length=30, choices=Stage.choices, default=Stage.MENUNGGU_TRANSFER)
     payment_proof_note = models.CharField(max_length=255, blank=True, help_text="Catatan transfer atau nomor referensi bank")
     cod_meeting_time = models.CharField(max_length=150, blank=True, help_text="Waktu pertemuan COD yang disepakati")
+    buyer_confirmed_at = models.DateTimeField(null=True, blank=True)
+    seller_confirmed_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         ordering = ['-created_at']
         constraints = [
+            models.UniqueConstraint(
+                fields=['item'],
+                condition=~models.Q(stage__in=['BATAL', 'SELESAI']),
+                name='uniq_active_order_per_item',
+            ),
             models.UniqueConstraint(
                 fields=['item', 'buyer'],
                 condition=~models.Q(stage__in=['BATAL', 'SELESAI']),

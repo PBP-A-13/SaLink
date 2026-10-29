@@ -48,7 +48,7 @@
         </a>
 
         <!-- 2. Nebeng -->
-        <a href="/saling-tebeng/" class="module-card">
+        <a href="{% url 'saling_tebeng:index' %}" class="module-card">
           <div class="module-card__icon">🛵</div>
           <div class="module-card__body">
             <h3 class="module-card__title">Saling Tebeng</h3>
@@ -85,7 +85,7 @@
           <p class="section-subtitle">Pilihan barang prelove yang siap di-COD di area kampus</p>
         </div>
         <a href="{% url 'saling_beli:index' %}" style="font-size: 0.95rem; text-transform: uppercase; color: var(--salink-primary); border-bottom: 2px solid var(--salink-primary); padding-bottom: 2px;">
-          Lihat Semua ({{ count_beli|default:"Semua" }}) →
+          Lihat Semua ({{ count_beli|default_if_none:"0" }}) →
         </a>
       </header>
 
@@ -111,46 +111,19 @@
           </div>
         </article>
         {% empty %}
-        <article class="card">
-          <div class="card__image-box"><span style="font-size: 2rem;">📚</span></div>
-          <div class="card-title">
-            <h3>Buku Kalkulus Purcel</h3>
-            <p class="price">Rp45,000</p>
-          </div>
-        </article>
-        <article class="card">
-          <div class="card__image-box"><span style="font-size: 2rem;">💡</span></div>
-          <div class="card-title">
-            <h3>Lampu Belajar Meja</h3>
-            <p class="price">Rp35,000</p>
-          </div>
-        </article>
-        <article class="card">
-          <div class="card__image-box"><span style="font-size: 2rem;">🪑</span></div>
-          <div class="card-title">
-            <h3>Meja Lipat Kayu Kos</h3>
-            <p class="price"><span class="badge-free">🎁 Hibah Gratis</span></p>
-          </div>
-        </article>
-        <article class="card">
-          <div class="card__image-box"><span style="font-size: 2rem;">🍳</span></div>
-          <div class="card-title">
-            <h3>Panci Listrik Serbaguna</h3>
-            <p class="price">Rp50,000</p>
-          </div>
-        </article>
+        <p class="grid__empty">Belum ada barang tersedia. Jadilah yang pertama menawarkan barang!</p>
         {% endfor %}
       </div>
 
-      <!-- SaLink Escrow & Safety Guarantee Banner -->
+      <!-- Direct user-to-user payment and safety guidance -->
       <section class="safety-banner">
         <div>
-          <h3 class="safety-banner__title">🔒 Transaksi Kampus Aman & Terverifikasi</h3>
+          <h3 class="safety-banner__title">🤝 Transaksi Langsung Antar Pengguna</h3>
           <p class="safety-banner__text">
-            SaLink menghadirkan sistem Escrow QRIS resmi: dana Anda ditahan aman di sistem hingga barang Anda terima dan konfirmasi. Tanpa tipu-menipu, khusus civitas Universitas Indonesia.
+            Atur pembayaran langsung dengan penjual dan bertemu di titik COD kampus. Periksa rekening tujuan, konfirmasi dana setelah benar-benar masuk, dan selesaikan transaksi setelah barang diterima.
           </p>
         </div>
-        <a href="{% url 'saling_beli:index' %}" class="btn-salink btn-salink--accent">
+        <a href="{% url 'main:panduan_cod' %}" class="btn-salink btn-salink--accent">
           Pelajari Selengkapnya
         </a>
       </section>

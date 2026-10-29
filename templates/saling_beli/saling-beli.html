@@ -179,6 +179,19 @@
         .replaceAll("'", '&#39;');
     }
 
+    function notificationHref(value) {
+      const raw = String(value || '#');
+      if (raw === '#') return '#';
+      try {
+        const target = new URL(raw, window.location.origin);
+        return target.origin === window.location.origin
+          ? `${target.pathname}${target.search}${target.hash}`
+          : '#';
+      } catch (_) {
+        return '#';
+      }
+    }
+
     function toggleNotifDropdown() {
       const dd = document.getElementById('notif-dropdown');
       if (!dd) return;
@@ -230,11 +243,12 @@
         <button class="salink-toast__close" onclick="this.parentElement.remove()">&times;</button>
       `;
 
-      if (link && link !== '#' && String(link).startsWith('/')) {
+      const safeLink = notificationHref(link);
+      if (safeLink !== '#') {
         toast.style.cursor = 'pointer';
         toast.onclick = function(e) {
           if (e.target.classList.contains('salink-toast__close')) return;
-          window.location.href = link;
+          window.location.href = safeLink;
         };
       }
 
@@ -252,7 +266,7 @@
       if (notifications && notifications.length > 0) {
         list.innerHTML = notifications.map(n => `
           <div style="padding: 6px; border-radius: 4px; background: ${n.is_read ? '#f9fafb' : '#eff6ff'}; border: 1px solid ${n.is_read ? '#e5e7eb' : '#bfdbfe'};">
-            <a href="${escapeHtml(n.link || '#')}" style="text-decoration: none; color: inherit; display: block;">
+            <a href="${escapeHtml(notificationHref(n.link))}" style="text-decoration: none; color: inherit; display: block;">
               <strong style="color: #111;">${escapeHtml(n.title)}</strong>
               <p style="margin: 2px 0 0 0; color: #4b5563;">${escapeHtml(n.message)}</p>
               <small style="color: #9ca3af; font-size: 0.65rem;">${escapeHtml(n.created_at)}</small>

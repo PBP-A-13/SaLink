@@ -10,10 +10,10 @@ def show_main(request):
     public_data = cache.get(HOME)
     if public_data is None:
         public_data = {
-            'featured_beli': list(ItemListing.objects.all()[:4]),
+            'featured_beli': list(ItemListing.objects.filter(status=ItemListing.Status.AVAILABLE).order_by('-created_at')[:4]),
             'latest_bagi': list(Makanan.objects.filter(is_available=True)[:3]),
             'borrow_items': list(BorrowItem.objects.filter(status='AVAILABLE')[:3]),
-            'count_beli': ItemListing.objects.count(),
+            'count_beli': ItemListing.objects.filter(status=ItemListing.Status.AVAILABLE).count(),
             'count_bagi': Makanan.objects.count(),
             'count_pinjam': BorrowItem.objects.count(),
         }
