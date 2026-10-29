@@ -1,20 +1,9 @@
+{% extends "base.html" %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="id">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>FAQ & Syarat Ketentuan | SaLink</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="{% static 'style.css' %}">
-  <link rel="stylesheet" href="{% static 'navbar-footer.css' %}">
-</head>
-<body class="bg-salink-cream text-salink-dark min-h-screen flex flex-col font-sans">
 
-  {% include "_navbar.html" %}
+{% block title %}FAQ & Syarat Ketentuan | SaLink{% endblock %}
 
+{% block content %}
   <main class="flex-1 max-w-4xl mx-auto px-4 py-8 w-full">
     <!-- Breadcrumb / Tombol Kembali -->
     <div style="margin-bottom: 24px;">
@@ -66,7 +55,7 @@
           <span style="font-size: 1.2rem;">▾</span>
         </summary>
         <p style="margin: 12px 0 0; font-size: 0.9rem; line-height: 1.6; color: #333; border-top: 1px dashed rgba(77,42,0,0.2); padding-top: 10px;">
-          Tidak. Barang yang status transaksinya telah selesai otomatis disembunyikan dari katalog utama agar etalase tetap menampilkan barang yang tersedia. Barang tidak dapat diedit atau dihapus selama transaksi masih berjalan.
+          Tidak. Barang yang status transaksinya telah selesai otomatis disembunyikan dari katalog utama agar etalase barang tetap segar dan hanya menampilkan barang yang masih tersedia bagi pembeli lain. Penjual juga memiliki kontrol penuh untuk mengedit detail atau menghapus barang dagangan miliknya kapan saja.
         </p>
       </details>
 
@@ -96,9 +85,4 @@
 
     </div>
   </main>
-
-  {% include "_footer.html" %}
-
-</body>
-</html>
-
+{% endblock %}
