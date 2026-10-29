@@ -1,0 +1,56 @@
+{% extends "saling_tebeng/base_tebeng.html" %}
+
+{% block title %}Tebengan Saya | SaLink{% endblock %}
+
+{% block sidebar %}
+  <div class="side-group">
+    <a class="side-item" href="{% url 'saling_tebeng:nebeng_list' %}">
+      <svg class="icon" aria-hidden="true"><use href="#i-home"/></svg>
+      <span>Pesan</span>
+    </a>
+  </div>
+  <a class="side-cta" href="{% url 'saling_tebeng:tawarkan_tebengan' %}">Tawarkan Tebengan</a>
+{% endblock %}
+
+{% block content %}
+<h1 class="offer-title">Tebengan Saya</h1>
+
+{% if bookings %}
+  <div class="rides-list" style="max-width: 800px; margin: 0 auto;">
+    {% for b in bookings %}
+    {% with s=b.ride_schedule %}
+    <article class="ride-card" style="grid-template-columns: 100px 1fr auto;">
+      <div class="ride-card__driver">
+        <div class="ride-card__avatar">
+          <svg aria-hidden="true"><use href="#i-user"/></svg>
+        </div>
+        <span class="ride-card__name">{{ s.ride_offer.driver.username|upper }}</span>
+      </div>
+
+      <div class="ride-card__info">
+        <div class="ride-card__origin">[{{ s.origin|upper }} → {{ s.destination|upper }}]</div>
+        <p class="ride-card__detail">Waktu: {{ s.date|date:"d M Y" }} @ {{ s.departure_time|time:"H.i" }}</p>
+        <p class="ride-card__detail">Kursi: {{ b.seats }} | Status: {{ b.get_status_display|upper }}</p>
+      </div>
+
+      <div style="display: flex; gap: 8px; align-items: center;">
+        {% if b.status != 'cancelled' %}
+        <form method="post" action="{% url 'saling_tebeng:cancel_booking' b.id %}" onsubmit="return confirm('Batalkan booking tebengan ini?');">
+          {% csrf_token %}
+          <button type="submit" class="btn-cancel" style="padding: 6px 18px; font-size: 0.9rem;">Batal</button>
+        </form>
+        {% endif %}
+      </div>
+    </article>
+    {% endwith %}
+    {% endfor %}
+  </div>
+{% else %}
+  <div class="empty-state">
+    <strong>Belum ada booking tebengan</strong>
+    <p>Kamu belum bergabung dengan tebengan manapun.</p>
+    <a href="{% url 'saling_tebeng:nebeng_list' %}" class="btn-white-pill" style="border: 2px solid var(--salink-dark); margin-top: 10px;">Cari Tebengan</a>
+  </div>
+{% endif %}
+{% endblock %}
+

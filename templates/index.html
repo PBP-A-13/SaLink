@@ -1,0 +1,138 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SaLink - Platform Kolaborasi & Kebutuhan Mahasiswa UI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Anton&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="{% static 'style.css' %}?v=20261027_04" />
+</head>
+<body>
+
+  <a class="skip-link" href="#main-content">Lewati ke konten utama</a>
+
+  <div class="hero-wrapper">
+    <!-- ==================== FLOATING NAVBAR ==================== -->
+    {% include "_navbar.html" with active_nav="home" %}
+
+    <!-- ==================== HERO SECTION (TULISAN GEDE SALINK) ==================== -->
+    <section class="hero">
+      <h1>SaLink</h1>
+    </section>
+  </div>
+
+  <!-- ==================== MAIN CONTENT SHEET (MENIMPA SAAT SCROLL) ==================== -->
+  <main class="sheet" id="main-content" tabindex="-1">
+    <div class="sheet-container">
+
+      <!-- 4 Core Modules Showcase -->
+      <header class="section-header">
+        <div>
+          <h2 class="section-title">Layanan Mahasiswa</h2>
+          <p class="section-subtitle">Temukan semua kemudahan aktivitas kampus dalam satu genggaman</p>
+        </div>
+      </header>
+
+      <section class="modules-grid" aria-label="Modul Layanan SaLink">
+        <!-- 1. Beli & Hibah -->
+        <a href="{% url 'saling_beli:index' %}" class="module-card">
+          <div class="module-card__icon">🛒</div>
+          <div class="module-card__body">
+            <h3 class="module-card__title">Saling Beli</h3>
+            <p class="module-card__desc">Prelove barang kos, buku kuliah, dan peralatan elektronik murah atau hibah gratis sesama mahasiswa UI.</p>
+            <span class="module-card__action">Jelajahi Beli →</span>
+          </div>
+        </a>
+
+        <!-- 2. Nebeng -->
+        <a href="{% url 'saling_tebeng:index' %}" class="module-card">
+          <div class="module-card__icon">🛵</div>
+          <div class="module-card__body">
+            <h3 class="module-card__title">Saling Tebeng</h3>
+            <p class="module-card__desc">Cari atau tawarkan tebengan hemat & ramah lingkungan di sekeliling area kampus Depok & Salemba.</p>
+            <span class="module-card__action">Cari Tebengan →</span>
+          </div>
+        </a>
+
+        <!-- 3. Bagi Makanan -->
+        <a href="/saling-bagi/" class="module-card">
+          <div class="module-card__icon">🍱</div>
+          <div class="module-card__body">
+            <h3 class="module-card__title">Saling Bagi</h3>
+            <p class="module-card__desc">Berbagi makanan berlebih atau peroleh hidangan berkah dari kantin dan sesama rekan mahasiswa.</p>
+            <span class="module-card__action">Lihat Makanan →</span>
+          </div>
+        </a>
+
+        <!-- 4. Pinjam Inventaris -->
+        <a href="{% url 'saling_pinjam:item_list' %}" class="module-card">
+          <div class="module-card__icon">🤝</div>
+          <div class="module-card__body">
+            <h3 class="module-card__title">Saling Pinjam</h3>
+            <p class="module-card__desc">Pinjam jas lab, kalkulator saintifik, toga, perkakas, hingga proyektor untuk kegiatan akademik.</p>
+            <span class="module-card__action">Pinjam Barang →</span>
+          </div>
+        </a>
+      </section>
+
+      <!-- Featured Items Saling Beli -->
+      <header class="section-header">
+        <div>
+          <h2 class="section-title">Prelove & Hibah Terbaru</h2>
+          <p class="section-subtitle">Pilihan barang prelove yang siap di-COD di area kampus</p>
+        </div>
+        <a href="{% url 'saling_beli:index' %}" style="font-size: 0.95rem; text-transform: uppercase; color: var(--salink-primary); border-bottom: 2px solid var(--salink-primary); padding-bottom: 2px;">
+          Lihat Semua ({{ count_beli|default_if_none:"0" }}) →
+        </a>
+      </header>
+
+      <div class="grid">
+        {% for item in featured_beli %}
+        <article class="card">
+          <a href="{% url 'saling_beli:item_detail' item.id %}" class="card__image-box">
+            {% if item.display_image %}
+              <img src="{{ item.display_image }}" alt="{{ item.title }}" loading="lazy">
+            {% else %}
+              <span style="font-size: 0.8rem; opacity: 0.6; color: var(--salink-dark);">No Picture</span>
+            {% endif %}
+          </a>
+          <div class="card-title">
+            <h3><a href="{% url 'saling_beli:item_detail' item.id %}">{{ item.title }}</a></h3>
+            <p class="price">
+              {% if item.is_free %}
+                <span class="badge-free">🎁 Hibah Gratis</span>
+              {% else %}
+                Rp{{ item.price|floatformat:"0g" }}
+              {% endif %}
+            </p>
+          </div>
+        </article>
+        {% empty %}
+        <p class="grid__empty">Belum ada barang tersedia. Jadilah yang pertama menawarkan barang!</p>
+        {% endfor %}
+      </div>
+
+      <!-- Direct user-to-user payment and safety guidance -->
+      <section class="safety-banner">
+        <div>
+          <h3 class="safety-banner__title">🤝 Transaksi Langsung Antar Pengguna</h3>
+          <p class="safety-banner__text">
+            Atur pembayaran langsung dengan penjual dan bertemu di titik COD kampus. Periksa rekening tujuan, konfirmasi dana setelah benar-benar masuk, dan selesaikan transaksi setelah barang diterima.
+          </p>
+        </div>
+        <a href="{% url 'main:panduan_cod' %}" class="btn-salink btn-salink--accent">
+          Pelajari Selengkapnya
+        </a>
+      </section>
+
+    </div>
+  </main>
+
+  <!-- ==================== FOOTER ==================== -->
+  {% include "_footer.html" %}
+
+</body>
+</html>

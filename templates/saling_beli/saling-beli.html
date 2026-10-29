@@ -1,0 +1,359 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SaLink - Beli</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Anton&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'saling_beli/saling-beli.css' %}?v=20261027_02">
+</head>
+<body data-user-auth="{{ user.is_authenticated|yesno:'true,false' }}">
+
+  {% include "_navbar.html" with active_nav="beli" show_notifications=True %}
+
+  <main class="page">
+
+    <!-- Form Pencarian & Tombol Jual -->
+    <div class="catalog-actions">
+      <form class="search" method="get" action="" id="catalogFilterForm">
+        <div class="search__field">
+          <svg class="search__icon" viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="10" cy="10" r="6" fill="none" stroke="currentColor" stroke-width="2"/>
+            <line x1="14.5" y1="14.5" x2="20" y2="20" stroke="currentColor" stroke-width="2"/>
+          </svg>
+          <input type="text" name="q" value="{{ query }}" placeholder="Cari Barang Prelove UI..." aria-label="Cari barang">
+        </div>
+
+        <!-- Hidden input untuk mempertahankan filter pills saat search dijalankan -->
+        <input type="hidden" name="category" id="filterCategoryInput" value="{{ category }}">
+        <input type="hidden" name="condition" id="filterConditionInput" value="{{ condition }}">
+        <input type="hidden" name="sort" id="filterSortInput" value="{{ sort }}">
+
+        <button type="submit" class="search__button">Search</button>
+      </form>
+
+      <a href="{% url 'saling_beli:item_create' %}" class="btn-salink btn-salink--primary" style="height: 48px; padding-inline: 20px; font-size: 0.95rem;">
+        ➕ Jual / Berbagi Gratis
+      </a>
+    </div>
+
+    <!-- Filter Pills & Sorting Bar -->
+    <div class="filter-bar">
+      <!-- Urutan (A-Z, Z-A, Terbaru, Terlama) -->
+      <div class="filter-row">
+        <span class="filter-label">Urutkan</span>
+        <div class="filter-pills">
+          <button type="button" class="pill-btn pill-btn--sort {% if sort == 'newest' %}is-active{% endif %}" onclick="setFilter('sort', 'newest')">Terbaru</button>
+          <button type="button" class="pill-btn pill-btn--sort {% if sort == 'oldest' %}is-active{% endif %}" onclick="setFilter('sort', 'oldest')">Paling Lama</button>
+          <button type="button" class="pill-btn pill-btn--sort {% if sort == 'name_asc' %}is-active{% endif %}" onclick="setFilter('sort', 'name_asc')">Nama A - Z</button>
+          <button type="button" class="pill-btn pill-btn--sort {% if sort == 'name_desc' %}is-active{% endif %}" onclick="setFilter('sort', 'name_desc')">Nama Z - A</button>
+        </div>
+      </div>
+
+      <!-- Kategori Barang -->
+      <div class="filter-row">
+        <span class="filter-label">Kategori</span>
+        <div class="filter-pills">
+          <button type="button" class="pill-btn pill-btn--category {% if not category %}is-active{% endif %}" onclick="setFilter('category', '')">Semua</button>
+          {% for cat_val, cat_label in categories %}
+          <button type="button" class="pill-btn pill-btn--category {% if category == cat_val %}is-active{% endif %}" onclick="setFilter('category', '{{ cat_val }}')">{{ cat_label }}</button>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Kondisi Fisik Barang -->
+      <div class="filter-row">
+        <span class="filter-label">Kondisi</span>
+        <div class="filter-pills">
+          <button type="button" class="pill-btn pill-btn--condition {% if not condition %}is-active{% endif %}" onclick="setFilter('condition', '')">Semua</button>
+          {% for cond_val, cond_label in conditions %}
+          <button type="button" class="pill-btn pill-btn--condition {% if condition == cond_val %}is-active{% endif %}" onclick="setFilter('condition', '{{ cond_val }}')">{{ cond_label }}</button>
+          {% endfor %}
+          {% if query or category or condition or sort != 'newest' %}
+          <a href="{% url 'saling_beli:index' %}" class="pill-btn pill-btn--reset">Reset Filter</a>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <section class="grid" aria-label="Daftar barang">
+      {% for item in items %}
+      <article class="card">
+        <a href="{% url 'saling_beli:item_detail' item.id %}" class="card__image" style="display: block;">
+          {% if item.display_image %}
+            <img src="{{ item.display_image }}" alt="{{ item.title }}" loading="lazy">
+          {% else %}
+            <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: #eee; font-size: 0.8rem; opacity: 0.6;">Tanpa Foto</div>
+          {% endif %}
+        </a>
+
+        <div class="card__body">
+          <h2 class="card__title">
+            <a href="{% url 'saling_beli:item_detail' item.id %}">{{ item.title }}</a>
+          </h2>
+          <p class="card__price {% if item.is_free %}is-free{% endif %}">
+            {% if item.is_free %}🎁 Gratis{% else %}Rp{{ item.price|floatformat:"0g" }}{% endif %}
+          </p>
+
+          <div class="card__actions">
+            <a href="{% url 'saling_beli:item_detail' item.id %}" class="btn btn--primary">Detail Barang</a>
+            <a href="{% url 'saling_beli:item_detail' item.id %}#chat" class="btn btn--icon" title="Chat Penjual di Web" aria-label="Chat penjual">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z" fill="none" stroke="currentColor" stroke-width="2"/>
+              </svg>
+            </a>
+          </div>
+        </div>
+      </article>
+      {% empty %}
+      <p class="grid__empty">Belum ada barang yang tersedia.</p>
+      {% endfor %}
+    </section>
+
+    {% if recently_viewed_items %}
+    <section class="recently-viewed" style="max-width: 1040px; margin: var(--space-5) auto 0; padding-top: var(--space-4); border-top: var(--border-thick);">
+      <h3 style="font-size: 1.25rem; text-transform: uppercase; margin-bottom: var(--space-3); display: flex; align-items: center; gap: 8px; color: var(--salink-dark);">
+        <span>🕒 Terakhir Anda Lihat</span>
+        <span style="font-size: 0.75rem; font-weight: normal; font-family: var(--font-body); text-transform: none; opacity: 0.8; background: var(--salink-light); padding: 2px 8px; border-radius: 999px; border: 1px solid var(--salink-dark);">(Tersimpan di Session)</span>
+      </h3>
+      <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: var(--space-3);">
+        {% for r_item in recently_viewed_items %}
+        <a href="{% url 'saling_beli:item_detail' r_item.id %}" style="text-decoration: none; color: inherit; border: var(--border-thick); border-radius: var(--radius-card); padding: 10px; display: flex; gap: 10px; align-items: center; background: var(--salink-white); box-shadow: 3px 3px 0px var(--salink-dark); transition: transform 0.12s ease, box-shadow 0.12s ease;">
+          {% if r_item.display_image %}
+            <img src="{{ r_item.display_image }}" alt="{{ r_item.title }}" style="width: 52px; height: 52px; object-fit: cover; border-radius: 8px; border: 1.5px solid var(--salink-dark);">
+          {% else %}
+            <div style="width: 52px; height: 52px; background: var(--salink-light); display: flex; align-items: center; justify-content: center; font-size: 0.65rem; border-radius: 8px; border: 1.5px solid var(--salink-dark);">No Pic</div>
+          {% endif %}
+          <div style="overflow: hidden;">
+            <p style="font-weight: 600; font-size: 0.9rem; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-transform: uppercase;">{{ r_item.title }}</p>
+            <p style="font-size: 0.85rem; margin: 2px 0 0; color: var(--salink-primary); font-weight: bold;">{% if r_item.is_free %}Gratis{% else %}Rp{{ r_item.price|floatformat:"0g" }}{% endif %}</p>
+          </div>
+        </a>
+        {% endfor %}
+      </div>
+    </section>
+    {% endif %}
+
+  </main>
+
+
+  <script>
+
+    // Helper untuk mengubah parameter filter pills dan men-submit form
+    function setFilter(field, value) {
+      if (field === 'category') {
+        document.getElementById('filterCategoryInput').value = value;
+      } else if (field === 'condition') {
+        document.getElementById('filterConditionInput').value = value;
+      } else if (field === 'sort') {
+        document.getElementById('filterSortInput').value = value;
+      }
+      document.getElementById('catalogFilterForm').submit();
+    }
+
+    function getCookie(name) {
+      let cookieValue = null;
+      if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+          const cookie = cookies[i].trim();
+          if (cookie.substring(0, name.length + 1) === (name + '=')) {
+            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+            break;
+          }
+        }
+      }
+      return cookieValue;
+    }
+    const csrftoken = getCookie('csrftoken');
+
+    function escapeHtml(value) {
+      return String(value === null || value === undefined ? '' : value)
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#39;');
+    }
+
+    function notificationHref(value) {
+      const raw = String(value || '#');
+      if (raw === '#') return '#';
+      try {
+        const target = new URL(raw, window.location.origin);
+        return target.origin === window.location.origin
+          ? `${target.pathname}${target.search}${target.hash}`
+          : '#';
+      } catch (_) {
+        return '#';
+      }
+    }
+
+    function toggleNotifDropdown() {
+      const dd = document.getElementById('notif-dropdown');
+      if (!dd) return;
+      dd.style.display = (dd.style.display === 'none' || dd.style.display === '') ? 'block' : 'none';
+      if (dd.style.display === 'block') {
+        fetchNotifications();
+      }
+    }
+
+    let seenNotifIds = new Set();
+    let isFirstNotifLoad = true;
+    let notifCursor = null;
+    let notifLoopTimer = null;
+
+    function updateNotifBadge(count) {
+      const badge = document.getElementById('notif-badge');
+      if (!badge) return;
+      if (count > 0) {
+        badge.style.display = 'inline-block';
+        badge.textContent = count;
+      } else {
+        badge.style.display = 'none';
+      }
+    }
+
+    function showSalinkToast(title, message, link, type) {
+      let container = document.getElementById('salink-toast-container');
+      if (!container) {
+        container = document.createElement('div');
+        container.id = 'salink-toast-container';
+        container.className = 'salink-toast-container';
+        document.body.appendChild(container);
+      }
+
+      const toast = document.createElement('div');
+      toast.className = 'salink-toast';
+
+      let icon = '🔔';
+      if (type === 'CHAT') icon = '💬';
+      else if (type === 'OFFER') icon = '🤝';
+      else if (type === 'TRACKER_UPDATE') icon = '📦';
+
+      toast.innerHTML = `
+        <div class="salink-toast__icon">${escapeHtml(icon)}</div>
+        <div class="salink-toast__body">
+          <h5 class="salink-toast__title">${escapeHtml(title)}</h5>
+          <p class="salink-toast__desc">${escapeHtml(message)}</p>
+        </div>
+        <button class="salink-toast__close" onclick="this.parentElement.remove()">&times;</button>
+      `;
+
+      const safeLink = notificationHref(link);
+      if (safeLink !== '#') {
+        toast.style.cursor = 'pointer';
+        toast.onclick = function(e) {
+          if (e.target.classList.contains('salink-toast__close')) return;
+          window.location.href = safeLink;
+        };
+      }
+
+      container.appendChild(toast);
+
+      setTimeout(() => {
+        toast.classList.add('is-hiding');
+        setTimeout(() => toast.remove(), 250);
+      }, 5000);
+    }
+
+    function renderNotificationList(notifications) {
+      const list = document.getElementById('notif-list');
+      if (!list) return;
+      if (notifications && notifications.length > 0) {
+        list.innerHTML = notifications.map(n => `
+          <div style="padding: 6px; border-radius: 4px; background: ${n.is_read ? '#f9fafb' : '#eff6ff'}; border: 1px solid ${n.is_read ? '#e5e7eb' : '#bfdbfe'};">
+            <a href="${escapeHtml(notificationHref(n.link))}" style="text-decoration: none; color: inherit; display: block;">
+              <strong style="color: #111;">${escapeHtml(n.title)}</strong>
+              <p style="margin: 2px 0 0 0; color: #4b5563;">${escapeHtml(n.message)}</p>
+              <small style="color: #9ca3af; font-size: 0.65rem;">${escapeHtml(n.created_at)}</small>
+            </a>
+          </div>
+        `).join('');
+      } else {
+        list.innerHTML = '<p style="text-align: center; color: #777; margin: 8px 0;">Tidak ada notifikasi baru.</p>';
+      }
+    }
+
+    function fetchNotifications() {
+      return fetch('{% url "saling_beli:user-notifications" %}')
+        .then(res => res.json())
+        .then(data => {
+          updateNotifBadge(data.unread_count);
+          if (data.cursor) notifCursor = data.cursor;
+          if (data.notifications && data.notifications.length) {
+            data.notifications.forEach(n => seenNotifIds.add(n.id));
+          }
+          renderNotificationList(data.notifications);
+        })
+        .catch(() => {});
+    }
+
+    async function longPollNotifications() {
+      try {
+        const url = new URL('{% url "saling_beli:notification-stream" %}', window.location.origin);
+        if (notifCursor) url.searchParams.set('after', notifCursor);
+
+        const res = await fetch(url.toString(), { headers: { 'Accept': 'application/json' } });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const data = await res.json();
+
+        if (data.cursor) notifCursor = data.cursor;
+        updateNotifBadge(data.unread_count);
+
+        if (data.notifications && data.notifications.length) {
+          let hasNew = false;
+          data.notifications.forEach(n => {
+            if (!seenNotifIds.has(n.id)) {
+              seenNotifIds.add(n.id);
+              hasNew = true;
+              if (!isFirstNotifLoad && !n.is_read) {
+                showSalinkToast(n.title, n.message, n.link, n.type);
+              }
+            }
+          });
+          if (hasNew) fetchNotifications();
+        }
+        isFirstNotifLoad = false;
+      } catch (err) {
+        await new Promise(resolve => setTimeout(resolve, 3000));
+      }
+      notifLoopTimer = setTimeout(longPollNotifications, 300);
+    }
+
+    function markAllNotifsRead() {
+      fetch('{% url "saling_beli:mark-notifications-read" %}', {
+        method: 'POST',
+        headers: {
+          'X-CSRFToken': csrftoken
+        }
+      })
+      .then(res => res.json())
+      .then(() => {
+        fetchNotifications();
+      });
+    }
+
+    // Inisialisasi notifikasi realtime jika user sedang login (cek dataset body)
+    const isUserAuth = document.body.dataset.userAuth === 'true';
+    if (isUserAuth) {
+      (async function initNotifications() {
+        try {
+          await fetchNotifications();
+        } catch (err) {
+          console.warn('Initial notifications fetch failed:', err);
+        } finally {
+          isFirstNotifLoad = false;
+          longPollNotifications();
+        }
+      })();
+    }
+  </script>
+
+  {% include "_footer.html" %}
+
+</body>
+</html>

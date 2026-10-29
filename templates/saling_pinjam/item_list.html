@@ -1,42 +1,17 @@
+{% extends "base.html" %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="id">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SaLink - Pinjam</title>
 
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Anton&display=swap" rel="stylesheet">
+{% block title %}SaLink - Pinjam{% endblock %}
 
-    <link rel="stylesheet" href="{% static 'saling_pinjam.css' %}">
-</head>
-<body>
+{% block extra_head %}
+    <link rel="stylesheet" href="{% static 'saling_pinjam/saling_pinjam.css' %}">
+{% endblock %}
 
-    <!-- ===== NAVBAR ===== -->
-    <header class="navbar">
-        <a href="/" class="navbar__logo">SaLink</a>
+{% block navbar %}
+    {% include "_navbar.html" with active_nav="pinjam" %}
+{% endblock %}
 
-        <nav class="navbar__menu">
-            <a href="/" class="navbar__link">HOME</a>
-            <a href="/saling-beli/" class="navbar__link">BELI</a>
-            <a href="#" class="navbar__link">NEBENG</a>
-            <a href="/saling-bagi/" class="navbar__link">BAGI</a>
-            <a href="{% url 'saling_pinjam:item_list' %}" class="navbar__link navbar__link--active">PINJAM</a>
-        </nav>
-
-        <a href="#" class="navbar__profile">
-            <span class="navbar__profile-text">Profile</span>
-            <span class="navbar__avatar">
-                <svg viewBox="0 0 24 24" aria-hidden="true">
-                    <circle cx="12" cy="8" r="5"></circle>
-                    <path d="M3 22c0-5 4-8 9-8s9 3 9 8z"></path>
-                </svg>
-            </span>
-        </a>
-    </header>
-
+{% block content %}
     <!-- ===== KONTEN UTAMA ===== -->
     <main class="pinjam">
 
@@ -87,7 +62,8 @@
                         <div class="item-card__image"></div>
                         <div class="item-card__info">
                             <span class="item-card__name">{{ item.name }}</span>
-                            <span class="item-card__meta">{{ item.pickup_location }}</span>
+                            <span class="item-card__meta">Lokasi Pickup</span>
+                            <span class="item-card__status">{{ item.get_status_display }}</span>
                         </div>
                     </a>
                     {% empty %}
@@ -117,6 +93,4 @@
         </aside>
 
     </main>
-
-</body>
-</html>
+{% endblock %}

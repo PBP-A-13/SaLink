@@ -1,0 +1,244 @@
+{% extends "saling_tebeng/base_tebeng.html" %}
+
+{% block title %}SaLink Nebeng - Tawarkan Tebengan{% endblock %}
+
+{% block sidebar %}
+  <div class="side-group">
+    <a class="side-item is-active" href="{% url 'saling_tebeng:tawarkan_tebengan' %}" aria-current="page">
+      <span>Tawarkan Tebengan</span>
+    </a>
+    <a class="side-item" href="{% url 'saling_tebeng:nebeng_list' %}">
+      <svg class="icon" aria-hidden="true"><use href="#i-home"/></svg>
+      <span>Pesan</span>
+    </a>
+  </div>
+{% endblock %}
+
+{% block content %}
+<h1 class="offer-title">Jadwal Nebeng</h1>
+
+<form method="post" id="offer-form" novalidate>
+  {% csrf_token %}
+
+  <div class="offer-layout">
+    {# Grid 5 Hari: Senin s/d Jumat #}
+    <div class="days-container">
+      {% for day in days %}
+      <div class="day-column" data-day="{{ day.iso }}">
+        <h2 class="day-column__header">{{ day.name }}</h2>
+
+        {# List Jadwal yang Tersimpan untuk Hari Ini #}
+        <div class="day-column__saved" id="saved-{{ day.iso }}">
+          {% for s in existing %}
+            {% if s.date == day.date %}
+            <div class="saved-card" id="existing-card-{{ s.id }}">
+              <div class="saved-card__route">{{ s.origin }} - {{ s.destination }}</div>
+              <div class="saved-card__time">
+                <svg class="icon" aria-hidden="true"><use href="#i-clock"/></svg>
+                <span>{{ s.departure_time|time:"H.i" }}</span>
+              </div>
+              <button type="button" class="saved-card__remove" data-schedule-id="{{ s.id }}" title="Batalkan Jadwal">
+                <svg class="icon" aria-hidden="true"><use href="#i-x"/></svg>
+              </button>
+            </div>
+            {% endif %}
+          {% endfor %}
+        </div>
+
+        {# Dropdowns Input Jadwal Baru #}
+        <div class="day-column__inputs">
+          <div class="slot-dropdown">
+            <select id="origin-{{ day.iso }}">
+              <option value="">Lokasi Asal</option>
+              {% for loc in locations %}
+                <option value="{{ loc }}">{{ loc }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="slot-dropdown">
+            <select id="dest-{{ day.iso }}">
+              <option value="">Lokasi Tujuan</option>
+              {% for loc in locations %}
+                <option value="{{ loc }}">{{ loc }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="slot-dropdown">
+            <select id="time-{{ day.iso }}">
+              <option value="">Jam</option>
+              {% for val, label in time_choices %}
+                <option value="{{ val }}">{{ label }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+
+        {# Tombol Tambah (+) #}
+        <button type="button" class="btn-add-slot" onclick="addSlot('{{ day.iso }}');" title="Tambah Jadwal {{ day.name }}">
+          <svg class="icon" aria-hidden="true"><use href="#i-plus"/></svg>
+        </button>
+      </div>
+      {% endfor %}
+    </div>
+
+    {# Kolom Kanan: Kendaraan #}
+    <aside class="vehicle-box">
+      <h2 class="vehicle-box__title">Kendaraan</h2>
+
+      <div class="vehicle-pill">
+        <select name="vehicle_type" id="id_vehicle_type" required>
+          <option value="">Jenis</option>
+          <option value="motor">Motor</option>
+          <option value="mobil">Mobil</option>
+        </select>
+      </div>
+
+      <div class="vehicle-pill">
+        <select name="capacity" id="id_capacity" required>
+          <option value="">Kapasitas</option>
+          <option value="1">1</option>
+          <option value="2">2</option>
+          <option value="3">3</option>
+          <option value="4">4</option>
+          <option value="5">5</option>
+          <option value="6">6</option>
+        </select>
+      </div>
+    </aside>
+  </div>
+
+  {# Container input tersembunyi yang akan dikirim ke backend saat Save #}
+  <div id="hidden-slots-container"></div>
+
+  {# Tombol Save dan Cancel di Ujung Kanan Bawah #}
+  <div class="form-actions-bottom">
+    <a href="{% url 'saling_tebeng:nebeng_list' %}" class="btn-cancel">Cancel</a>
+    <button type="submit" class="btn-save">Save</button>
+  </div>
+</form>
+
+{# Form tersembunyi untuk pembatalan jadwal yang sudah tersimpan di DB #}
+<form id="cancel-existing-form" method="post" action="" style="display:none;">
+  {% csrf_token %}
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  var slotCounter = 0;
+
+  function addSlot(dayIso) {
+    var originEl = document.getElementById('origin-' + dayIso);
+    var destEl = document.getElementById('dest-' + dayIso);
+    var timeEl = document.getElementById('time-' + dayIso);
+
+    var origin = originEl ? originEl.value.trim() : '';
+    var dest = destEl ? destEl.value.trim() : '';
+    var time = timeEl ? timeEl.value.trim() : '';
+
+    if (!origin || !dest || !time) {
+      alert('Pilih Lokasi Asal, Lokasi Tujuan, dan Jam terlebih dahulu.');
+      return;
+    }
+
+    if (origin.toLowerCase() === dest.toLowerCase()) {
+      alert('Lokasi Asal dan Lokasi Tujuan tidak boleh sama.');
+      return;
+    }
+
+    slotCounter++;
+    var uniqueId = 'slot_' + slotCounter;
+
+    // Format jam tampilan (misal 12:00 -> 12.00)
+    var timeDisplay = time.replace(':', '.');
+
+    // Buat kartu visual di kolom hari
+    var savedContainer = document.getElementById('saved-' + dayIso);
+    var cardDiv = document.createElement('div');
+    cardDiv.className = 'saved-card';
+    cardDiv.id = 'card-' + uniqueId;
+    cardDiv.innerHTML =
+      '<div class="saved-card__route">' + escapeHtml(origin) + ' - ' + escapeHtml(dest) + '</div>' +
+      '<div class="saved-card__time">' +
+        '<svg class="icon" aria-hidden="true"><use href="#i-clock"/></svg>' +
+        ' <span>' + escapeHtml(timeDisplay) + '</span>' +
+      '</div>' +
+      '<button type="button" class="saved-card__remove" onclick="removeSlot(\'' + uniqueId + '\');" title="Hapus Jadwal">' +
+        '<svg class="icon" aria-hidden="true"><use href="#i-x"/></svg>' +
+      '</button>';
+    savedContainer.appendChild(cardDiv);
+
+    // Buat input tersembunyi untuk dikirim ke backend saat Save
+    var hiddenContainer = document.getElementById('hidden-slots-container');
+    var inputsWrapper = document.createElement('div');
+    inputsWrapper.id = 'inputs-' + uniqueId;
+    inputsWrapper.innerHTML =
+      '<input type="hidden" name="slot_date[]" value="' + escapeHtml(dayIso) + '">' +
+      '<input type="hidden" name="slot_origin[]" value="' + escapeHtml(origin) + '">' +
+      '<input type="hidden" name="slot_destination[]" value="' + escapeHtml(dest) + '">' +
+      '<input type="hidden" name="slot_time[]" value="' + escapeHtml(time) + '">';
+    hiddenContainer.appendChild(inputsWrapper);
+
+    // Reset dropdown agar user bisa tambah jadwal lain
+    originEl.value = '';
+    destEl.value = '';
+    timeEl.value = '';
+  }
+
+  function removeSlot(uniqueId) {
+    var card = document.getElementById('card-' + uniqueId);
+    if (card) card.remove();
+
+    var inputs = document.getElementById('inputs-' + uniqueId);
+    if (inputs) inputs.remove();
+  }
+
+  function cancelExistingSchedule(scheduleId) {
+    if (confirm('Batalkan jadwal ini?')) {
+      var form = document.getElementById('cancel-existing-form');
+      form.action = '/saling-tebeng/nebeng/jadwal/' + scheduleId + '/batal/';
+      form.submit();
+    }
+  }
+
+  document.querySelectorAll('.saved-card__remove[data-schedule-id]').forEach(function (button) {
+    button.addEventListener('click', function () {
+      cancelExistingSchedule(button.dataset.scheduleId);
+    });
+  });
+
+  function escapeHtml(text) {
+    var div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
+  // Validasi form saat klik Save
+  document.getElementById('offer-form').addEventListener('submit', function (e) {
+    var vehicleType = document.getElementById('id_vehicle_type').value;
+    var capacity = document.getElementById('id_capacity').value;
+    var slots = document.querySelectorAll('#hidden-slots-container input[name="slot_origin[]"]');
+    var existingCards = document.querySelectorAll('.saved-card');
+
+    if (!vehicleType) {
+      alert('Pilih jenis kendaraan terlebih dahulu.');
+      e.preventDefault();
+      return;
+    }
+
+    if (!capacity) {
+      alert('Pilih kapasitas kendaraan terlebih dahulu.');
+      e.preventDefault();
+      return;
+    }
+
+    if (slots.length === 0 && existingCards.length === 0) {
+      alert('Isi jadwal dan klik tanda tambah (+) untuk menambahkan minimal satu jadwal.');
+      e.preventDefault();
+      return;
+    }
+  });
+</script>
+{% endblock %}

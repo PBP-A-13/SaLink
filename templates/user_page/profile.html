@@ -1,0 +1,95 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Profil {{ user.username }} | SaLink</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Anton&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'user_page/user-page.css' %}">
+</head>
+<body class="account-body">
+  {% include 'user_page/_navbar.html' %}
+  <main class="account-page profile-page">
+    {% if messages %}
+      <div class="messages" aria-live="polite">
+        {% for message in messages %}<p class="messages__item">{{ message }}</p>{% endfor %}
+      </div>
+    {% endif %}
+
+    <section class="profile-banner">
+      {% if user.profile.avatar %}
+        <img src="{{ user.profile.avatar.url }}" alt="{{ user.username }}" class="profile-avatar" style="object-fit: cover; border: 3px solid var(--salink-cream);">
+      {% else %}
+        <div class="profile-avatar" aria-hidden="true">{{ user.username|first|upper }}</div>
+      {% endif %}
+      <div class="profile-banner__identity">
+        <p class="eyebrow">PROFIL PENGGUNA</p>
+        <h1>{% if user.get_full_name %}{{ user.get_full_name }}{% else %}{{ user.username }}{% endif %}</h1>
+        <p>@{{ user.username }}{% if user.email %}<span> &middot; {{ user.email }}</span>{% endif %}</p>
+      </div>
+      <span class="member-mark">ANGGOTA SALINK</span>
+    </section>
+
+    <section class="activity-section" aria-labelledby="activity-heading">
+      <div class="section-heading">
+        <div><p class="eyebrow">JEJAK AKTIVITAS</p><h2 id="activity-heading">Ruang gerakmu</h2></div>
+        <span class="section-heading__note">Terhubung lintas modul</span>
+      </div>
+      <div class="stats-grid">
+        {% for stat in stats %}
+          <a class="stat-card stat-card--{{ stat.tone }}" href="{{ stat.url }}" style="--card-order: {{ forloop.counter0 }}">
+            <span class="stat-card__label">{{ stat.label }}</span>
+            <strong class="stat-card__value">{{ stat.value }}</strong>
+            <span class="stat-card__detail">{{ stat.detail }}</span>
+            <span class="stat-card__arrow" aria-hidden="true">&#8599;</span>
+          </a>
+        {% endfor %}
+      </div>
+    </section>
+
+    <section class="profile-lower">
+      <div class="profile-form-panel">
+        <p class="eyebrow">AKUN</p>
+        <h2>Detail profil</h2>
+        <form method="post" enctype="multipart/form-data" class="account-form profile-form">
+          {% csrf_token %}
+          {% for field in form %}
+            <div class="field">
+              <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+              {{ field }}
+              {{ field.errors }}
+            </div>
+          {% endfor %}
+          <button class="action-button" type="submit">Simpan profil</button>
+        </form>
+
+        <!-- Zona Bahaya: Hapus Akun -->
+        <div style="margin-top: 36px; padding-top: 24px; border-top: 1.5px dashed rgba(77, 42, 0, 0.25);">
+          <p class="eyebrow" style="color: #c62828;">ZONA BAHAYA</p>
+          <h3 style="font-size: 1.1rem; margin: 4px 0 8px; text-transform: uppercase;">Hapus Akun SaLink</h3>
+          <p style="font-size: 0.85rem; font-family: var(--font-body); color: var(--salink-muted); margin: 0 0 16px;">
+            Menghapus akun Anda akan menghapus data profil secara permanen dan membebaskan username <strong>@{{ user.username }}</strong> sehingga dapat didaftarkan kembali oleh Anda atau orang lain.
+          </p>
+          <form method="post" action="{% url 'user_page:delete_account' %}" onsubmit="return confirm('PERINGATAN: Apakah Anda yakin ingin menghapus akun Anda secara permanen? Semua data profil akan dihapus dan Anda akan logout.');">
+            {% csrf_token %}
+            <button type="submit" class="action-button" style="background: #c62828; color: #fff; width: auto; padding: 10px 20px; font-size: 0.85rem;">
+              🗑️ Hapus Akun Saya
+            </button>
+          </form>
+        </div>
+      </div>
+      <aside class="module-panel">
+        <p class="eyebrow">LANJUTKAN</p>
+        <h2>Semua layanan</h2>
+        <a href="{% url 'saling_beli:item_create' %}"><span>01</span> Jual atau hibahkan barang <b>&#8599;</b></a>
+        <a href="{% url 'saling_pinjam:item_create' %}"><span>02</span> Tawarkan barang pinjaman <b>&#8599;</b></a>
+        <a href="{% url 'saling_beli:index' %}"><span>03</span> Jelajahi barang prelove <b>&#8599;</b></a>
+      </aside>
+    </section>
+  </main>
+  {% include "_footer.html" %}
+</body>
+</html>

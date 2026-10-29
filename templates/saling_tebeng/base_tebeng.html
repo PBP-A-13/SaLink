@@ -1,0 +1,81 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}SaLink Nebeng{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Oswald:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'navbar-footer.css' %}">
+  <link rel="stylesheet" href="{% static 'saling_tebeng/saling_tebeng.css' %}">
+</head>
+<body>
+  {% with active_nav='tebeng' %}
+    {% include "_navbar.html" %}
+  {% endwith %}
+
+  <div class="shell">
+    <aside class="sidebar" aria-label="Menu Nebeng">
+      {% block sidebar %}{% endblock %}
+    </aside>
+
+    <main class="main">
+      {% if messages %}
+      <ul class="messages" role="status">
+        {% for message in messages %}
+        <li class="message {{ message.tags }}">{{ message }}</li>
+        {% endfor %}
+      </ul>
+      {% endif %}
+
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+
+  {# SVG Sprite for Icons #}
+  <svg width="0" height="0" style="position:absolute; display:none;" aria-hidden="true">
+    <symbol id="i-user" viewBox="0 0 24 24">
+      <circle cx="12" cy="8" r="4.5"/>
+      <path d="M3 23c0-5.5 4-8.5 9-8.5s9 3 9 8.5z"/>
+    </symbol>
+    <symbol id="i-home" viewBox="0 0 24 24">
+      <path d="M12 3 1.5 12.5H5V21h5v-6h4v6h5v-8.5h3.5z"/>
+    </symbol>
+    <symbol id="i-search" viewBox="0 0 24 24">
+      <circle cx="10" cy="10" r="6" fill="none" stroke="currentColor" stroke-width="2.4"/>
+      <path d="m15 15 5.5 5.5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="i-pin" viewBox="0 0 24 24">
+      <path fill-rule="evenodd" d="M12 2a7 7 0 0 0-7 7c0 5 7 13 7 13s7-8 7-13a7 7 0 0 0-7-7Zm0 9.5a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5Z"/>
+    </symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2.2"/>
+      <path d="M12 7v5.2l3.2 2" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="i-x" viewBox="0 0 24 24">
+      <path d="m6 6 12 12M18 6 6 18" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24">
+      <path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="i-check" viewBox="0 0 24 24">
+      <path d="m5 12.5 4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
+    <symbol id="i-motor" viewBox="0 0 40 28">
+      <circle cx="9" cy="20" r="5" fill="#000" stroke="#000" stroke-width="2"/>
+      <circle cx="31" cy="20" r="5" fill="#000" stroke="#000" stroke-width="2"/>
+      <path d="M9 20l6-9h8l8 9M22 11l3-5h5M12 11H8" fill="none" stroke="#000" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
+    <symbol id="i-car" viewBox="0 0 40 28">
+      <path d="M4 20v-5l4-7h18l6 7h4v5z" fill="#000" stroke="#000" stroke-width="2" stroke-linejoin="round"/>
+      <circle cx="11" cy="21" r="4" fill="#D9D9D9" stroke="#000" stroke-width="2"/>
+      <circle cx="29" cy="21" r="4" fill="#D9D9D9" stroke="#000" stroke-width="2"/>
+    </symbol>
+  </svg>
+
+  {% block scripts %}{% endblock %}
+</body>
+</html>
+

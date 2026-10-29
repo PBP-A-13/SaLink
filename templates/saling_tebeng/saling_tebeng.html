@@ -1,0 +1,169 @@
+{% extends "saling_tebeng/base_tebeng.html" %}
+
+{% block title %}SaLink Nebeng{% endblock %}
+
+{% block sidebar %}
+  <div class="side-group">
+    <a class="side-item is-active" href="{% url 'saling_tebeng:nebeng_list' %}" aria-current="page">
+      <svg class="icon" aria-hidden="true"><use href="#i-home"/></svg>
+      <span>Pesan</span>
+    </a>
+  </div>
+
+  {% if user.is_authenticated %}
+    <a class="side-cta" href="{% url 'saling_tebeng:tawarkan_tebengan' %}">Tawarkan Tebengan</a>
+  {% else %}
+    <a class="side-cta" href="{% url 'user_page:login' %}?next={% url 'saling_tebeng:tawarkan_tebengan' %}">Tawarkan Tebengan</a>
+  {% endif %}
+{% endblock %}
+
+{% block content %}
+<form method="get" id="search-form" class="search-bar" novalidate>
+  {# Search Dropdown Asal #}
+  <div class="search-field">
+    <label class="search-field__label" for="select-asal">Asal</label>
+    <div class="pill-search">
+      <svg class="icon" aria-hidden="true"><use href="#i-search"/></svg>
+      <select name="asal" id="select-asal" onchange="document.getElementById('search-form').submit();">
+        <option value="">Lokasi Sekarang</option>
+        {% for loc in locations %}
+          <option value="{{ loc }}" {% if selected_asal == loc %}selected{% endif %}>{{ loc }}</option>
+        {% endfor %}
+      </select>
+      {% if selected_asal %}
+      <button type="button" class="clear-btn" onclick="clearSelect('select-asal');" aria-label="Hapus asal">
+        <svg class="icon" aria-hidden="true"><use href="#i-x"/></svg>
+      </button>
+      {% endif %}
+    </div>
+  </div>
+
+  {# Search Dropdown Tujuan #}
+  <div class="search-field">
+    <label class="search-field__label" for="select-tujuan">Tujuan</label>
+    <div class="pill-search">
+      <svg class="icon" aria-hidden="true"><use href="#i-pin"/></svg>
+      <select name="tujuan" id="select-tujuan" onchange="document.getElementById('search-form').submit();">
+        <option value="">Tujuan</option>
+        {% for loc in locations %}
+          <option value="{{ loc }}" {% if selected_tujuan == loc %}selected{% endif %}>{{ loc }}</option>
+        {% endfor %}
+      </select>
+      {% if selected_tujuan %}
+      <button type="button" class="clear-btn" onclick="clearSelect('select-tujuan');" aria-label="Hapus tujuan">
+        <svg class="icon" aria-hidden="true"><use href="#i-x"/></svg>
+      </button>
+      {% endif %}
+    </div>
+  </div>
+
+  {# Search Dropdown Jam #}
+  <div class="search-field">
+    <label class="search-field__label" for="select-jam">Waktu Berangkat</label>
+    <div class="pill-search">
+      <svg class="icon" aria-hidden="true"><use href="#i-clock"/></svg>
+      <select name="jam" id="select-jam" onchange="document.getElementById('search-form').submit();">
+        <option value="">Masukkan Jam</option>
+        {% for val, label in time_choices %}
+          <option value="{{ val }}" {% if selected_jam == val %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+      {% if selected_jam %}
+      <button type="button" class="clear-btn" onclick="clearSelect('select-jam');" aria-label="Hapus jam">
+        <svg class="icon" aria-hidden="true"><use href="#i-x"/></svg>
+      </button>
+      {% endif %}
+    </div>
+  </div>
+</form>
+
+{% if results %}
+  <section class="rides-list" aria-label="Daftar tebengan yang tersedia">
+    {% for r in results %}
+    {% with s=r.schedule %}
+    <article class="ride-card">
+      {# Kolom 1: Avatar Driver & Nama #}
+      <div class="ride-card__driver">
+        <div class="ride-card__avatar">
+          <svg aria-hidden="true"><use href="#i-user"/></svg>
+        </div>
+        <span class="ride-card__name">{{ r.driver.username|upper }}</span>
+      </div>
+
+      {# Kolom 2: Detail Tebengan #}
+      <div class="ride-card__info">
+        <div class="ride-card__origin">[{{ s.origin|upper }}]</div>
+        <p class="ride-card__detail">Available Kursi : {{ s.available_seats }}</p>
+        <p class="ride-card__detail">Nominal : Rp{{ s.price }}</p>
+        <div class="ride-card__vehicle-type">
+          <svg class="ride-card__vehicle-icon" aria-label="{{ r.vehicle.get_vehicle_type_display }}">
+            <use href="#i-{% if r.vehicle.vehicle_type == 'motor' %}motor{% else %}car{% endif %}"/>
+          </svg>
+        </div>
+      </div>
+
+      {# Kolom 3: Ilustrasi Rute #}
+      <div class="ride-card__route" aria-hidden="true">
+        <svg class="route-svg" viewBox="0 0 240 70">
+          <polyline points="10,55 45,20 80,48 115,12 165,52 220,18" fill="none" stroke="#000000" stroke-width="2.5" stroke-linejoin="round"/>
+          <circle cx="10" cy="55" r="4.5" fill="#000000"/>
+          <circle cx="220" cy="18" r="4.5" fill="#000000"/>
+          <use href="#i-{% if r.vehicle.vehicle_type == 'motor' %}motor{% else %}car{% endif %}" x="210" y="2" width="28" height="20"/>
+        </svg>
+      </div>
+
+      {# Status Searah di Kanan Atas #}
+      <div class="ride-card__badge">
+        <span>SEARAH</span>
+        <span class="badge-check-circle">✔</span>
+      </div>
+
+      {# Tombol Aksi di Kanan Bawah #}
+      <div class="ride-card__actions">
+        {% if r.already_booked %}
+          <span class="btn-white-pill" style="opacity: 0.6; cursor: default;">Sudah Bergabung</span>
+        {% else %}
+          {% if user.is_authenticated %}
+            <form method="post" action="{% url 'saling_tebeng:join_ride' s.id %}" style="display:inline; margin:0;">
+              {% csrf_token %}
+              <input type="hidden" name="seats" value="1">
+              <button type="submit" class="btn-white-pill">Gabung Tebengan</button>
+            </form>
+          {% else %}
+            <a href="{% url 'user_page:login' %}?next={{ request.get_full_path|urlencode }}" class="btn-white-pill">Gabung Tebengan</a>
+          {% endif %}
+        {% endif %}
+        {% if user.is_authenticated %}
+          <a href="{% url 'saling_tebeng:ride_chat' s.id %}" class="btn-white-pill">Chat</a>
+        {% else %}
+          <a href="{% url 'user_page:login' %}?next={% url 'saling_tebeng:ride_chat' s.id %}" class="btn-white-pill">Chat</a>
+        {% endif %}
+      </div>
+    </article>
+    {% endwith %}
+    {% endfor %}
+  </section>
+{% else %}
+  <div class="empty-state">
+    <strong>Belum ada tawaran tebengan</strong>
+    <p>Coba pilih lokasi asal, tujuan, atau jam yang berbeda, atau tawarkan tebenganmu sendiri!</p>
+    {% if user.is_authenticated %}
+      <a href="{% url 'saling_tebeng:tawarkan_tebengan' %}" class="btn-white-pill" style="border: 2px solid var(--salink-dark); margin-top: 10px;">Tawarkan Tebengan</a>
+    {% else %}
+      <a href="{% url 'user_page:login' %}?next={% url 'saling_tebeng:tawarkan_tebengan' %}" class="btn-white-pill" style="border: 2px solid var(--salink-dark); margin-top: 10px;">Tawarkan Tebengan</a>
+    {% endif %}
+  </div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+  function clearSelect(selectId) {
+    var sel = document.getElementById(selectId);
+    if (sel) {
+      sel.value = '';
+      document.getElementById('search-form').submit();
+    }
+  }
+</script>
+{% endblock %}

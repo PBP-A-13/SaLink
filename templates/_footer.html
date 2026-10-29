@@ -1,0 +1,46 @@
+<footer class="footer">
+  <div class="footer-container">
+    <div class="footer-brand">
+      <h2>SaLink</h2>
+      <p>
+        Platform komprehensif mahasiswa Universitas Indonesia. Saling bantu, saling beli, saling tebeng, saling bagi, dan saling pinjam untuk ekosistem kampus yang lebih solid dan berkelanjutan.
+      </p>
+    </div>
+
+    <div class="footer-column">
+      <h3>Layanan</h3>
+      <ul>
+        <li><a href="{% url 'saling_beli:index' %}">Saling Beli Prelove</a></li>
+        <li><a href="/saling-tebeng/">Saling Tebeng</a></li>
+        <li><a href="{% url 'saling_bagi:index' %}">Saling Bagi Makanan</a></li>
+        <li><a href="{% url 'saling_pinjam:item_list' %}">Saling Pinjam Barang</a></li>
+      </ul>
+    </div>
+
+    <div class="footer-column">
+      <h3>Akun & Bantuan</h3>
+      <ul>
+        {% if user.is_authenticated %}
+          <li><a href="{% url 'user_page:profile' %}">Profil Saya ({{ user.username }})</a></li>
+          <li><a href="{% url 'saling_pinjam:my_borrows' %}">Pinjaman Saya</a></li>
+          <li>
+            <form method="post" action="{% url 'user_page:logout' %}" style="display:inline; margin:0;">
+              {% csrf_token %}
+              <button type="submit" style="background:none; border:none; padding:0; color:inherit; font:inherit; cursor:pointer; opacity:0.85;">Keluar Akun</button>
+            </form>
+          </li>
+        {% else %}
+          <li><a href="{% url 'user_page:login' %}?next={{ request.get_full_path|urlencode }}">Masuk Akun</a></li>
+          <li><a href="{% url 'user_page:register' %}">Daftar Akun Baru</a></li>
+        {% endif %}
+        <li><a href="{% url 'main:panduan_cod' %}">Panduan Keamanan COD</a></li>
+        <li><a href="{% url 'main:faq' %}">FAQ & Syarat Ketentuan</a></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="footer-bottom">
+    <p>&copy; 2026 SaLink &middot; Kelompok PBP A-13 UI.</p>
+    <p>Dibuat semua orang yang ingin live sustainable</p>
+  </div>
+</footer>
