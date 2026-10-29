@@ -24,3 +24,12 @@ def show_main(request):
     }
     return render(request, "index.html", context)
 
+
+def panduan_cod(request):
+    """Halaman panduan keselamatan transaksi Cash on Delivery (COD) di area kampus."""
+    return render(request, "panduan_cod.html")
+
+
+def faq(request):
+    """Halaman Frequently Asked Questions (FAQ) & Syarat Ketentuan SaLink."""
+    return render(request, "faq.html")
