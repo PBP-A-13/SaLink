@@ -1,0 +1,103 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Panduan Keamanan COD Kampus | SaLink</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'style.css' %}">
+  <link rel="stylesheet" href="{% static 'navbar-footer.css' %}">
+</head>
+<body class="bg-salink-cream text-salink-dark min-h-screen flex flex-col font-sans">
+
+  {% include "_navbar.html" %}
+
+  <main class="flex-1 max-w-4xl mx-auto px-4 py-8 w-full">
+    <!-- Breadcrumb / Tombol Kembali -->
+    <div style="margin-bottom: 24px;">
+      <a href="{% url 'main:show_main' %}" style="display: inline-flex; align-items: center; gap: 6px; text-decoration: none; font-weight: 600; font-size: 0.9rem; color: #4D2A00; background: #fff; padding: 6px 14px; border: 2px solid #4D2A00; border-radius: 8px; box-shadow: 2px 2px 0 #4D2A00;">
+        ← Kembali ke Beranda
+      </a>
+    </div>
+
+    <!-- Header Dokumen -->
+    <header style="background: #4D2A00; color: #FFFDF9; border: 3px solid #4D2A00; border-radius: 16px; padding: 28px 24px; margin-bottom: 28px; box-shadow: 4px 4px 0 #F2A900;">
+      <p style="font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #F2A900; margin: 0 0 6px;">SAFETY GUIDELINES &bull; SALINK</p>
+      <h1 style="font-family: 'Anton', sans-serif; font-size: clamp(2rem, 4vw, 2.8rem); margin: 0 0 10px; line-height: 1.1; text-transform: uppercase;">
+        🛡️ Panduan Keamanan COD Kampus UI
+      </h1>
+      <p style="margin: 0; font-size: 0.95rem; opacity: 0.9; max-width: 680px; line-height: 1.5;">
+        SaLink mengedepankan keamanan dan kenyamanan antar mahasiswa. Ikuti panduan praktis berikut saat bertemu langsung (Cash on Delivery / serah terima barang) di lingkungan kampus Universitas Indonesia.
+      </p>
+    </header>
+
+    <!-- Konten Panduan -->
+    <div style="display: grid; gap: 20px;">
+      
+      <!-- Poin 1 -->
+      <section style="background: #fff; border: 2.5px solid #4D2A00; border-radius: 14px; padding: 20px; box-shadow: 3px 3px 0 #4D2A00;">
+        <h2 style="font-size: 1.15rem; font-weight: 700; text-transform: uppercase; margin: 0 0 8px; color: #4D2A00; display: flex; align-items: center; gap: 8px;">
+          <span>📍</span> 1. Pilih Titik Temu Ramai & Terang di Kampus
+        </h2>
+        <p style="margin: 0; font-size: 0.9rem; line-height: 1.6; color: #333;">
+          Selalu sepakati lokasi pertemuan di area publik yang ramai dan diawasi oleh petugas keamanan / CCTV kampus UI. Rekomendasi titik temu resmi SaLink:
+        </p>
+        <ul style="margin: 8px 0 0 20px; padding: 0; font-size: 0.9rem; line-height: 1.6;">
+          <li><strong>Perpustakaan Pusat UI (The Crystal of Knowledge)</strong>: Area lobi utama atau dekat Starbucks/jembatan teksas.</li>
+          <li><strong>Stasiun UI / Stasiun Pondok Cina</strong>: Area pintu keluar utama atau minimarket stasiun.</li>
+          <li><strong>Kantin & Lobi Fakultas Masing-Masing</strong>: Contohnya Kantin Dallas (FIK), Kantin Takor (FT), atau Lobi Gedung Baru Fasilkom.</li>
+          <li><strong>Pusgiwa UI</strong>: Area lobi dan selasar depan.</li>
+        </ul>
+      </section>
+
+      <!-- Poin 2 -->
+      <section style="background: #fff; border: 2.5px solid #4D2A00; border-radius: 14px; padding: 20px; box-shadow: 3px 3px 0 #4D2A00;">
+        <h2 style="font-size: 1.15rem; font-weight: 700; text-transform: uppercase; margin: 0 0 8px; color: #4D2A00; display: flex; align-items: center; gap: 8px;">
+          <span>⏰</span> 2. Atur Waktu di Jam Aktif Kampus
+        </h2>
+        <p style="margin: 0; font-size: 0.9rem; line-height: 1.6; color: #333;">
+          Hindari membuat janji COD larut malam di tempat sepi. Waktu yang disarankan adalah <strong>pukul 08.00 s.d. 18.00 WIB</strong> saat aktivitas perkuliahan masih ramai dan bus kuning (Bikun) masih beroperasi optimal.
+        </p>
+      </section>
+
+      <!-- Poin 3 -->
+      <section style="background: #fff; border: 2.5px solid #4D2A00; border-radius: 14px; padding: 20px; box-shadow: 3px 3px 0 #4D2A00;">
+        <h2 style="font-size: 1.15rem; font-weight: 700; text-transform: uppercase; margin: 0 0 8px; color: #4D2A00; display: flex; align-items: center; gap: 8px;">
+          <span>🔍</span> 3. Cek Kondisi Fisik Barang di Tempat
+        </h2>
+        <p style="margin: 0; font-size: 0.9rem; line-height: 1.6; color: #333;">
+          Bagi pembeli atau peminjam, luangkan waktu 3-5 menit untuk memeriksa kelengkapan dan kondisi fisik barang (fungsi alat elektronik, kelengkapan halaman buku, kebersihan pakaian) sebelum mengonfirmasi transaksi selesai di tracker.
+        </p>
+      </section>
+
+      <!-- Poin 4 -->
+      <section style="background: #fff; border: 2.5px solid #4D2A00; border-radius: 14px; padding: 20px; box-shadow: 3px 3px 0 #4D2A00;">
+        <h2 style="font-size: 1.15rem; font-weight: 700; text-transform: uppercase; margin: 0 0 8px; color: #4D2A00; display: flex; align-items: center; gap: 8px;">
+          <span>💬</span> 4. Gunakan Fitur Chat Resmi SaLink
+        </h2>
+        <p style="margin: 0; font-size: 0.9rem; line-height: 1.6; color: #333;">
+          Gunakan fitur percakapan terintegrasi di web SaLink untuk menyepakati harga nego, nomor rekening, dan jam janji temu agar rekam jejak transaksi tercatat dengan aman jika terjadi kendala.
+        </p>
+      </section>
+
+      <!-- Poin 5 -->
+      <section style="background: #fff; border: 2.5px solid #4D2A00; border-radius: 14px; padding: 20px; box-shadow: 3px 3px 0 #4D2A00;">
+        <h2 style="font-size: 1.15rem; font-weight: 700; text-transform: uppercase; margin: 0 0 8px; color: #4D2A00; display: flex; align-items: center; gap: 8px;">
+          <span>🚨</span> 5. Kontak Bantuan & Keamanan Kampus UI (PLK UI)
+        </h2>
+        <p style="margin: 0; font-size: 0.9rem; line-height: 1.6; color: #333;">
+          Jika Anda merasa curiga, merasa tidak aman, atau mengalami insiden di lingkungan kampus UI, segera dekati pos Satpam terdekat atau hubungi <strong>Pusat Pengamanan Lingkungan Kampus (PLK UI)</strong> di nomor <strong>(021) 7867222 ext. 100/101</strong> atau Emergency 112.
+        </p>
+      </section>
+
+    </div>
+  </main>
+
+  {% include "_footer.html" %}
+
+</body>
+</html>
+
