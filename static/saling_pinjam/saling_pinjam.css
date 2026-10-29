@@ -112,6 +112,36 @@ a {
     outline-offset: -1px;
 }
 
+/* radio disembunyikan, tapi tetap bisa difokus lewat keyboard */
+.calendar__radio {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+label.calendar__cell {
+    cursor: pointer;
+}
+
+/* hover = tampilan sama dengan tanggal yang dipilih (kuning + aksen cokelat) */
+label.calendar__cell:hover,
+label.calendar__cell:has(:focus-visible),
+label.calendar__cell:has(:checked) {
+    background: var(--salink-accent);
+    border-color: var(--salink-dark);
+    box-shadow: 0 4px 0 var(--salink-dark);
+}
+
+label.calendar__cell:hover,
+label.calendar__cell:has(:focus-visible) {
+    transform: translateY(-2px);
+}
+
+label.calendar__cell:active {
+    transform: translateY(2px);
+    box-shadow: 0 1px 0 var(--salink-dark);
+}
+
 /* ---------- SIDEBAR ---------- */
 .sidebar {
     display: flex;
