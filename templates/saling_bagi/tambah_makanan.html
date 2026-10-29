@@ -5,9 +5,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SaLink - Tambah Makanan</title>
+    <title>SaLink - Saling Bagi</title>
 
-    <link rel="stylesheet" href="{% static 'style.css' %}">
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Anton&display=swap" rel="stylesheet" />
+
+    <link rel="stylesheet" href="{% static 'style.css' %}?v=20261027_04">
     <link rel="stylesheet" href="{% static 'navbar-footer.css' %}">
     <link rel="stylesheet" href="{% static 'saling_bagi/saling_bagi.css' %}">
 </head>
@@ -15,7 +19,7 @@
 
     {% include "_navbar.html" with active_nav="bagi" %}
 
-    <main class="bagi">
+      <main class="bagi">
         <h2 class="section-title">Bagikan Makanan</h2>
 
         <form method="POST" enctype="multipart/form-data">
@@ -24,7 +28,7 @@
             {{ form.non_field_errors }}
 
             {% for field in form %}
-                <div style="margin-bottom: 16px;">
+                <div class="bagi__form-row">
                     <label for="{{ field.id_for_label }}">
                         {{ field.label }}
                     </label>
@@ -32,7 +36,7 @@
                     {{ field }}
 
                     {% for error in field.errors %}
-                        <p style="color: red;">{{ error }}</p>
+                        <p class="bagi__error">{{ error }}</p>
                     {% endfor %}
                 </div>
             {% endfor %}
@@ -42,7 +46,7 @@
             </button>
         </form>
 
-        <p>
+        <p class="bagi__back">
             <a href="{% url 'saling_bagi:index' %}">
                 Kembali ke Saling Bagi
             </a>

@@ -1,57 +1,50 @@
-@import url('../navbar-footer.css');
-
-/* ===== RESET & BASE ===== */
-:root {
-    --salink-dark: #4D2A00;
-    --salink-primary: #CC6F00;
-    --salink-accent: #F2A900;
-    --salink-light: #F9E6A8;
-    --salink-cream: #FFF6DC;
-    --salink-white: #FFFFFF;
-    --salink-muted: #8C5A1F;
-}
-
-* { box-sizing: border-box; margin: 0; padding: 0; }
-
-body {
-    font-family: 'Anton', sans-serif;
-    background: var(--salink-light);
-    color: var(--salink-dark);
-}
-
-a { color: inherit; text-decoration: none; }
-
-/* ===== MAP ===== */
-.map-section {
-    margin: 16px;
-    border-radius: 20px;
-    overflow: hidden;
-}
-
-#map {
-    height: 220px;
-    width: 100%;
-    z-index: 0;
-}
-
-/* Biar tampilan map hangat atau serasi */
-#map .leaflet-tile-pane { filter: sepia(0.2) saturate(1.2); }
+/* ==========================================================
+   Saling Bagi - style khusus modul Saling Bagi
+   Variabel warna (--salink-*) & font global ada di style.css,
+   jadi file ini TIDAK mendefinisikan ulang :root atau body.
+   ========================================================== */
 
 /* ===== KONTEN ===== */
-.bagi { 
-    padding: 16px 20px 32px; 
+.bagi {
+    padding: 24px 20px 48px;
     max-width: 1200px;
     margin: 0 auto;
 }
 
+.bagi a {
+    color: inherit;
+    text-decoration: none;
+}
+
+/* Anton hanya dipakai untuk judul */
 .section-title {
-    font-size: 24px;
+    font-family: 'Anton', sans-serif;
+    font-size: 28px;
     font-weight: 400;
     margin-bottom: 14px;
     color: var(--salink-dark);
+    text-transform: uppercase;
     letter-spacing: 0.02em;
 }
 
+/* Tombol + Tambah Makanan */
+.bagi__add-button {
+    display: inline-block;
+    margin-bottom: 24px;
+    padding: 8px 20px;
+    background: var(--salink-dark);
+    color: var(--salink-white);
+    border-radius: 999px;
+    font-size: 14px;
+    text-transform: uppercase;
+    transition: background 0.15s ease;
+}
+
+.bagi__add-button:hover {
+    background: var(--salink-primary);
+}
+
+/* ===== GRID KARTU MAKANAN ===== */
 .food-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -91,16 +84,19 @@ a { color: inherit; text-decoration: none; }
 .food-card__info {
     flex: 1;
     background: var(--salink-cream);
-    padding: 10px 12px;
+    padding: 10px 12px 44px; /* ruang bawah untuk tombol */
     border-radius: 14px;
     font-size: 13px;
     line-height: 1.4;
     color: var(--salink-dark);
 }
 
-.food-card__name { 
-    font-size: 16px; 
+.food-card__name {
+    font-family: 'Anton', sans-serif;
+    font-size: 18px;
+    font-weight: 400;
     text-transform: uppercase;
+    margin-bottom: 4px;
 }
 
 .food-card__label {
@@ -109,8 +105,8 @@ a { color: inherit; text-decoration: none; }
     color: var(--salink-primary);
 }
 
-.food-card__meta { 
-    font-size: 11px; 
+.food-card__meta {
+    font-size: 11px;
     color: var(--salink-muted);
 }
 
@@ -133,9 +129,9 @@ a { color: inherit; text-decoration: none; }
     transition: background 0.15s ease;
 }
 
-.food-card__button:hover { 
-    background: var(--salink-primary); 
-    color: var(--salink-white); 
+.food-card__button:hover {
+    background: var(--salink-primary);
+    color: var(--salink-white);
 }
 
 .empty-text {
@@ -144,8 +140,57 @@ a { color: inherit; text-decoration: none; }
     color: var(--salink-muted);
 }
 
+/* ===== FORM TAMBAH MAKANAN ===== */
+.bagi__form-row {
+    margin-bottom: 16px;
+}
+
+.bagi__form-row label {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 14px;
+    color: var(--salink-dark);
+}
+
+.bagi input[type="text"],
+.bagi input[type="number"],
+.bagi input[type="datetime-local"],
+.bagi select,
+.bagi textarea {
+    width: 100%;
+    max-width: 480px;
+    padding: 8px 12px;
+    font-family: inherit;
+    font-size: 14px;
+    color: var(--salink-dark);
+    background: var(--salink-cream);
+    border: 2px solid var(--salink-accent);
+    border-radius: 10px;
+}
+
+.bagi input:focus,
+.bagi select:focus,
+.bagi textarea:focus {
+    outline: none;
+    border-color: var(--salink-primary);
+}
+
+.bagi__error {
+    margin-top: 4px;
+    font-size: 12px;
+    color: #c0392b;
+}
+
+.bagi__back {
+    margin-top: 20px;
+    font-size: 14px;
+    color: var(--salink-muted);
+}
+
 /* ===== MESSAGES ===== */
-.messages { margin-bottom: 14px; }
+.messages {
+    margin-bottom: 14px;
+}
 
 .messages__item {
     padding: 10px 14px;
@@ -157,10 +202,14 @@ a { color: inherit; text-decoration: none; }
     border-left: 5px solid var(--salink-primary);
 }
 
-.messages__item--error { border-left-color: #c0392b; }
-.messages__item--success { border-left-color: #27ae60; }
+.messages__item.error   { border-left-color: #c0392b; }
+.messages__item.success { border-left-color: #27ae60; }
 
 /* ===== RESPONSIVE ===== */
-@media (max-width: 900px) {
+@media (max-width: 1000px) {
+    .food-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 650px) {
     .food-grid { grid-template-columns: 1fr; }
 }

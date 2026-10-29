@@ -5,12 +5,12 @@ from django.contrib.auth.models import User
 
 class Makanan(models.Model):
     LOKASI_CHOICES = [
-        ('Kantin Fasilkom', 'Kantin Fasilkom (Dallas)'),
+        ('Kantin Fasilkom', 'Kantin Fasilkom'),
         ('Perpusat UI', 'Perpustakaan Pusat UI'),
         ('Stasiun UI', 'Stasiun UI'),
         ('Asrama UI', 'Asrama UI'),
         ('Kantin RIK', 'Kantin RIK'),
-        ('Lainnya', 'Lainnya (Cek di deskripsi)'),
+        ('Lainnya', 'Lainnya'),
     ]
 
     nama_makanan = models.CharField(max_length=255)
