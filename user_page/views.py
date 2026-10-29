@@ -1,7 +1,8 @@
 from django.contrib import messages
-from django.contrib.auth import login
+from django.contrib.auth import login, logout
 from django.contrib.auth.views import LoginView
 from django.contrib.auth.decorators import login_required
+from django.views.decorators.http import require_POST
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils.http import url_has_allowed_host_and_scheme
@@ -67,11 +68,14 @@ def register(request):
 
 @login_required
 def profile(request):
-    form = ProfileForm(request.POST or None, instance=request.user)
-    if request.method == 'POST' and form.is_valid():
-        form.save()
-        messages.success(request, 'Profil berhasil diperbarui.')
-        return redirect('user_page:profile')
+    if request.method == 'POST':
+        form = ProfileForm(request.POST, request.FILES, instance=request.user)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Profil berhasil diperbarui.')
+            return redirect('user_page:profile')
+    else:
+        form = ProfileForm(instance=request.user)
 
     user = request.user
     stats = [
@@ -101,3 +105,14 @@ def profile(request):
         'form': form,
         'stats': stats,
     })
+
+
+@login_required
+@require_POST
+def delete_account(request):
+    user = request.user
+    username = user.username
+    logout(request)
+    user.delete()
+    messages.success(request, f'Akun @{username} telah berhasil dihapus. Username sekarang tersedia kembali untuk digunakan.')
+    return redirect('user_page:login')

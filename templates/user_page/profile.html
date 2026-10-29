@@ -20,7 +20,11 @@
     {% endif %}
 
     <section class="profile-banner">
-      <div class="profile-avatar" aria-hidden="true">{{ user.username|first|upper }}</div>
+      {% if user.profile.avatar %}
+        <img src="{{ user.profile.avatar.url }}" alt="{{ user.username }}" class="profile-avatar" style="object-fit: cover; border: 3px solid var(--salink-cream);">
+      {% else %}
+        <div class="profile-avatar" aria-hidden="true">{{ user.username|first|upper }}</div>
+      {% endif %}
       <div class="profile-banner__identity">
         <p class="eyebrow">PROFIL PENGGUNA</p>
         <h1>{% if user.get_full_name %}{{ user.get_full_name }}{% else %}{{ user.username }}{% endif %}</h1>
@@ -50,7 +54,7 @@
       <div class="profile-form-panel">
         <p class="eyebrow">AKUN</p>
         <h2>Detail profil</h2>
-        <form method="post" class="account-form profile-form">
+        <form method="post" enctype="multipart/form-data" class="account-form profile-form">
           {% csrf_token %}
           {% for field in form %}
             <div class="field">
@@ -61,6 +65,21 @@
           {% endfor %}
           <button class="action-button" type="submit">Simpan profil</button>
         </form>
+
+        <!-- Zona Bahaya: Hapus Akun -->
+        <div style="margin-top: 36px; padding-top: 24px; border-top: 1.5px dashed rgba(77, 42, 0, 0.25);">
+          <p class="eyebrow" style="color: #c62828;">ZONA BAHAYA</p>
+          <h3 style="font-size: 1.1rem; margin: 4px 0 8px; text-transform: uppercase;">Hapus Akun SaLink</h3>
+          <p style="font-size: 0.85rem; font-family: var(--font-body); color: var(--salink-muted); margin: 0 0 16px;">
+            Menghapus akun Anda akan menghapus data profil secara permanen dan membebaskan username <strong>@{{ user.username }}</strong> sehingga dapat didaftarkan kembali oleh Anda atau orang lain.
+          </p>
+          <form method="post" action="{% url 'user_page:delete_account' %}" onsubmit="return confirm('PERINGATAN: Apakah Anda yakin ingin menghapus akun Anda secara permanen? Semua data profil akan dihapus dan Anda akan logout.');">
+            {% csrf_token %}
+            <button type="submit" class="action-button" style="background: #c62828; color: #fff; width: auto; padding: 10px 20px; font-size: 0.85rem;">
+              🗑️ Hapus Akun Saya
+            </button>
+          </form>
+        </div>
       </div>
       <aside class="module-panel">
         <p class="eyebrow">LANJUTKAN</p>
