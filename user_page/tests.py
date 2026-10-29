@@ -60,3 +60,9 @@ class UserPageTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Saling Beli')
         self.assertContains(response, 'Saling Bagi')
+
+    def test_module_login_rejects_external_redirect_target(self):
+        response = self.client.get(reverse('saling_beli:login'), {'next': 'https://evil.example/'})
+        self.assertEqual(response.status_code, 302)
+        self.assertIn('/akun/login/', response['Location'])
+        self.assertNotIn('evil.example', response['Location'])

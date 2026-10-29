@@ -45,7 +45,7 @@
           </p>
           <p><strong>Status Ketersediaan:</strong> {{ item.get_status_display }}</p>
 
-          {% if not item.is_free and item.payout_account_number %}
+          {% if user.is_authenticated and user != item.user and not item.is_free and item.payout_account_number %}
           <div style="background: var(--salink-white); border-radius: 12px; padding: 12px 14px; margin: 10px 0; border: 1.5px solid var(--salink-dark);">
             <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
               <div>
@@ -93,7 +93,7 @@
           {% endif %}
         </div>
 
-        {% if not item.is_free %}
+        {% if not item.is_free and item.payout_account_number %}
         <!-- Alur Pembayaran Langsung ke Rekening Penjual -->
         <div class="payment-box" style="border-radius: 16px; padding: 16px; background: var(--salink-white); margin-block: var(--space-3); border: 2px solid var(--salink-dark);">
           <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
@@ -112,7 +112,7 @@
             </ol>
           </div>
         </div>
-        {% else %}
+        {% elif item.is_free %}
         <!-- Box Gratis -->
         <div style="border-radius: 14px; padding: 14px; background: var(--salink-white); margin-block: var(--space-3); font-family: var(--font-body); font-size: 0.85rem;">
           <strong style="text-transform: uppercase;">🎁 Barang Gratis (Rp0)</strong>
@@ -137,10 +137,16 @@
             <span class="btn" style="flex: 2; cursor: default; background: var(--salink-muted);">Barang sedang diproses</span>
             {% elif item.status == 'SOLD' %}
             <span class="btn" style="flex: 2; cursor: default; background: var(--salink-dark);">Transaksi selesai</span>
+            {% elif user.is_authenticated and user != item.user and not item.is_free and not item.payout_account_number %}
+            <span class="btn" style="flex: 2; cursor: default; background: var(--salink-muted);">Rekening pembayaran belum tersedia</span>
             {% endif %}
+            {% if user.is_authenticated %}
             <button onclick="openChatModal()" class="btn" style="flex: 1; padding: 10px 16px; font-size: 0.85rem; cursor: pointer;">
               💬 Chat Penjual
             </button>
+            {% else %}
+            <a href="{% url 'user_page:login' %}?next={{ request.get_full_path|urlencode }}" class="btn" style="flex: 1; padding: 10px 16px; font-size: 0.85rem;">Masuk untuk Chat</a>
+            {% endif %}
             <button id="btn-save-cookie" class="btn btn--icon" style="padding: 10px 16px;" onclick="saveToCookies('{{ item.id }}')" title="Simpan ke Favorit (Cookie)">
               ⭐ Simpan
             </button>
@@ -204,10 +210,16 @@
 
               <!-- Timeline Stepper -->
               <div style="display: flex; justify-content: space-between; margin-top: 10px; font-size: 0.7rem; text-align: center; gap: 4px;">
+                {% if ord.item.is_free %}
+                <div class="step-pill {% if ord.stage != 'BATAL' %}is-active{% endif %}">1. Pesanan</div>
+                <div class="step-pill {% if ord.stage == 'JANJI_TEMU_COD' or ord.stage == 'SELESAI' %}is-active{% endif %}">2. Janji COD</div>
+                <div class="step-pill {% if ord.stage == 'SELESAI' %}is-done{% endif %}">3. Serah Terima</div>
+                {% else %}
                 <div class="step-pill {% if ord.stage != 'BATAL' %}is-active{% endif %}">1. Transfer</div>
                 <div class="step-pill {% if ord.stage == 'BUKTI_DIUNGGAH' or ord.stage == 'DIKONFIRMASI' or ord.stage == 'JANJI_TEMU_COD' or ord.stage == 'SELESAI' %}is-active{% endif %}">2. Verifikasi</div>
                 <div class="step-pill {% if ord.stage == 'JANJI_TEMU_COD' or ord.stage == 'SELESAI' %}is-active{% endif %}">3. Janji COD</div>
                 <div class="step-pill {% if ord.stage == 'SELESAI' %}is-done{% endif %}">4. Selesai</div>
+                {% endif %}
               </div>
 
               {% if user == ord.buyer or user == ord.seller %}
@@ -216,8 +228,10 @@
                   {% if ord.stage == 'MENUNGGU_TRANSFER' or ord.stage == 'JANJI_TEMU_COD' %}
                     <button onclick="updateOrderPrompt('{{ ord.id }}', 'JANJI_TEMU_COD', 'Tentukan hari & jam pertemuan serah terima barang di kampus:', 'cod_time')" class="btn" style="padding: 4px 10px; font-size: 0.75rem; background: #000; color: #fff;">Atur Waktu Janji Temu</button>
                   {% endif %}
-                  {% if ord.stage == 'JANJI_TEMU_COD' %}
+                  {% if ord.stage == 'JANJI_TEMU_COD' and not ord.buyer_confirmed_at and user == ord.buyer %}
                     <button onclick="updateOrder('{{ ord.id }}', 'SELESAI')" class="btn" style="padding: 4px 10px; font-size: 0.75rem; background: #1565c0; color: #fff;">Konfirmasi Barang Sudah Diambil</button>
+                  {% elif ord.stage == 'JANJI_TEMU_COD' and not ord.seller_confirmed_at and user == ord.seller %}
+                    <button onclick="updateOrder('{{ ord.id }}', 'SELESAI')" class="btn" style="padding: 4px 10px; font-size: 0.75rem; background: #1565c0; color: #fff;">Konfirmasi Serah Terima</button>
                   {% endif %}
                 {% else %}
                   {% if user == ord.buyer and ord.stage == 'MENUNGGU_TRANSFER' %}
@@ -226,15 +240,20 @@
                   {% if user == ord.seller and ord.stage == 'BUKTI_DIUNGGAH' %}
                     <button onclick="updateOrder('{{ ord.id }}', 'DIKONFIRMASI')" class="btn" style="padding: 4px 10px; font-size: 0.75rem; background: #2e7d32; color: #fff;">Konfirmasi Dana Masuk</button>
                   {% endif %}
-                  {% if ord.stage == 'DIKONFIRMASI' or ord.stage == 'BUKTI_DIUNGGAH' %}
+                  {% if ord.stage == 'DIKONFIRMASI' %}
                     <button onclick="updateOrderPrompt('{{ ord.id }}', 'JANJI_TEMU_COD', 'Tentukan hari & jam pertemuan COD kampus:', 'cod_time')" class="btn" style="padding: 4px 10px; font-size: 0.75rem;">Atur Jadwal COD</button>
                   {% endif %}
-                  {% if ord.stage == 'JANJI_TEMU_COD' %}
-                    <button onclick="updateOrder('{{ ord.id }}', 'SELESAI')" class="btn" style="padding: 4px 10px; font-size: 0.75rem; background: #1565c0; color: #fff;">Selesaikan Transaksi (Barang Diterima)</button>
+                  {% if ord.stage == 'JANJI_TEMU_COD' and not ord.buyer_confirmed_at and user == ord.buyer %}
+                    <button onclick="updateOrder('{{ ord.id }}', 'SELESAI')" class="btn" style="padding: 4px 10px; font-size: 0.75rem; background: #1565c0; color: #fff;">Konfirmasi Barang Diterima</button>
+                  {% elif ord.stage == 'JANJI_TEMU_COD' and not ord.seller_confirmed_at and user == ord.seller %}
+                    <button onclick="updateOrder('{{ ord.id }}', 'SELESAI')" class="btn" style="padding: 4px 10px; font-size: 0.75rem; background: #1565c0; color: #fff;">Konfirmasi Serah Terima</button>
                   {% endif %}
                 {% endif %}
-                {% if ord.stage != 'SELESAI' and ord.stage != 'BATAL' %}
+                {% if ord.stage == 'MENUNGGU_TRANSFER' %}
                   <button onclick="if(confirm('Yakin ingin membatalkan pesanan ini?')) updateOrder('{{ ord.id }}', 'BATAL')" class="btn" style="padding: 4px 10px; font-size: 0.75rem; background: #fee2e2; color: #b91c1c; border-color: #fca5a5;">Batalkan Pesanan</button>
+                {% endif %}
+                {% if ord.stage == 'JANJI_TEMU_COD' and ord.buyer_confirmed_at or ord.stage == 'JANJI_TEMU_COD' and ord.seller_confirmed_at %}
+                  <span role="status" style="font-size: 0.75rem;">Konfirmasi serah terima tersimpan; menunggu pihak lain.</span>
                 {% endif %}
               </div>
               {% endif %}
@@ -252,6 +271,7 @@
   {% if can_purchase %}
   <div id="paymentModal" class="modal-overlay" onclick="closeModalOnBg(event)">
     <div class="modal-content" style="border: 2px solid #000; border-radius: 16px; box-shadow: 6px 6px 0px #000;">
+      {% csrf_token %}
       <h2 style="margin: 0; font-size: 1.25rem; text-transform: uppercase;">
         {% if item.is_free %}🎁 Konfirmasi Ambil Barang Gratis{% else %}💳 Konfirmasi Pesanan & Transfer Penjual{% endif %}
       </h2>
@@ -260,7 +280,7 @@
         <p style="margin: 6px 0;">Total Bayar: <strong>{% if item.is_free %}Gratis (Rp0){% else %}Rp{{ item.price|floatformat:"0g" }}{% endif %}</strong></p>
         <p style="margin: 6px 0;">Titik Temu COD: <strong>{{ item.pickup_location }}</strong></p>
 
-        {% if not item.is_free %}
+        {% if not item.is_free and item.payout_account_number %}
         <div style="background: #f0fdf4; border: 1.5px solid #000; border-radius: 8px; padding: 10px; margin: 8px 0; font-size: 0.82rem;">
           <p style="margin: 0 0 6px 0; font-weight: bold;">Tujuan Transfer Penjual (@{{ item.user.username }}):</p>
           <p style="margin: 0; font-size: 0.9rem;">
@@ -272,9 +292,9 @@
             Setelah memesan, Anda dapat mentransfer langsung ke rekening/e-wallet di atas. Selanjutnya, klik <strong>'Konfirmasi Sudah Transfer'</strong> di tracker agar penjual dapat memverifikasi masuknya dana.
           </p>
         </div>
-        {% else %}
+        {% elif item.is_free %}
         <p style="font-size: 0.85rem; color: #555;">
-          Pesanan barang gratis akan dibuat di sistem SaLink. Silakan hubungi pemilik via chat atau atur waktu janji temu COD di kampus.
+          Pesanan barang gratis akan dibuat di sistem SaLink. Silakan hubungi pemilik atau atur waktu janji temu COD di kampus.
         </p>
         {% endif %}
       </div>
@@ -322,6 +342,7 @@
   </div>
   {% endif %}
 
+  {% if user.is_authenticated %}
   <!-- Modal Chat Interaktif -->
   <div id="chatModal" class="modal-overlay" onclick="closeChatModalOnBg(event)" style="display: none;">
     <div class="modal-content" style="max-height: 520px; display: flex; flex-direction: column;">
@@ -346,11 +367,13 @@
 
       <!-- Form Kirim Pesan -->
       <form id="chat-form" onsubmit="sendChatMessage(event)" style="display: flex; gap: 6px; margin-top: 8px;">
+        {% csrf_token %}
         <input type="text" id="chat-input" placeholder="Tulis pesan ke penjual..." required style="flex: 1; padding: 8px; border: 1.5px solid; border-radius: 4px; font: inherit; font-size: 0.85rem;">
         <button type="submit" class="btn" style="padding: 8px 16px; background: #000; color: #fff; font-size: 0.85rem; cursor: pointer;">Kirim</button>
       </form>
     </div>
   </div>
+  {% endif %}
 
 
   <script>
@@ -448,8 +471,9 @@
       .then(res => res.json())
       .then(data => {
         alert(data.message || (data.success ? 'Berhasil' : data.error));
-        location.reload();
-      });
+        if (data.success) location.reload();
+      })
+      .catch(() => alert('Respons penawaran gagal dikirim karena koneksi bermasalah. Silakan coba lagi.'));
     }
 
     function confirmTransferOrder() {
@@ -472,8 +496,8 @@
         }
       })
       .catch(() => {
-        msg.textContent = 'Permintaan pembelian dicatat! Silakan simpan bukti transfer dan temui penjual.';
-        setTimeout(() => closePaymentModal(), 2000);
+        msg.style.color = 'red';
+        msg.textContent = 'Pesanan belum dapat dibuat karena koneksi bermasalah. Silakan coba lagi.';
       });
     }
 
@@ -505,7 +529,10 @@
       .then(res => res.json())
       .then(data => {
         alert(data.message || (data.success ? 'Status diperbarui!' : data.error));
-        location.reload();
+        if (data.success) location.reload();
+      })
+      .catch(() => {
+        alert('Perubahan status gagal karena koneksi bermasalah. Silakan coba lagi.');
       });
     }
 
@@ -575,6 +602,19 @@
         .replaceAll("'", '&#39;');
     }
 
+    function notificationHref(value) {
+      const raw = String(value || '#');
+      if (raw === '#') return '#';
+      try {
+        const target = new URL(raw, window.location.origin);
+        return target.origin === window.location.origin
+          ? `${target.pathname}${target.search}${target.hash}`
+          : '#';
+      } catch (_) {
+        return '#';
+      }
+    }
+
     function toggleNotifDropdown() {
       const dd = document.getElementById('notif-dropdown');
       dd.style.display = (dd.style.display === 'none' || dd.style.display === '') ? 'block' : 'none';
@@ -625,11 +665,12 @@
         <button class="salink-toast__close" onclick="this.parentElement.remove()">&times;</button>
       `;
 
-      if (link && link !== '#' && String(link).startsWith('/')) {
+      const safeLink = notificationHref(link);
+      if (safeLink !== '#') {
         toast.style.cursor = 'pointer';
         toast.onclick = function(e) {
           if (e.target.classList.contains('salink-toast__close')) return;
-          window.location.href = link;
+          window.location.href = safeLink;
         };
       }
 
@@ -647,7 +688,7 @@
       if (notifications && notifications.length > 0) {
         list.innerHTML = notifications.map(n => `
           <div style="padding: 6px; border-radius: 4px; background: ${n.is_read ? '#f9fafb' : '#eff6ff'}; border: 1px solid ${n.is_read ? '#e5e7eb' : '#bfdbfe'};">
-            <a href="${escapeHtml(n.link || '#')}" style="text-decoration: none; color: inherit; display: block;">
+            <a href="${escapeHtml(notificationHref(n.link))}" style="text-decoration: none; color: inherit; display: block;">
               <strong style="color: #111;">${escapeHtml(n.title)}</strong>
               <p style="margin: 2px 0 0 0; color: #4b5563;">${escapeHtml(n.message)}</p>
               <small style="color: #9ca3af; font-size: 0.65rem;">${escapeHtml(n.created_at)}</small>
@@ -670,7 +711,10 @@
           }
           renderNotificationList(data.notifications);
         })
-        .catch(() => {});
+        .catch(() => {
+          const list = document.getElementById('notif-list');
+          if (list) list.innerHTML = '<p style="text-align: center; color: #b91c1c; margin: 8px 0;">Notifikasi belum dapat dimuat. Coba lagi sebentar.</p>';
+        });
     }
 
     // Long-polling: request ditahan server sampai ada notifikasi baru (maks. 20 detik).
@@ -774,8 +818,10 @@
     }
 
     function openChatModal() {
+      const modal = document.getElementById('chatModal');
+      if (!modal) return;
       chatPeerId = chatPeerId || peerFromUrl();
-      document.getElementById('chatModal').style.display = 'flex';
+      modal.style.display = 'flex';
       loadChatMessages();
       if (!chatPollInterval) {
         chatPollInterval = setInterval(loadChatMessages, 4000);
@@ -788,7 +834,8 @@
     }
 
     function closeChatModal() {
-      document.getElementById('chatModal').style.display = 'none';
+      const modal = document.getElementById('chatModal');
+      if (modal) modal.style.display = 'none';
       if (chatPollInterval) {
         clearInterval(chatPollInterval);
         chatPollInterval = null;
@@ -833,7 +880,9 @@
             box.innerHTML = '<p style="text-align: center; color: #888; margin: auto;">Belum ada pesan. Mulai obrolan dengan penjual!</p>';
           }
         })
-        .catch(() => {});
+        .catch(() => {
+          box.innerHTML = '<p style="text-align: center; color: #b91c1c; margin: auto;">Pesan belum dapat dimuat. Periksa koneksi lalu coba lagi.</p>';
+        });
     }
 
     function sendChatMessage(e) {

@@ -246,8 +246,4 @@ a {
         grid-template-columns: 1fr;
     }
 
-    .navbar__menu {
-        gap: 20px;
-    }
-
 }

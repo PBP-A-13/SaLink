@@ -19,6 +19,31 @@ from .models import (
 )
 
 
+class ListingPageTests(TestCase):
+	def test_catalog_only_shows_available_items_by_default(self):
+		seller = User.objects.create_user(username='seller', password='test-password')
+		ItemListing.objects.create(user=seller, title='Available item', description='Available')
+		ItemListing.objects.create(
+			user=seller,
+			title='Reserved item',
+			description='Reserved',
+			status=ItemListing.Status.RESERVED,
+		)
+		ItemListing.objects.create(
+			user=seller,
+			title='Sold item',
+			description='Sold',
+			status=ItemListing.Status.SOLD,
+		)
+
+		response = self.client.get(reverse('saling_beli:index'))
+
+		self.assertEqual(response.status_code, 200)
+		self.assertContains(response, 'Available item')
+		self.assertNotContains(response, 'Reserved item')
+		self.assertNotContains(response, 'Sold item')
+
+
 class ListingApiTests(TestCase):
 	def setUp(self):
 		self.user = User.objects.create_user(username='seller', password='test-password')
@@ -37,12 +62,52 @@ class ListingApiTests(TestCase):
 		self.assertEqual(len(response.json()), 1)
 		self.assertEqual(response.json()[0]['title'], 'Desk')
 
+	def test_public_listing_api_does_not_expose_payment_account(self):
+		ItemListing.objects.create(
+			user=self.user,
+			title='Desk',
+			description='Study desk',
+			payout_method='BCA',
+			payout_account_name='Seller Name',
+			payout_account_number='1234567890',
+		)
+		response = self.client.get(self.collection_url)
+		self.assertEqual(response.status_code, 200)
+		self.assertNotIn('payout_account_number', response.json()[0])
+		self.assertNotIn('payout_account_name', response.json()[0])
+
+	def test_paid_listing_requires_payment_destination(self):
+		self.client.force_login(self.user)
+		response = self.client.post(
+			self.collection_url,
+			data=json.dumps({'title': 'Lamp', 'description': 'Desk lamp', 'price': 20000}),
+			content_type='application/json',
+		)
+		self.assertEqual(response.status_code, 400)
+		self.assertFalse(ItemListing.objects.exists())
+
+	def test_paid_listing_rejects_unknown_payment_method(self):
+		self.client.force_login(self.user)
+		response = self.client.post(
+			self.collection_url,
+			data=json.dumps({
+				'title': 'Lamp',
+				'description': 'Desk lamp',
+				'price': 20000,
+				'payout_method': 'Unknown wallet',
+				'payout_account_number': '08123456789',
+			}),
+			content_type='application/json',
+		)
+		self.assertEqual(response.status_code, 400)
+		self.assertIn('payout_method', response.json()['errors'])
+
 	def test_authenticated_user_can_create_listing(self):
 		self.client.force_login(self.user)
 
 		response = self.client.post(
 			self.collection_url,
-			data=json.dumps({'title': 'Lamp', 'description': 'Desk lamp'}),
+			data=json.dumps({'title': 'Lamp', 'description': 'Desk lamp', 'is_free': True}),
 			content_type='application/json',
 		)
 
@@ -62,7 +127,7 @@ class ListingApiTests(TestCase):
 		self.client.force_login(self.user)
 		create_response = self.client.post(
 			reverse('saling_beli:listing-create'),
-			data=json.dumps({'title': 'Lamp', 'description': 'Desk lamp'}),
+			data=json.dumps({'title': 'Lamp', 'description': 'Desk lamp', 'is_free': True}),
 			content_type='application/json',
 		)
 		listing_id = create_response.json()['id']
@@ -93,6 +158,7 @@ class OrderFlowTests(TestCase):
 			title='Kalkulator',
 			description='Mulus, lengkap',
 			price=100000,
+			payout_account_number='1234567890',
 		)
 		self.offer_url = reverse('saling_beli:make-offer', args=[self.item.id])
 		self.order_url = reverse('saling_beli:create-order', args=[self.item.id])
@@ -154,6 +220,26 @@ class OrderFlowTests(TestCase):
 		self.assertEqual(second.status_code, 400)
 		self.assertEqual(TransactionOrder.objects.filter(item=self.item).count(), 1)
 
+	def test_sold_item_cannot_be_ordered_again(self):
+		self.item.status = ItemListing.Status.SOLD
+		self.item.save(update_fields=['status'])
+		self.client.force_login(self.buyer)
+
+		response = self.client.post(self.order_url)
+
+		self.assertEqual(response.status_code, 400)
+		self.assertFalse(TransactionOrder.objects.filter(item=self.item).exists())
+
+	def test_paid_item_without_account_cannot_be_ordered(self):
+		self.item.payout_account_number = ''
+		self.item.save(update_fields=['payout_account_number'])
+		self.client.force_login(self.buyer)
+
+		response = self.client.post(self.order_url)
+
+		self.assertEqual(response.status_code, 400)
+		self.assertFalse(TransactionOrder.objects.filter(item=self.item).exists())
+
 	def test_same_buyer_order_is_idempotent(self):
 		self.client.force_login(self.buyer)
 		first = self.client.post(self.order_url)
@@ -192,6 +278,49 @@ class OrderFlowTests(TestCase):
 		order.refresh_from_db()
 		self.assertEqual(order.stage, TransactionOrder.Stage.MENUNGGU_TRANSFER)
 
+	def test_paid_order_cannot_skip_transfer_confirmation_for_cod(self):
+		order = TransactionOrder.objects.create(
+			item=self.item,
+			buyer=self.buyer,
+			seller=self.seller,
+			agreed_price=100000,
+		)
+		response = self._set_stage(
+			order,
+			self.buyer,
+			'JANJI_TEMU_COD',
+			cod_meeting_time='Jumat 10.00',
+		)
+		self.assertEqual(response.status_code, 400)
+		order.refresh_from_db()
+		self.assertEqual(order.stage, TransactionOrder.Stage.MENUNGGU_TRANSFER)
+
+	def test_free_order_can_schedule_cod_without_payment(self):
+		free_item = ItemListing.objects.create(
+			user=self.seller,
+			title='Buku gratis',
+			description='Silakan ambil',
+			is_free=True,
+		)
+		order = TransactionOrder.objects.create(
+			item=free_item,
+			buyer=self.buyer,
+			seller=self.seller,
+			agreed_price=0,
+		)
+		free_item.status = ItemListing.Status.RESERVED
+		free_item.save(update_fields=['status'])
+
+		response = self._set_stage(
+			order,
+			self.buyer,
+			'JANJI_TEMU_COD',
+			cod_meeting_time='Jumat 10.00',
+		)
+		self.assertEqual(response.status_code, 200)
+		order.refresh_from_db()
+		self.assertEqual(order.stage, TransactionOrder.Stage.JANJI_TEMU_COD)
+
 	def test_only_buyer_can_upload_payment_proof(self):
 		order = TransactionOrder.objects.create(
 			item=self.item,
@@ -220,18 +349,51 @@ class OrderFlowTests(TestCase):
 			seller=self.seller,
 			agreed_price=100000,
 		)
+		self.item.status = ItemListing.Status.RESERVED
+		self.item.save(update_fields=['status'])
 
 		self.assertEqual(self._set_stage(order, self.buyer, 'BUKTI_DIUNGGAH', note='REF-1').status_code, 200)
 		self.assertEqual(self._set_stage(order, self.seller, 'DIKONFIRMASI').status_code, 200)
 		self.assertEqual(self._set_stage(
 			order, self.seller, 'JANJI_TEMU_COD', cod_meeting_time='Jumat 10.00, Perpusat'
 		).status_code, 200)
-		self.assertEqual(self._set_stage(order, self.buyer, 'SELESAI').status_code, 200)
+		first_confirmation = self._set_stage(order, self.buyer, 'SELESAI')
+		self.assertTrue(first_confirmation.json()['awaiting_confirmation'])
+		order.refresh_from_db()
+		self.item.refresh_from_db()
+		self.assertEqual(order.stage, TransactionOrder.Stage.JANJI_TEMU_COD)
+		self.assertEqual(self.item.status, ItemListing.Status.RESERVED)
+		self.assertEqual(self._set_stage(order, self.seller, 'SELESAI').status_code, 200)
 
 		order.refresh_from_db()
 		self.item.refresh_from_db()
 		self.assertEqual(order.stage, TransactionOrder.Stage.SELESAI)
 		self.assertEqual(self.item.status, ItemListing.Status.SOLD)
+
+	def test_transfer_order_cannot_be_cancelled_after_payment_proof(self):
+		order = TransactionOrder.objects.create(
+			item=self.item,
+			buyer=self.buyer,
+			seller=self.seller,
+			agreed_price=100000,
+			stage=TransactionOrder.Stage.BUKTI_DIUNGGAH,
+		)
+		self.item.status = ItemListing.Status.RESERVED
+		self.item.save(update_fields=['status'])
+		response = self._set_stage(order, self.buyer, 'BATAL')
+		self.assertEqual(response.status_code, 400)
+		order.refresh_from_db()
+		self.item.refresh_from_db()
+		self.assertEqual(order.stage, TransactionOrder.Stage.BUKTI_DIUNGGAH)
+		self.assertEqual(self.item.status, ItemListing.Status.RESERVED)
+
+	def test_offer_cannot_be_accepted_after_item_is_sold(self):
+		_, offer = self._make_offer()
+		self.item.status = ItemListing.Status.SOLD
+		self.item.save(update_fields=['status'])
+		response = self._accept_offer(offer)
+		self.assertEqual(response.status_code, 400)
+		self.assertFalse(TransactionOrder.objects.filter(item=self.item).exists())
 
 	def test_cancel_releases_reserved_item(self):
 		self.client.force_login(self.buyer)
@@ -255,6 +417,7 @@ class ChatThreadTests(TestCase):
 			title='Buku Kalkulus',
 			description='Edisi 14',
 			price=120000,
+			payout_account_number='1234567890',
 		)
 		self.chat_url = reverse('saling_beli:item-chats', args=[self.item.id])
 
@@ -310,6 +473,16 @@ class ChatThreadTests(TestCase):
 
 		self.assertEqual(response.status_code, 400)
 		self.assertEqual(Conversation.objects.count(), 0)
+
+	def test_chat_rejects_non_object_json_without_server_error(self):
+		self.client.force_login(self.buyer_a)
+		response = self.client.post(
+			self.chat_url,
+			data=json.dumps(['not', 'an', 'object']),
+			content_type='application/json',
+		)
+		self.assertEqual(response.status_code, 400)
+		self.assertFalse(ItemChatMessage.objects.exists())
 
 
 class NotificationStreamTests(TestCase):
@@ -459,3 +632,9 @@ class PageRenderTests(TestCase):
 
 		self.assertEqual(response.status_code, 200)
 		self.assertContains(response, 'Form Penjual')
+
+	def test_anonymous_detail_page_offers_login_instead_of_chat_compose(self):
+		response = self.client.get(reverse('saling_beli:item_detail', args=[self.item.id]))
+		self.assertEqual(response.status_code, 200)
+		self.assertContains(response, 'Masuk untuk Chat')
+		self.assertNotContains(response, 'id="chat-form"')

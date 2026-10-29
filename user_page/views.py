@@ -2,6 +2,7 @@ from django.contrib import messages
 from django.contrib.auth import login, logout
 from django.contrib.auth.views import LoginView
 from django.contrib.auth.decorators import login_required
+from django.db.models import Q
 from django.views.decorators.http import require_POST
 from django.shortcuts import redirect, render
 from django.urls import reverse
@@ -14,6 +15,12 @@ from .forms import ProfileForm, SaLinkAuthenticationForm, SignUpForm
 def module_login(request):
     module_root = request.path.rsplit('login/', 1)[0]
     next_path = request.GET.get('next') or module_root
+    if not url_has_allowed_host_and_scheme(
+        next_path,
+        allowed_hosts={request.get_host()},
+        require_https=request.is_secure(),
+    ):
+        next_path = module_root
     return redirect(f"{reverse('user_page:login')}?{urlencode({'next': next_path})}")
 
 
@@ -40,6 +47,8 @@ class SaLinkLoginView(LoginView):
             ('/saling-beli/', 'Saling Beli'),
             ('/saling-pinjam/', 'Saling Pinjam'),
             ('/saling-bagi/', 'Saling Bagi'),
+            ('/saling-tebeng/', 'Saling Tebeng'),
+            ('/nebeng/', 'Saling Tebeng'),
         )
         context['module_name'] = next(
             (name for prefix, name in module_paths if next_path.startswith(prefix)),
@@ -78,11 +87,15 @@ def profile(request):
         form = ProfileForm(instance=request.user)
 
     user = request.user
+    from saling_beli.models import TransactionOrder
+    transaction_count = TransactionOrder.objects.filter(
+        Q(seller=user) | Q(buyer=user),
+    ).exclude(stage=TransactionOrder.Stage.BATAL).count()
     stats = [
         {
             'label': 'Saling Beli',
             'value': user.item_listings.count(),
-            'detail': f'{user.orders_bought.count() + user.orders_sold.count()} transaksi',
+            'detail': f'{transaction_count} transaksi',
             'url': reverse('saling_beli:index'),
             'tone': 'gold',
         },
