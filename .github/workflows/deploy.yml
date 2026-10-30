@@ -1,0 +1,25 @@
+name: Deploy to PWS
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Push to PWS
+        env:
+          PWS_USERNAME: ${{ secrets.PWS_USERNAME }}
+          PWS_TOKEN: ${{ secrets.PWS_TOKEN }}
+        run: |
+          USER_ENC=$(python3 -c "import urllib.parse,os; print(urllib.parse.quote(os.environ['PWS_USERNAME'], safe=''))")
+          TOKEN_ENC=$(python3 -c "import urllib.parse,os; print(urllib.parse.quote(os.environ['PWS_TOKEN'], safe=''))")
+          git remote add pws "https://${USER_ENC}:${TOKEN_ENC}@pws.cs.ui.ac.id/muhammad.hasbi52/salink"
+          git push pws HEAD:main --force
