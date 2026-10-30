@@ -105,14 +105,40 @@ def evaluate_matched(
         match_label = 'Beda Asal'
     elif not destination_matched:
         match_label = 'Beda Tujuan'
+    elif origin and destination and not time_matched:
+        match_label = 'Beda Jam'
     elif origin and destination:
         match_label = 'Searah'
     else:
         match_label = ''
 
+    if not day_matched:
+        match_priority = 4
+    elif requested_time and origin and origin_matched and time_matched:
+        match_priority = 0
+    elif requested_time and destination and destination_matched and time_matched:
+        match_priority = 1
+    elif (
+        requested_time
+        and origin
+        and destination
+        and origin_matched
+        and destination_matched
+    ):
+        match_priority = 2
+    elif origin and destination and origin_matched and destination_matched:
+        match_priority = 0
+    elif origin and origin_matched:
+        match_priority = 0
+    elif destination and destination_matched:
+        match_priority = 1
+    else:
+        match_priority = 3
+
     return {
         'matched': match_rank == 0,
         'match_rank': match_rank,
+        'match_priority': match_priority,
         'match_label': match_label,
         'date_difference': date_difference,
         'day_matched': day_matched,
@@ -344,6 +370,7 @@ def nebeng_list(request):
                 'time_difference': 0,
                 'date_difference': 0,
                 'match_rank': 0,
+                'match_priority': 0,
                 'match_label': '',
                 'reasons': [],
             }
@@ -359,7 +386,8 @@ def nebeng_list(request):
 
     if searched:
         results.sort(key=lambda r: (
-            r['match_rank'],
+            not r['day_matched'],
+            r['match_priority'],
             r['date_difference'],
             r['time_difference'],
             r['schedule'].origin.casefold(),

@@ -303,6 +303,10 @@ svg.icon {
   transition: transform 0.15s, box-shadow 0.15s;
 }
 
+.ride-card--different-date {
+  background: var(--salink-light);
+}
+
 .ride-card:hover {
   transform: translateY(-2px);
   box-shadow: 6px 6px 0 var(--salink-dark);
@@ -363,6 +367,16 @@ svg.icon {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.ride-card__time {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font);
+  font-size: 1.15rem;
+  letter-spacing: 0.04em;
+  color: var(--salink-dark);
 }
 
 .ride-card__detail {
@@ -437,7 +451,7 @@ svg.icon {
 }
 
 .ride-card__badge--day-different {
-  background: var(--salink-light);
+  background: var(--salink-cream);
   color: var(--salink-dark);
 }
 

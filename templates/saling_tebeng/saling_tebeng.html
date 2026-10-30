@@ -100,7 +100,7 @@
   <section class="rides-list" aria-label="Daftar nebeng yang tersedia">
     {% for r in results %}
     {% with s=r.schedule %}
-    <article class="ride-card">
+    <article class="ride-card{% if searched and not r.day_matched %} ride-card--different-date{% endif %}">
       {# Kolom 1: Avatar Driver & Nama #}
       <div class="ride-card__driver">
         <div class="ride-card__avatar">
@@ -111,6 +111,10 @@
 
       {# Kolom 2: Detail Tebengan #}
       <div class="ride-card__info">
+        <div class="ride-card__time">
+          <svg class="icon" aria-hidden="true"><use href="#i-clock"/></svg>
+          {{ s.departure_time|time:"H.i" }}
+        </div>
         <div class="ride-card__origin">[{{ s.origin|upper }}]</div>
         <p class="ride-card__detail">Available Kursi : {{ s.available_seats }}</p>
         <p class="ride-card__detail">Nominal : Rp{{ s.price }}</p>
