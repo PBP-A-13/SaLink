@@ -11,7 +11,7 @@ Produk ini dirancang untuk alur kampus yang sederhana: pengguna dapat menjelajah
 | Saling Beli | Marketplace barang bekas dan hibah gratis | Menjelajah, melihat detail, menawar, memesan, dan mengelola listing |
 | Saling Pinjam | Akses sementara terhadap barang yang dibutuhkan | Menjelajah, mengajukan, menyetujui, dan melacak pengembalian |
 | Saling Bagi | Redistribusi makanan berlebih | Melihat makanan tersedia dan mengambil porsi |
-| Saling Tebeng | Berbagi perjalanan di area kampus | Mencari rute, menawarkan tebengan, bergabung, dan mengelola booking |
+| Saling Nebeng | Berbagi perjalanan di area kampus | Mencari rute, menawarkan tebengan, bergabung, dan mengelola booking |
 | User Page | Identitas dan aksi akun bersama | Mendaftar, login, mengubah profil, dan kembali ke modul asal |
 
 ## Screenshot dan GIF

@@ -11,9 +11,24 @@ urlpatterns = [
     path('saling-bagi/', include('saling_bagi.urls')),
     path('saling-beli/', include('saling_beli.urls')),
     path('saling-pinjam/', include('saling_pinjam.urls')),
-    path('saling-tebeng/', include('saling_tebeng.urls')),
-    path('saling_tebeng/', RedirectView.as_view(url='/saling-tebeng/', permanent=False)),
-    path('nebeng/', RedirectView.as_view(url='/saling-tebeng/', permanent=False)),
+    path('saling-nebeng/', include('saling_tebeng.urls')),
+    path(
+        'saling-tebeng/',
+        RedirectView.as_view(url='/saling-nebeng/', permanent=False),
+    ),
+    path(
+        'saling-tebeng/<path:path>',
+        RedirectView.as_view(
+            url='/saling-nebeng/%(path)s',
+            permanent=False,
+            query_string=True,
+        ),
+    ),
+    path(
+        'saling_tebeng/',
+        RedirectView.as_view(url='/saling-nebeng/', permanent=False),
+    ),
+    path('nebeng/', RedirectView.as_view(url='/saling-nebeng/', permanent=False)),
 ]
 
 if settings.DEBUG:
