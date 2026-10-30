@@ -121,6 +121,15 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+# UI SSO Configuration
+CAS_SERVER_URL = 'https://sso.ui.ac.id/cas2/'
+CAS_VERSION = '2'
+CAS_VERIFY_SSL_CERTIFICATE = True
+
+# Disable automatic user creation
+CAS_CREATE_USER = False
+CAS_USERNAME_ATTRIBUTE = 'cas:user'
+
 
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/

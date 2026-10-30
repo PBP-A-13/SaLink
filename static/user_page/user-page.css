@@ -545,3 +545,87 @@ body.account-body {
     transition-duration: 0.01ms !important;
   }
 }
+
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 22px 0;
+  color: var(--salink-muted);
+  font-size: 0.75rem;
+  font-family: var(--font-body);
+}
+
+.auth-divider::before,
+.auth-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: rgba(77, 42, 0, 0.2);
+}
+
+.sso-button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 13px 18px;
+  border: 1.5px solid var(--salink-ink, #4d2a00);
+  border-radius: 6px;
+  color: var(--salink-ink, #4d2a00);
+  background: transparent;
+  text-decoration: none;
+  font-family: var(--font-body);
+  font-weight: 600;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.sso-button:hover {
+  background: var(--salink-ink, #4d2a00);
+  color: var(--salink-cream, #fff8e8);
+}
+
+.sso-connection {
+  margin-top: 32px;
+  padding: 24px;
+  border: 1.5px solid rgba(77, 42, 0, 0.2);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.sso-connection h3 {
+  margin: 4px 0 14px;
+  font-size: 1.1rem;
+  text-transform: uppercase;
+}
+
+.sso-connection__status {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  font-family: var(--font-body);
+}
+
+.sso-status-dot {
+  flex-shrink: 0;
+  width: 10px;
+  height: 10px;
+  margin-top: 5px;
+  border-radius: 50%;
+  background: #388e3c;
+}
+
+.sso-connection__status strong {
+  font-size: 0.9rem;
+}
+
+.sso-connection__status p,
+.sso-connection__description {
+  margin: 5px 0 0;
+  color: var(--salink-muted);
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  line-height: 1.6;
+}
