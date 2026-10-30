@@ -102,6 +102,24 @@ menggunakan data seed yang sudah dianonimkan.
   <source src="salingbagi.mp4" type="video/mp4">
 </video>
 
+## Saling Pinjam
+
+### Jadwal pinjam (desktop)
+Kalender untuk memilih tanggal mulai pinjam. Barang yang bebas di tanggal itu tampil di bawahnya, dan panel Pinjaman Saya menampilkan maksimal 2 pinjaman aktif.
+
+![Halaman Saling Pinjam](salingpinjam-page.png)
+
+### Detail barang
+![Detail barang dan form ajukan pinjaman](salingpinjam-detail.png)
+
+### Pinjamkan barang
+![Form pinjamkan barang](salingpinjam-form.png)
+
+### Pinjaman saya
+Pemilik barang menyetujui, menolak, dan menandai barang sudah diambil atau dikembalikan dari halaman ini.
+
+![Halaman Pinjaman Saya](salingpinjam-pinjaman-saya.png)
+
 ---
 
 ## Panduan capture
