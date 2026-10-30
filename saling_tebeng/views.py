@@ -8,6 +8,7 @@ from django.db import transaction
 from django.db.models import Q, Sum
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.utils import timezone
 from django.utils.dateparse import parse_date, parse_time
 from django.views.decorators.http import require_http_methods, require_POST
@@ -21,6 +22,7 @@ from .models import (
     RideSchedule,
     Vehicle,
 )
+from saling_beli.models import UserNotification
 from .forms import (
     DAY_NAMES,
     LOCATIONS,
@@ -168,6 +170,27 @@ def _create_booking(user, schedule_id, ride_date, seats=1):
             passenger=user,
             seats=seats,
             status='confirmed',
+        )
+        RideConversation.objects.get_or_create(
+            ride_schedule=schedule,
+            passenger=user,
+        )
+        driver_chat_url = reverse(
+            'saling_tebeng:ride_chat',
+            args=[schedule.pk],
+        )
+        UserNotification.objects.create(
+            user=schedule.ride_offer.driver,
+            title='Penumpang bergabung',
+            message=(
+                f'@{user.username} bergabung ke tebenganmu '
+                f'pada {ride_date:%d %b %Y}.'
+            ),
+            notification_type=UserNotification.NotifType.OFFER,
+            link=(
+                f'{driver_chat_url}?peer={user.pk}'
+                f'&tanggal={ride_date.isoformat()}'
+            ),
         )
 
         RideRequest.objects.filter(
@@ -600,14 +623,38 @@ def ride_chat_messages(request, schedule_id):
         if len(message) > 2000:
             return JsonResponse({'error': 'Pesan maksimal 2.000 karakter.'}, status=400)
 
-        chat = RideChatMessage.objects.create(
-            conversation=conversation,
-            sender=request.user,
-            message=message,
+        recipient = (
+            conversation.passenger
+            if request.user.id == schedule.ride_offer.driver_id
+            else schedule.ride_offer.driver
         )
-        RideConversation.objects.filter(pk=conversation.pk).update(
-            updated_at=timezone.now(),
+        chat_url = reverse(
+            'saling_tebeng:ride_chat',
+            args=[schedule.pk],
         )
+        if recipient.id == schedule.ride_offer.driver_id:
+            chat_url = (
+                f'{chat_url}?peer={conversation.passenger_id}'
+                f'&tanggal={schedule.date.isoformat()}'
+            )
+        else:
+            chat_url = f'{chat_url}?tanggal={schedule.date.isoformat()}'
+        with transaction.atomic():
+            chat = RideChatMessage.objects.create(
+                conversation=conversation,
+                sender=request.user,
+                message=message,
+            )
+            RideConversation.objects.filter(pk=conversation.pk).update(
+                updated_at=timezone.now(),
+            )
+            UserNotification.objects.create(
+                user=recipient,
+                title=f'Pesan nebeng dari @{request.user.username}',
+                message=message[:200],
+                notification_type=UserNotification.NotifType.CHAT,
+                link=chat_url,
+            )
         return JsonResponse({
             'success': True,
             'chat': {
