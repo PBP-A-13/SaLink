@@ -288,15 +288,18 @@ svg.icon {
 .ride-card {
   display: grid;
   grid-template-columns: 110px 220px 1fr 220px;
+  grid-template-areas:
+    "driver info route badge"
+    "driver info route actions";
   align-items: center;
   gap: 16px;
-  background: var(--salink-cream);
+  background: var(--salink-accent);
   border: 2px solid var(--salink-dark);
   border-radius: 20px;
   box-shadow: var(--shadow-flat-lg);
   padding: 20px 28px;
   position: relative;
-  min-height: 140px;
+  min-height: 190px;
   transition: transform 0.15s, box-shadow 0.15s;
 }
 
@@ -307,6 +310,7 @@ svg.icon {
 
 /* Driver column */
 .ride-card__driver {
+  grid-area: driver;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -344,6 +348,7 @@ svg.icon {
 
 /* Info column */
 .ride-card__info {
+  grid-area: info;
   display: flex;
   flex-direction: column;
   gap: 5px;
@@ -382,6 +387,7 @@ svg.icon {
 
 /* Route column */
 .ride-card__route {
+  grid-area: route;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -411,9 +417,9 @@ svg.icon {
 
 /* Status & Actions */
 .ride-card__badge {
-  position: absolute;
-  top: 18px;
-  right: 28px;
+  grid-area: badge;
+  align-self: start;
+  justify-self: end;
   display: flex;
   align-items: center;
   gap: 6px;
@@ -421,14 +427,18 @@ svg.icon {
   font-size: 1.15rem;
   letter-spacing: 0.05em;
   color: var(--salink-dark);
+  padding: 4px 10px;
+  border-radius: 999px;
 }
 
 .ride-card__badge--matched {
-  color: #1B5E20;
+  background: #c9d99b;
+  color: var(--salink-dark);
 }
 
 .ride-card__badge--different {
-  color: #8A5A00;
+  background: var(--salink-light);
+  color: var(--salink-dark);
 }
 
 .badge-check-circle {
@@ -445,14 +455,14 @@ svg.icon {
 }
 
 .ride-card__badge--matched .badge-check-circle {
-  background: #2E7D32;
-  color: var(--salink-white);
+  background: var(--salink-dark);
+  color: #c9d99b;
 }
 
 .ride-card__actions {
-  position: absolute;
-  bottom: 18px;
-  right: 28px;
+  grid-area: actions;
+  align-self: end;
+  justify-self: end;
   display: flex;
   align-items: center;
   gap: 12px;
@@ -832,6 +842,10 @@ svg.icon {
       "route route"
       "badge badge"
       "actions actions";
+  }
+  .ride-card__badge,
+  .ride-card__actions {
+    justify-self: end;
   }
   .search-field {
     width: min(100%, 300px);

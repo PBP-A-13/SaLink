@@ -4,7 +4,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
 from django.db import transaction
-from django.db.models import Q
+from django.db.models import Q, Sum
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.utils.dateparse import parse_date, parse_time
@@ -23,6 +23,15 @@ from .forms import (
 from .models import RideBooking, RideOffer, RideRequest, RideSchedule, Vehicle
 
 KURUN_WAKTU = 30
+HARI_NAMES = [
+    'Senin',
+    'Selasa',
+    'Rabu',
+    'Kamis',
+    'Jumat',
+    'Sabtu',
+    'Minggu',
+]
 
 
 def _minutes(t):
@@ -102,7 +111,14 @@ def _week_days():
     ]
 
 
-def _create_booking(user, schedule_id, seats=1):
+def _available_seats(schedule, ride_date):
+    booked_seats = schedule.bookings.filter(
+        ride_date=ride_date,
+    ).exclude(status='cancelled').aggregate(total=Sum('seats'))['total'] or 0
+    return max(0, schedule.total_seats - booked_seats)
+
+
+def _create_booking(user, schedule_id, ride_date, seats=1):
     with transaction.atomic():
         schedule = (
             RideSchedule.objects.select_for_update()
@@ -111,27 +127,30 @@ def _create_booking(user, schedule_id, seats=1):
         )
         if not schedule.is_active or not schedule.ride_offer.is_active:
             return None, 'Tebengan ini sudah tidak aktif.'
+        if ride_date < schedule.date or ride_date.weekday() != schedule.date.weekday():
+            return None, 'Jadwal ini tidak tersedia pada tanggal tersebut.'
         if schedule.ride_offer.driver_id == user.id:
             return None, 'Kamu tidak bisa menebeng tawaranmu sendiri.'
         if RideBooking.objects.filter(
-            ride_schedule=schedule, passenger=user
+            ride_schedule=schedule,
+            ride_date=ride_date,
+            passenger=user,
         ).exclude(status='cancelled').exists():
             return None, 'Kamu sudah bergabung di tebengan ini.'
-        if seats < 1 or schedule.available_seats < seats:
+        if seats < 1 or _available_seats(schedule, ride_date) < seats:
             return None, 'Kursi tidak mencukupi.'
 
         booking = RideBooking.objects.create(
             ride_schedule=schedule,
+            ride_date=ride_date,
             passenger=user,
             seats=seats,
             status='confirmed',
         )
-        schedule.available_seats -= seats
-        schedule.save(update_fields=['available_seats'])
 
         RideRequest.objects.filter(
             passenger=user,
-            date=schedule.date,
+            date=ride_date,
             status='searching',
             origin__iexact=schedule.origin,
             destination__iexact=schedule.destination,
@@ -169,27 +188,54 @@ def nebeng_list(request):
 
     qs = (
         RideSchedule.objects.filter(
-            is_active=True,
-            available_seats__gt=0,
-            ride_offer__is_active=True,
+            date__lte=selected_date,
+            date__week_day=selected_date.isoweekday() % 7 + 1,
         )
         .select_related('ride_offer__driver', 'ride_offer__vehicle')
+        .order_by('-date', '-departure_time', '-pk')
     )
 
     if request.user.is_authenticated:
         qs = qs.exclude(ride_offer__driver=request.user)
 
-    qs = qs.filter(date=selected_date).order_by('departure_time', 'pk')
+    latest_schedules = {}
+    for schedule in qs:
+        slot = (schedule.ride_offer.driver_id, schedule.departure_time)
+        latest_schedules.setdefault(slot, schedule)
+    schedules = [
+        schedule for schedule in latest_schedules.values()
+        if schedule.is_active and schedule.ride_offer.is_active
+    ]
+    schedules.sort(key=lambda schedule: (schedule.departure_time, schedule.pk))
+
+    available_by_schedule = {
+        row['ride_schedule_id']: row['booked_seats'] or 0
+        for row in RideBooking.objects.filter(
+            ride_schedule__in=schedules,
+            ride_date=selected_date,
+        ).exclude(status='cancelled').values('ride_schedule_id').annotate(
+            booked_seats=Sum('seats'),
+        )
+    }
 
     booked_ids = set()
     if request.user.is_authenticated:
         booked_ids = set(
-            RideBooking.objects.filter(passenger=request.user)
+            RideBooking.objects.filter(
+                passenger=request.user,
+                ride_date=selected_date,
+            )
             .exclude(status='cancelled')
             .values_list('ride_schedule_id', flat=True)
         )
 
-    for s in qs:
+    for s in schedules:
+        s.available_seats = max(
+            0,
+            s.total_seats - available_by_schedule.get(s.id, 0),
+        )
+        if s.available_seats == 0:
+            continue
         if searched:
             info = evaluate_matched(s, asal, tujuan, req_time)
         else:
@@ -208,6 +254,7 @@ def nebeng_list(request):
             'driver': s.ride_offer.driver,
             'vehicle': s.ride_offer.vehicle,
             'already_booked': s.id in booked_ids,
+            'weekday': HARI_NAMES[selected_date.weekday()],
         })
         results.append(info)
 
@@ -344,6 +391,7 @@ def tawarkan_tebengan(request):
                     origin=o,
                     destination=dest,
                     available_seats=capacity,
+                    total_seats=capacity,
                     price=price,
                 )
                 sched.save()
@@ -383,8 +431,12 @@ def cancel_schedule(request, schedule_id):
 def join_ride(request, schedule_id):
     schedule = get_object_or_404(RideSchedule, pk=schedule_id)
     seats = int(request.POST.get('seats', 1) or 1)
+    ride_date = parse_date(request.POST.get('ride_date', ''))
+    if not ride_date:
+        messages.error(request, 'Tanggal nebeng tidak valid.')
+        return redirect('saling_tebeng:nebeng_list')
 
-    booking, err = _create_booking(request.user, schedule.id, seats)
+    booking, err = _create_booking(request.user, schedule.id, ride_date, seats)
     if err:
         messages.error(request, err)
         return redirect('saling_tebeng:nebeng_list')
@@ -398,9 +450,14 @@ def ride_chat(request, schedule_id):
         RideSchedule.objects.select_related('ride_offer__driver', 'ride_offer__vehicle'),
         pk=schedule_id,
     )
+    ride_date = parse_date(request.GET.get('tanggal', '')) or schedule.date
+    available_seats = _available_seats(schedule, ride_date)
     return render(request, 'saling_tebeng/ride_chat.html', {
         'schedule': schedule,
         'driver': schedule.ride_offer.driver,
+        'ride_date': ride_date,
+        'weekday': HARI_NAMES[ride_date.weekday()],
+        'available_seats': available_seats,
         'asal': request.GET.get('asal', ''),
         'tujuan': request.GET.get('tujuan', ''),
         'jam': request.GET.get('jam', ''),
@@ -414,7 +471,16 @@ def join_from_chat(request, schedule_id):
     if not form.is_valid():
         messages.error(request, 'Kapasitas tidak valid.')
         return redirect('saling_tebeng:ride_chat', schedule_id=schedule_id)
-    booking, err = _create_booking(request.user, schedule_id, form.cleaned_data['seats'])
+    ride_date = parse_date(request.POST.get('ride_date', ''))
+    if not ride_date:
+        messages.error(request, 'Tanggal nebeng tidak valid.')
+        return redirect('saling_tebeng:ride_chat', schedule_id=schedule_id)
+    booking, err = _create_booking(
+        request.user,
+        schedule_id,
+        ride_date,
+        form.cleaned_data['seats'],
+    )
     if err:
         messages.error(request, err)
         return redirect('saling_tebeng:ride_chat', schedule_id=schedule_id)
@@ -445,11 +511,6 @@ def cancel_booking(request, booking_id):
             passenger=request.user,
         )
         if booking.status in ('pending', 'confirmed'):
-            schedule = RideSchedule.objects.select_for_update().get(
-                pk=booking.ride_schedule_id
-            )
-            schedule.available_seats += booking.seats
-            schedule.save(update_fields=['available_seats'])
             booking.status = 'cancelled'
             booking.save(update_fields=['status'])
     messages.success(request, 'Booking dibatalkan.')

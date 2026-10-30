@@ -29,7 +29,7 @@
 
       <div class="ride-card__info">
         <div class="ride-card__origin">[{{ s.origin|upper }} → {{ s.destination|upper }}]</div>
-        <p class="ride-card__detail">Waktu: {{ s.date|date:"d M Y" }} @ {{ s.departure_time|time:"H.i" }}</p>
+        <p class="ride-card__detail">Waktu: {{ b.ride_date|date:"d M Y" }} @ {{ s.departure_time|time:"H.i" }}</p>
         <p class="ride-card__detail">Kursi: {{ b.seats }} | Status: {{ b.get_status_display|upper }}</p>
       </div>
 

@@ -67,6 +67,8 @@ class RideSchedule(models.Model):
 
     available_seats = models.PositiveIntegerField(default=1)
 
+    total_seats = models.PositiveIntegerField(default=1)
+
     price = models.PositiveIntegerField(default=0)
 
     is_active = models.BooleanField(default=True)
@@ -147,6 +149,8 @@ class RideBooking(models.Model):
         on_delete=models.CASCADE,
         related_name='bookings'
     )
+
+    ride_date = models.DateField()
 
     passenger = models.ForeignKey(
         User,

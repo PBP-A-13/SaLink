@@ -11,11 +11,11 @@ class RideOfferAdmin(admin.ModelAdmin):
 
 @admin.register(RideSchedule)
 class RideScheduleAdmin(admin.ModelAdmin):
-    list_display = ('ride_offer', 'date', 'departure_time', 'origin', 'destination', 'available_seats', 'price', 'is_active')
+    list_display = ('ride_offer', 'date', 'departure_time', 'origin', 'destination', 'total_seats', 'price', 'is_active')
 
 @admin.register(RideBooking)
 class RideBookingAdmin(admin.ModelAdmin):
-    list_display = ('ride_schedule', 'passenger', 'seats', 'status', 'booked_at')
+    list_display = ('ride_schedule', 'ride_date', 'passenger', 'seats', 'status', 'booked_at')
 
 @admin.register(RideRequest)
 class RideRequestAdmin(admin.ModelAdmin):
