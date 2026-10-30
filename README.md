@@ -131,14 +131,14 @@ Keputusan yang harus dipelihara manusia meliputi batas modul, kebijakan autentik
 **Saling Bagi** 
 
 * **Tujuan & Strategi Prompt:** 
-  Kami memberikan *prompt* berupa potongan kode (`urls.py`, `settings.py`) dan *log error* mentah dari terminal. Tujuannya untuk mencari tahu kenapa gambar/media gagal dimuat di server PWS (berkaitan dengan `DEBUG=False`), mencari solusi bentrok Git (`non-fast-forward`), dan menanyakan sintaks dasar *template inheritance* Django untuk memasang *footer*.
+  Memberikan *prompt* berupa potongan kode (`urls.py`, `settings.py`) dan *log error* mentah dari terminal. Tujuannya untuk mencari tahu kenapa gambar/media gagal dimuat di server PWS (berkaitan dengan `DEBUG=False`), mencari solusi bentrok Git (`non-fast-forward`), dan menanyakan sintaks dasar *template inheritance* Django untuk memasang *footer*.
 
 * **Batasan & Kelemahan AI yang Ditemukan:**
   * **Kurang Paham Struktur Proyek:** AI sempat menyarankan untuk menaruh *routing* gambar di file `saling_bagi/urls.py`, padahal agar bisa jalan di PWS, *routing* itu wajib ditaruh di level root (`SaLink/urls.py`). 
   * **Tidak Tahu Konvensi Kelompok:** AI hanya memberikan contoh sintaks umum (seperti `{% extends 'base.html' %}`). AI tidak tahu kalau kelompok kami menggunakan konvensi penamaan khusus seperti `_footer.html`.
   * **Gagal Membaca State Lokal:** AI sempat menyarankan perbaikan kodingan saat web error `ERR_CONNECTION_REFUSED`, padahal masalah aslinya sesederhana *server* lokal (`localhost:8000`) belum dinyalakan lewat `runserver`.
 
-* **Perbaikan Manual yang Kami Lakukan:**
-  * Kami menyadari instruksi *routing* AI salah sasaran, sehingga kami secara manual memindahkan dan menyesuaikan konfigurasi *routing* media tersebut ke *entry point* yang benar di `SaLink/urls.py`.
-  * Saat merapikan riwayat Git, AI menyuruh langsung menggunakan `git revert`. Karena kami sedang mengedit file CSS secara lokal, eksekusi itu gagal. Kami harus inisiatif merangkai alur manual: mengamankan kodingan dengan `git stash`, melakukan *revert* dua kali, lalu mengembalikan CSS menggunakan `git stash pop` agar desain *front-end* tidak hilang.
-  * Daripada menelan mentah-mentah kode dari AI, kami menginspeksi file HTML milik rekan sekelompok (fitur *Saling Tebeng*) untuk menyesuaikan tag pemanggilan `{% include "_footer.html" %}` agar desain *footer* selaras dengan UI aplikasi lainnya.
+* **Perbaikan Manual yang dilakukan:**
+  * Menyadari instruksi *routing* AI salah sasaran, sehingga secara manual memindahkan dan menyesuaikan konfigurasi *routing* media tersebut ke *entry point* yang benar di `SaLink/urls.py`.
+  * Saat merapikan riwayat Git, AI menyuruh langsung menggunakan `git revert`. Karena sedang mengedit file CSS secara lokal, eksekusi itu gagal. Harus inisiatif merangkai alur manual: mengamankan kodingan dengan `git stash`, melakukan *revert* dua kali, lalu mengembalikan CSS menggunakan `git stash pop` agar desain *front-end* tidak hilang.
+  * Daripada menelan mentah-mentah kode dari AI, menginspeksi file HTML milik rekan sekelompok (fitur *Saling Tebeng*) untuk menyesuaikan tag pemanggilan `{% include "_footer.html" %}` agar desain *footer* selaras dengan UI aplikasi lainnya.
