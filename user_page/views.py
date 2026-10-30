@@ -1,4 +1,8 @@
 import secrets
+import logging
+
+logger = logging.getLogger(__name__)
+
 from django.contrib import messages
 from django.contrib.auth import login, logout
 from django.contrib.auth.views import LoginView
@@ -260,6 +264,7 @@ def sso_callback(request):
             raise ValueError('CAS tidak mengembalikan username.')
 
     except Exception:
+        logger.exception('UI SSO ticket verification failed')
         messages.error(
             request,
             'Verifikasi UI SSO gagal. Silakan coba beberapa saat lagi.',
