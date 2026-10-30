@@ -1,11 +1,15 @@
 {% extends "saling_tebeng/base_tebeng.html" %}
 
-{% block title %}Chat Tebengan | SaLink{% endblock %}
+{% block title %}Chat Nebeng | SaLink{% endblock %}
 
 {% block sidebar %}
   <div class="side-group">
     <a class="side-item" href="{% url 'saling_tebeng:nebeng_list' %}">
       <svg class="icon" aria-hidden="true"><use href="#i-home"/></svg>
+      <span>Cari Nebeng</span>
+    </a>
+    <a class="side-item is-active" href="{% url 'saling_tebeng:ride_messages' %}" aria-current="page">
+      <svg class="icon" aria-hidden="true"><use href="#i-chat"/></svg>
       <span>Pesan</span>
     </a>
   </div>
@@ -13,23 +17,152 @@
 {% endblock %}
 
 {% block page_content %}
-<div style="max-width: 600px; margin: 0 auto; background: var(--salink-cream); border: 2px solid var(--salink-dark); box-shadow: var(--shadow-flat); border-radius: 20px; padding: 24px; color: var(--salink-dark);">
-  <h2 style="font-family: var(--font); font-size: 1.5rem; margin-top: 0; color: var(--salink-dark);">Chat dengan {{ driver.username }}</h2>
-  <div style="background: var(--salink-white); border: 2px solid var(--salink-dark); border-radius: 12px; padding: 16px; margin-bottom: 20px;">
-    <p style="margin: 0 0 6px 0; font-weight: bold;">Rute: {{ schedule.origin }} → {{ schedule.destination }}</p>
-    <p style="margin: 0 0 6px 0;">Hari: {{ weekday }} @ {{ schedule.departure_time|time:"H.i" }}</p>
-    <p style="margin: 0;">Kendaraan: {{ schedule.ride_offer.vehicle.get_vehicle_type_display }} (Tersedia: {{ available_seats }} kursi)</p>
-  </div>
+<section class="ride-chat">
+  <header class="ride-chat__header">
+    <div>
+      <h1 class="offer-title">Pesan Nebeng</h1>
+      <p class="ride-chat__subtitle">
+        {{ schedule.origin }} → {{ schedule.destination }} · {{ weekday }} {{ ride_date|date:"d M Y" }} · {{ schedule.departure_time|time:"H.i" }}
+      </p>
+    </div>
+    <a class="btn-white-pill" href="{% url 'saling_tebeng:ride_messages' %}">Semua Pesan</a>
+  </header>
 
-  <form method="post" action="{% url 'saling_tebeng:join_from_chat' schedule.id %}" style="display: flex; gap: 12px; align-items: center;">
-    {% csrf_token %}
-    <input type="hidden" name="seats" value="1">
-    <input type="hidden" name="ride_date" value="{{ ride_date|date:'Y-m-d' }}">
-    <button type="submit" class="btn-save" style="width: 100%;">Gabung Tebengan Sekarang</button>
-  </form>
+  {% if user.id == driver.id %}
+    <div class="ride-chat__threads">
+      <strong>Percakapan jadwal ini</strong>
+      {% for thread in conversations %}
+        <a
+          href="{% url 'saling_tebeng:ride_chat' schedule.id %}?peer={{ thread.passenger_id }}&tanggal={{ ride_date|date:'Y-m-d' }}"
+          {% if peer and peer.id == thread.passenger_id %}aria-current="page"{% endif %}
+        >@{{ thread.passenger.username }}</a>
+      {% empty %}
+        <span>Belum ada pesan dari penumpang.</span>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="ride-chat__schedule">
+      <span>Kendaraan: {{ schedule.ride_offer.vehicle.get_vehicle_type_display }}</span>
+      <span>Kursi tersedia: {{ available_seats }}</span>
+      {% if available_seats > 0 %}
+        <form method="post" action="{% url 'saling_tebeng:join_from_chat' schedule.id %}">
+          {% csrf_token %}
+          <input type="hidden" name="seats" value="1">
+          <input type="hidden" name="ride_date" value="{{ ride_date|date:'Y-m-d' }}">
+          <button type="submit" class="btn-white-pill">Gabung Nebeng</button>
+        </form>
+      {% else %}
+        <span>Kursi penuh</span>
+      {% endif %}
+    </div>
+  {% endif %}
 
-  <div style="margin-top: 16px; text-align: center;">
-    <a href="{% url 'saling_tebeng:nebeng_list' %}" style="text-decoration: underline; font-family: var(--font-ui); font-size: 0.9rem;">Kembali ke Daftar Tebengan</a>
-  </div>
-</div>
+  {% if conversation %}
+    <div
+      class="ride-chat__messages"
+      id="ride-chat-box"
+      data-url="{% url 'saling_tebeng:ride_chat_messages' schedule.id %}"
+      {% if user.id == driver.id %}data-peer="{{ conversation.passenger_id }}"{% endif %}
+      aria-live="polite"
+    >
+      <p class="ride-chat__loading">Memuat pesan...</p>
+    </div>
+    <form class="ride-chat__form" id="ride-chat-form">
+      {% csrf_token %}
+      <label class="sr-only" for="ride-chat-input">Tulis pesan</label>
+      <input id="ride-chat-input" name="message" maxlength="2000" placeholder="Tulis pesan..." autocomplete="off" required>
+      <button class="btn-white-pill" type="submit">Kirim</button>
+    </form>
+    <p class="ride-chat__error" id="ride-chat-error" role="status"></p>
+  {% elif user.id == driver.id %}
+    <p class="empty-state">Pilih percakapan untuk membalas pesan.</p>
+  {% endif %}
+</section>
+{% endblock %}
+
+{% block extra_js %}
+{% if conversation %}
+<script>
+  (function () {
+    const box = document.getElementById('ride-chat-box');
+    const form = document.getElementById('ride-chat-form');
+    const input = document.getElementById('ride-chat-input');
+    const error = document.getElementById('ride-chat-error');
+    const csrfToken = form.querySelector('[name=csrfmiddlewaretoken]').value;
+    const peer = box.dataset.peer;
+    const endpoint = box.dataset.url + (peer ? '?peer=' + encodeURIComponent(peer) : '');
+
+    function renderMessages(chats) {
+      box.replaceChildren();
+      if (!chats.length) {
+        const empty = document.createElement('p');
+        empty.className = 'ride-chat__loading';
+        empty.textContent = 'Belum ada pesan. Mulai percakapan!';
+        box.appendChild(empty);
+        return;
+      }
+
+      chats.forEach(function (chat) {
+        const bubble = document.createElement('article');
+        bubble.className = 'ride-chat__bubble' + (chat.is_me ? ' is-mine' : '');
+        const meta = document.createElement('small');
+        meta.textContent = (chat.is_me ? 'Anda' : '@' + chat.sender) + ' · ' + chat.created_at;
+        const text = document.createElement('p');
+        text.textContent = chat.message;
+        bubble.append(meta, text);
+        box.appendChild(bubble);
+      });
+      box.scrollTop = box.scrollHeight;
+    }
+
+    function loadMessages() {
+      fetch(endpoint)
+        .then(function (response) {
+          if (!response.ok) throw new Error('Pesan tidak dapat dimuat.');
+          return response.json();
+        })
+        .then(function (data) {
+          renderMessages(data.chats || []);
+          error.textContent = '';
+        })
+        .catch(function () {
+          error.textContent = 'Pesan belum dapat dimuat. Periksa koneksi lalu coba lagi.';
+        });
+    }
+
+    form.addEventListener('submit', function (event) {
+      event.preventDefault();
+      const message = input.value.trim();
+      if (!message) return;
+      const payload = {message: message};
+      if (peer) payload.peer = peer;
+
+      fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': csrfToken
+        },
+        body: JSON.stringify(payload)
+      })
+        .then(function (response) {
+          return response.json().then(function (data) {
+            if (!response.ok) throw new Error(data.error || 'Pesan gagal dikirim.');
+            return data;
+          });
+        })
+        .then(function () {
+          input.value = '';
+          loadMessages();
+        })
+        .catch(function (sendError) {
+          error.textContent = sendError.message;
+        });
+    });
+
+    loadMessages();
+    window.setInterval(loadMessages, 4000);
+  })();
+</script>
+{% endif %}
 {% endblock %}

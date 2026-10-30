@@ -27,7 +27,7 @@ class RideSearchTests(TestCase):
             destination=destination,
         )
 
-    def test_initial_page_shows_all_available_schedules_on_today(self):
+    def test_initial_page_shows_schedules_from_all_weekdays(self):
         today = timezone.localdate()
         today_schedule = self.create_schedule(
             'today_driver', today, '08:00', 'Depok', 'Salemba',
@@ -41,10 +41,10 @@ class RideSearchTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(
             [result['schedule'].id for result in response.context['results']],
-            [today_schedule.id],
+            [today_schedule.id, tomorrow_schedule.id],
         )
         self.assertContains(response, f'value="{today:%Y-%m-%d}"')
-        self.assertNotContains(response, tomorrow_schedule.ride_offer.driver.username)
+        self.assertContains(response, tomorrow_schedule.ride_offer.driver.username)
         self.assertNotContains(response, 'SEARAH')
 
     def test_search_shows_and_orders_matching_and_mismatching_routes(self):
@@ -61,6 +61,13 @@ class RideSearchTests(TestCase):
         different_both = self.create_schedule(
             'both_driver', today, '09:30', 'Fakultas Teknik', 'Fakultas Hukum',
         )
+        different_day = self.create_schedule(
+            'day_driver',
+            today + timedelta(days=1),
+            '08:00',
+            'Stasiun UI',
+            'Perpusat UI',
+        )
 
         response = self.client.get(reverse('saling_tebeng:index'), {
             'asal': 'Stasiun UI',
@@ -75,15 +82,23 @@ class RideSearchTests(TestCase):
                 matching.id,
                 different_origin.id,
                 different_destination.id,
+                different_day.id,
                 different_both.id,
             ],
         )
         self.assertEqual(
             [result['match_label'] for result in results],
-            ['Searah', 'Beda Asal', 'Beda Tujuan', 'Beda Asal & Tujuan'],
+            [
+                'Searah',
+                'Tidak Searah',
+                'Tidak Searah',
+                'Tidak Searah',
+                'Tidak Searah',
+            ],
         )
         self.assertContains(response, 'ride-card__badge--matched')
         self.assertContains(response, 'ride-card__badge--different')
+        self.assertContains(response, 'TIDAK SEARAH')
 
     def test_schedule_repeats_on_its_weekday_for_a_later_date(self):
         selected_date = timezone.localdate() + timedelta(days=10)
@@ -157,3 +172,45 @@ class RideSearchTests(TestCase):
         )
         self.assertEqual(next_booking.status_code, 302)
         self.assertEqual(schedule.bookings.filter(passenger=passenger).count(), 2)
+
+    def test_ride_chat_allows_passenger_and_driver_to_exchange_messages(self):
+        ride_date = timezone.localdate() + timedelta(days=1)
+        schedule = self.create_schedule(
+            'chat_driver',
+            ride_date,
+            '08:00',
+            'Stasiun UI',
+            'Perpusat UI',
+        )
+        passenger = User.objects.create_user(username='chat_passenger')
+        chat_url = reverse(
+            'saling_tebeng:ride_chat_messages',
+            args=[schedule.id],
+        )
+
+        self.client.force_login(passenger)
+        response = self.client.post(
+            chat_url,
+            data='{"message":"Halo, masih ada kursi?"}',
+            content_type='application/json',
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json()['success'])
+
+        self.client.force_login(schedule.ride_offer.driver)
+        response = self.client.get(chat_url, {'peer': passenger.id})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['chats'][0]['message'], 'Halo, masih ada kursi?')
+        self.assertFalse(response.json()['chats'][0]['is_me'])
+
+        response = self.client.post(
+            f'{chat_url}?peer={passenger.id}',
+            data='{"message":"Ya, masih ada."}',
+            content_type='application/json',
+        )
+        self.assertEqual(response.status_code, 200)
+
+        self.client.force_login(passenger)
+        response = self.client.get(chat_url)
+        self.assertEqual(response.json()['chats'][-1]['message'], 'Ya, masih ada.')
+        self.assertFalse(response.json()['chats'][-1]['is_me'])

@@ -6,8 +6,14 @@
   <div class="side-group">
     <a class="side-item is-active" href="{% url 'saling_tebeng:nebeng_list' %}" aria-current="page">
       <svg class="icon" aria-hidden="true"><use href="#i-home"/></svg>
+      <span>Cari Nebeng</span>
+    </a>
+    {% if user.is_authenticated %}
+    <a class="side-item" href="{% url 'saling_tebeng:ride_messages' %}">
+      <svg class="icon" aria-hidden="true"><use href="#i-chat"/></svg>
       <span>Pesan</span>
     </a>
+    {% endif %}
   </div>
 
   {% if user.is_authenticated %}
@@ -108,7 +114,7 @@
         <div class="ride-card__origin">[{{ s.origin|upper }}]</div>
         <p class="ride-card__detail">Available Kursi : {{ s.available_seats }}</p>
         <p class="ride-card__detail">Nominal : Rp{{ s.price }}</p>
-        <p class="ride-card__detail">Hari: {{ r.weekday }}</p>
+        <p class="ride-card__detail">Hari: {{ r.weekday }} ({{ r.occurrence_date|date:"d M Y" }})</p>
         <div class="ride-card__vehicle-type">
           <svg class="ride-card__vehicle-icon" aria-label="{{ r.vehicle.get_vehicle_type_display }}">
             <use href="#i-{% if r.vehicle.vehicle_type == 'motor' %}motor{% else %}car{% endif %}"/>
@@ -135,25 +141,31 @@
 
       {# Tombol Aksi di Kanan Bawah #}
       <div class="ride-card__actions">
-        {% if r.already_booked %}
+        {% if user.is_authenticated and user.id == r.driver.id %}
+          <span class="btn-white-pill" style="opacity: 0.7; cursor: default;">Tawaran Anda</span>
+        {% elif r.already_booked %}
           <span class="btn-white-pill" style="opacity: 0.6; cursor: default;">Sudah Bergabung</span>
+        {% elif s.available_seats == 0 %}
+          <span class="btn-white-pill" style="opacity: 0.6; cursor: default;">Kursi Penuh</span>
         {% else %}
           {% if user.is_authenticated %}
             <form method="post" action="{% url 'saling_tebeng:join_ride' s.id %}" style="display:inline; margin:0;">
               {% csrf_token %}
               <input type="hidden" name="seats" value="1">
-              <input type="hidden" name="ride_date" value="{{ selected_date|date:'Y-m-d' }}">
+              <input type="hidden" name="ride_date" value="{{ r.occurrence_date|date:'Y-m-d' }}">
               <button type="submit" class="btn-white-pill">Gabung Nebeng</button>
             </form>
           {% else %}
             <a href="{% url 'user_page:login' %}?next={{ request.get_full_path|urlencode }}" class="btn-white-pill">Gabung Nebeng</a>
           {% endif %}
         {% endif %}
-        {% if user.is_authenticated %}
-          <a href="{% url 'saling_tebeng:ride_chat' s.id %}?tanggal={{ selected_date|date:'Y-m-d' }}" class="btn-white-pill">Chat</a>
-        {% else %}
-          {% url 'saling_tebeng:ride_chat' s.id as chat_url %}
-          <a href="{% url 'user_page:login' %}?next={{ chat_url|urlencode }}%3Ftanggal%3D{{ selected_date|date:'Y-m-d' }}" class="btn-white-pill">Chat</a>
+        {% if not user.is_authenticated or user.id != r.driver.id %}
+          {% if user.is_authenticated %}
+            <a href="{% url 'saling_tebeng:ride_chat' s.id %}?tanggal={{ r.occurrence_date|date:'Y-m-d' }}" class="btn-white-pill">Chat</a>
+          {% else %}
+            {% url 'saling_tebeng:ride_chat' s.id as chat_url %}
+            <a href="{% url 'user_page:login' %}?next={{ chat_url|urlencode }}%3Ftanggal%3D{{ r.occurrence_date|date:'Y-m-d' }}" class="btn-white-pill">Chat</a>
+          {% endif %}
         {% endif %}
       </div>
     </article>
@@ -162,8 +174,8 @@
   </section>
 {% else %}
   <div class="empty-state">
-    <strong>Belum ada tawaran nebeng pada tanggal ini</strong>
-    <p>Coba pilih tanggal lain, atau tawarkan tebenganmu sendiri!</p>
+    <strong>Belum ada tawaran nebeng</strong>
+    <p>Coba lagi nanti, atau tawarkan tebenganmu sendiri!</p>
     {% if user.is_authenticated %}
       <a href="{% url 'saling_tebeng:tawarkan_tebengan' %}" class="btn-white-pill" style="border: 2px solid var(--salink-dark); margin-top: 10px;">Tawarkan Tebengan</a>
     {% else %}
