@@ -1,0 +1,199 @@
+
+{% load static %}
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SaLink - Janji Temu</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Anton&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="{% static 'style.css' %}">
+    <link rel="stylesheet" href="{% static 'navbar-footer.css' %}">
+    <link rel="stylesheet" href="{% static 'saling_bagi/saling_bagi.css' %}">
+</head>
+
+<body>
+{% include "_navbar.html" with active_nav="bagi" %}
+
+<main class="bagi-page">
+
+    {% if messages %}
+    <div class="bagi-messages">
+        {% for message in messages %}
+        <div class="bagi-message">{{ message }}</div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <section class="bagi-appointment-header">
+        <span class="bagi-eyebrow">YOUR PICKUP SCHEDULE</span>
+        <h1>Janji Temu Saya</h1>
+        <p>
+            Kelola permintaan pengambilan makanan dan jadwal
+            pertemuanmu dengan mahasiswa lain.
+        </p>
+    </section>
+
+    <!-- PERMINTAAN YANG DITERIMA -->
+    <section class="bagi-appointment-section">
+
+        <div class="bagi-section-heading">
+            <div>
+                <span class="bagi-eyebrow">SEBAGAI PEMBERI</span>
+                <h2>Permintaan Masuk</h2>
+                <p>Mahasiswa yang ingin mengambil makananmu.</p>
+            </div>
+        </div>
+
+        <div class="bagi-appointment-list">
+
+            {% for janji in janji_diterima %}
+            <article class="bagi-appointment-card">
+
+                <div class="bagi-appointment-card__top">
+                    <div>
+                        <span class="bagi-food-category">MAKANAN</span>
+                        <h3>{{ janji.makanan.nama_makanan }}</h3>
+                    </div>
+
+                    <span class="bagi-status bagi-status--{{ janji.status|lower }}">
+                        {{ janji.get_status_display }}
+                    </span>
+                </div>
+
+                <div class="bagi-appointment-details">
+                    <p>👤 Pengambil: <strong>{{ janji.pengambil.username }}</strong></p>
+                    <p>📍 Lokasi: {{ janji.makanan.get_lokasi_pengambilan_display }}</p>
+                    <p>📅 Tanggal: {{ janji.waktu_janji|date:"d F Y" }}</p>
+                    <p>🕒 Jam: {{ janji.waktu_janji|date:"H:i" }} WIB</p>
+                    <p>🍴 Porsi: {{ janji.makanan.porsi }}</p>
+                </div>
+
+                {% if janji.status == 'PENDING' %}
+                <div class="bagi-appointment-actions">
+
+                    <form method="POST"
+                          action="{% url 'saling_bagi:keputusan_janji' janji.id %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="keputusan" value="approve">
+                        <button class="bagi-approve-button" type="submit">
+                            ✓ SETUJUI
+                        </button>
+                    </form>
+
+                    <form method="POST"
+                          action="{% url 'saling_bagi:keputusan_janji' janji.id %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="keputusan" value="reject">
+                        <button class="bagi-reject-button" type="submit">
+                            ✕ TOLAK
+                        </button>
+                    </form>
+
+                </div>
+
+                {% elif janji.status == 'APPROVED' %}
+                <form method="POST"
+                      action="{% url 'saling_bagi:selesaikan_janji' janji.id %}">
+                    {% csrf_token %}
+                    <button class="bagi-approve-button bagi-full-button"
+                            type="submit">
+                        ✓ TANDAI PENYERAHAN SELESAI
+                    </button>
+                </form>
+                {% endif %}
+
+            </article>
+
+            {% empty %}
+            <div class="bagi-appointment-empty">
+                <span>📭</span>
+                <h3>Belum Ada Permintaan Masuk</h3>
+                <p>Permintaan pengambilan makananmu akan muncul di sini.</p>
+            </div>
+            {% endfor %}
+
+        </div>
+    </section>
+
+    <!-- PERMINTAAN YANG DIBUAT -->
+    <section class="bagi-appointment-section">
+
+        <div class="bagi-section-heading">
+            <div>
+                <span class="bagi-eyebrow">SEBAGAI PENGAMBIL</span>
+                <h2>Permintaan Saya</h2>
+                <p>Pantau janji temu makanan yang kamu ajukan.</p>
+            </div>
+        </div>
+
+        <div class="bagi-appointment-list">
+
+            {% for janji in janji_dibuat %}
+            <article class="bagi-appointment-card">
+
+                <div class="bagi-appointment-card__top">
+                    <div>
+                        <span class="bagi-food-category">PENGAMBILAN</span>
+                        <h3>{{ janji.makanan.nama_makanan }}</h3>
+                    </div>
+
+                    <span class="bagi-status bagi-status--{{ janji.status|lower }}">
+                        {{ janji.get_status_display }}
+                    </span>
+                </div>
+
+                <div class="bagi-appointment-details">
+                    <p>👤 Pemberi: <strong>{{ janji.makanan.pemberi.username }}</strong></p>
+                    <p>📍 Lokasi: {{ janji.makanan.get_lokasi_pengambilan_display }}</p>
+                    <p>📅 Tanggal: {{ janji.waktu_janji|date:"d F Y" }}</p>
+                    <p>🕒 Jam: {{ janji.waktu_janji|date:"H:i" }} WIB</p>
+                </div>
+
+                {% if janji.status == 'PENDING' %}
+                <p class="bagi-pending-note">
+                    ⏳ Menunggu persetujuan pemberi makanan.
+                </p>
+                {% elif janji.status == 'APPROVED' %}
+                <p class="bagi-approved-note">
+                    ✓ Disetujui! Datang ke lokasi sesuai jadwal.
+                </p>
+                {% elif janji.status == 'REJECTED' %}
+                <p class="bagi-rejected-note">
+                    Permintaan janji temu ditolak.
+                </p>
+                {% elif janji.status == 'COMPLETED' %}
+                <p class="bagi-approved-note">
+                    ✓ Makanan sudah diserahkan. Terima kasih!
+                </p>
+                {% endif %}
+
+            </article>
+
+            {% empty %}
+            <div class="bagi-appointment-empty">
+                <span>🗓️</span>
+                <h3>Belum Ada Janji Temu</h3>
+                <p>Janji temu yang kamu ajukan akan muncul di sini.</p>
+                <a href="{% url 'saling_bagi:index' %}"
+                   class="bagi-primary-button">
+                    CARI MAKANAN →
+                </a>
+            </div>
+            {% endfor %}
+
+        </div>
+    </section>
+
+    <a href="{% url 'saling_bagi:index' %}" class="bagi-back">
+        ← Kembali ke Saling Bagi
+    </a>
+
+</main>
+
+</body>
+</html>

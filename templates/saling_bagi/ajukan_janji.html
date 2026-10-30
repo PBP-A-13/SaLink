@@ -1,0 +1,96 @@
+
+{% load static %}
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SaLink - Ajukan Janji Temu</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Anton&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="{% static 'style.css' %}">
+    <link rel="stylesheet" href="{% static 'navbar-footer.css' %}">
+    <link rel="stylesheet" href="{% static 'saling_bagi/saling_bagi.css' %}">
+</head>
+
+<body>
+{% include "_navbar.html" with active_nav="bagi" %}
+
+<main class="bagi-page">
+    <div class="bagi-form-page">
+
+        <a href="{% url 'saling_bagi:index' %}" class="bagi-back">
+            ← Kembali ke Saling Bagi
+        </a>
+
+        <section class="bagi-form-card">
+
+            <div class="bagi-form-heading">
+                <span class="bagi-eyebrow">PICKUP APPOINTMENT</span>
+                <h1>Ajukan Janji Temu!</h1>
+                <p>
+                    Tentukan waktu yang cocok untuk bertemu dengan
+                    pemberi makanan dan mengambil makananmu.
+                </p>
+            </div>
+
+            <div class="bagi-appointment-info">
+                <h3>{{ makanan.nama_makanan }}</h3>
+
+                <p>
+                    📍 {{ makanan.get_lokasi_pengambilan_display }}
+                </p>
+
+                <p>
+                    👤 Pemberi: {{ makanan.pemberi.username }}
+                </p>
+
+                <p>
+                    🍴 {{ makanan.porsi }} porsi
+                </p>
+
+                <p>
+                    ⏰ Batas konsumsi:
+                    {{ makanan.batas_layak_konsumsi|date:"d M Y, H:i" }}
+                </p>
+            </div>
+
+            <form method="POST" class="bagi-form">
+                {% csrf_token %}
+
+                {% for field in form %}
+                <div class="bagi-form-group">
+                    <label for="{{ field.id_for_label }}">
+                        {{ field.label }}
+                    </label>
+
+                    {{ field }}
+
+                    {% for error in field.errors %}
+                    <span class="bagi-form-error">{{ error }}</span>
+                    {% endfor %}
+                </div>
+                {% endfor %}
+
+                <div class="bagi-appointment-warning">
+                    <strong>Perhatian!</strong>
+                    <p>
+                        Waktu yang kamu pilih masih berupa pengajuan.
+                        Janji temu baru resmi setelah disetujui oleh pemberi.
+                    </p>
+                </div>
+
+                <button type="submit" class="bagi-primary-button bagi-submit">
+                    KIRIM PERMINTAAN →
+                </button>
+            </form>
+
+        </section>
+    </div>
+</main>
+
+</body>
+</html>
