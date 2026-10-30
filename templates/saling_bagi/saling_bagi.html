@@ -14,6 +14,8 @@
     <link rel="stylesheet" href="{% static 'style.css' %}">
     <link rel="stylesheet" href="{% static 'navbar-footer.css' %}">
     <link rel="stylesheet" href="{% static 'saling_bagi/saling_bagi.css' %}">
+
+    <script src="{% static 'saling_bagi/saling_bagi.js' %}" defer></script>
 </head>
 
 <body>
@@ -118,12 +120,9 @@
                 <label for="bagiLocation">FILTER LOKASI</label>
                 <select id="bagiLocation">
                     <option value="">Semua Lokasi</option>
-                    <option value="Kantin Fasilkom">Kantin Fasilkom</option>
-                    <option value="Perpusat UI">Perpustakaan Pusat UI</option>
-                    <option value="Stasiun UI">Stasiun UI</option>
-                    <option value="Asrama UI">Asrama UI</option>
-                    <option value="Kantin RIK">Kantin RIK</option>
-                    <option value="Lainnya">Lainnya</option>
+                    {% for value, label in lokasi_choices %}
+                    <option value="{{ value }}">{{ label }}</option>
+                    {% endfor %}
                 </select>
             </div>
 
@@ -190,9 +189,7 @@
 
                         <div>
                             <span class="bagi-detail-icon">📍</span>
-                            <span>
-                                {{ makanan.get_lokasi_pengambilan_display }}
-                            </span>
+                            <span>{{ makanan.nama_lokasi }}</span>
                         </div>
 
                         <div>
@@ -264,7 +261,7 @@
 
             {% endfor %}
 
-            <div class="bagi-no-result" id="bagiNoResult" hidden>
+            <div class="bagi-no-result" id="bagiNoResults" hidden>
                 <span>🔎</span>
                 <h3>Makanan Tidak Ditemukan</h3>
                 <p>
@@ -290,81 +287,7 @@
 
 </main>
 
-<script>
-document.addEventListener("DOMContentLoaded", function () {
-
-    const searchInput = document.getElementById("bagiSearch");
-    const locationSelect = document.getElementById("bagiLocation");
-    const sortSelect = document.getElementById("bagiSort");
-    const foodGrid = document.getElementById("bagiFoodGrid");
-    const resultCount = document.getElementById("bagiResultCount");
-    const noResult = document.getElementById("bagiNoResult");
-
-    const cards = Array.from(
-        foodGrid.querySelectorAll(".bagi-food-card")
-    );
-
-    function filterFoods() {
-        const keyword = searchInput.value.toLowerCase().trim();
-        const location = locationSelect.value;
-
-        let visibleCount = 0;
-
-        cards.forEach(function (card) {
-            const name = card.dataset.name || "";
-            const description = card.dataset.description || "";
-            const cardLocation = card.dataset.location || "";
-
-            const matchesKeyword =
-                name.includes(keyword) ||
-                description.includes(keyword);
-
-            const matchesLocation =
-                location === "" || cardLocation === location;
-
-            const visible = matchesKeyword && matchesLocation;
-
-            card.hidden = !visible;
-
-            if (visible) {
-                visibleCount++;
-            }
-        });
-
-        resultCount.textContent = visibleCount;
-
-        noResult.hidden = !(cards.length > 0 && visibleCount === 0);
-    }
-
-    function sortFoods() {
-        const sortType = sortSelect.value;
-        const sortedCards = [...cards];
-
-        sortedCards.sort(function (a, b) {
-            if (sortType === "oldest") {
-                return Number(a.dataset.date) - Number(b.dataset.date);
-            }
-
-            if (sortType === "name") {
-                return a.dataset.name.localeCompare(b.dataset.name);
-            }
-
-            return Number(b.dataset.date) - Number(a.dataset.date);
-        });
-
-        sortedCards.forEach(function (card) {
-            foodGrid.insertBefore(card, noResult);
-        });
-
-        filterFoods();
-    }
-
-    searchInput.addEventListener("input", filterFoods);
-    locationSelect.addEventListener("change", filterFoods);
-    sortSelect.addEventListener("change", sortFoods);
-
-});
-</script>
+{% include "_footer.html" %}
 
 </body>
 </html>
