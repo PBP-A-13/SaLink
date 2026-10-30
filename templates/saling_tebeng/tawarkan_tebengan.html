@@ -198,7 +198,7 @@
   function cancelExistingSchedule(scheduleId) {
     if (confirm('Batalkan jadwal ini?')) {
       var form = document.getElementById('cancel-existing-form');
-      form.action = '/saling-tebeng/nebeng/jadwal/' + scheduleId + '/batal/';
+      form.action = '/saling-nebeng/nebeng/jadwal/' + scheduleId + '/batal/';
       form.submit();
     }
   }

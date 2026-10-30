@@ -49,8 +49,9 @@ class SaLinkLoginView(LoginView):
             ('/saling-beli/', 'Saling Beli'),
             ('/saling-pinjam/', 'Saling Pinjam'),
             ('/saling-bagi/', 'Saling Bagi'),
-            ('/saling-tebeng/', 'Saling Tebeng'),
-            ('/nebeng/', 'Saling Tebeng'),
+            ('/saling-nebeng/', 'Saling Nebeng'),
+            ('/saling-tebeng/', 'Saling Nebeng'),
+            ('/nebeng/', 'Saling Nebeng'),
         )
         context['module_name'] = next(
             (name for prefix, name in module_paths if next_path.startswith(prefix)),
