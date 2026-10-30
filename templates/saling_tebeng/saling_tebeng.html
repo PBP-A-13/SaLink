@@ -17,7 +17,7 @@
   {% endif %}
 {% endblock %}
 
-{% block content %}
+{% block page_content %}
 <form method="get" id="search-form" class="search-bar" novalidate>
   {# Search Dropdown Asal #}
   <div class="search-field">
@@ -156,7 +156,7 @@
 {% endif %}
 {% endblock %}
 
-{% block scripts %}
+{% block extra_js %}
 <script>
   function clearSelect(selectId) {
     var sel = document.getElementById(selectId);

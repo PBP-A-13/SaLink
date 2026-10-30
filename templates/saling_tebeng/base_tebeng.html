@@ -1,21 +1,21 @@
+{% extends "base.html" %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="id">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{% block title %}SaLink Nebeng{% endblock %}</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Oswald:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="{% static 'navbar-footer.css' %}">
+
+{% block title %}SaLink Nebeng{% endblock %}
+
+{% block extra_head %}
+  {{ block.super }}
+  <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="{% static 'saling_tebeng/saling_tebeng.css' %}">
-</head>
-<body>
+{% endblock %}
+
+{% block navbar %}
   {% with active_nav='tebeng' %}
     {% include "_navbar.html" %}
   {% endwith %}
+{% endblock %}
 
+{% block content %}
   <div class="shell">
     <aside class="sidebar" aria-label="Menu Nebeng">
       {% block sidebar %}{% endblock %}
@@ -30,7 +30,7 @@
       </ul>
       {% endif %}
 
-      {% block content %}{% endblock %}
+      {% block page_content %}{% endblock %}
     </main>
   </div>
 
@@ -75,7 +75,4 @@
     </symbol>
   </svg>
 
-  {% block scripts %}{% endblock %}
-</body>
-</html>
-
+{% endblock %}

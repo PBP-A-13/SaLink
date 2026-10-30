@@ -12,7 +12,7 @@
   <a class="side-cta" href="{% url 'saling_tebeng:tawarkan_tebengan' %}">Tawarkan Tebengan</a>
 {% endblock %}
 
-{% block content %}
+{% block page_content %}
 <div style="max-width: 600px; margin: 0 auto; background: var(--salink-cream); border: 2px solid var(--salink-dark); box-shadow: var(--shadow-flat); border-radius: 20px; padding: 24px; color: var(--salink-dark);">
   <h2 style="font-family: var(--font); font-size: 1.5rem; margin-top: 0; color: var(--salink-dark);">Chat dengan {{ driver.username }}</h2>
   <div style="background: var(--salink-white); border: 2px solid var(--salink-dark); border-radius: 12px; padding: 16px; margin-bottom: 20px;">
@@ -32,4 +32,3 @@
   </div>
 </div>
 {% endblock %}
-
