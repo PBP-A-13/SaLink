@@ -1,139 +1,98 @@
-# SaLink Media
+# Dokumentasi Media SaLink
 
-Kumpulan tangkapan layar produk SaLink untuk dokumentasi dan rilis. Semua gambar diambil
-menggunakan data seed yang sudah dianonimkan.
+Kumpulan screenshot dan video alur fitur SaLink. Semua media harus menggunakan data demo
+yang sudah dianonimkan.
 
-> **Privasi:** jangan pernah memasukkan kredensial, cookie sesi, alamat email asli, nomor
-> rekening, atau isi percakapan pribadi ke dalam folder ini. Tangkapan layar harus memakai
-> akun dan barang demo.
+> **Privasi:** jangan masukkan password, cookie sesi, email asli, nomor rekening, atau isi
+> chat pribadi ke dalam folder ini.
 
-## Daftar isi
+## Daftar Modul
 
-- [Beranda](#beranda)
-- [Autentikasi](#autentikasi)
+- [Beranda dan autentikasi](#beranda-dan-autentikasi)
 - [Saling Beli](#saling-beli)
-- [Panduan capture](#panduan-capture)
+- [Saling Bagi](#saling-bagi)
+- [Saling Pinjam](#saling-pinjam)
+- [Saling Tebeng](#saling-tebeng)
+- [Panduan penamaan dan capture](#panduan-penamaan-dan-capture)
 
 ---
 
-## Beranda
+## Beranda dan Autentikasi
 
-### Halaman utama (desktop)
+| Tampilan | File | Keterangan |
+| --- | --- | --- |
+| Homepage desktop | [`homepage-desktop.png`](homepage-desktop.png) | Hero, ringkasan layanan, dan kartu modul. |
+| Footer global | [`footer-desktop.png`](footer-desktop.png) | Tautan modul dan informasi kelompok. |
+| Login bersama | [`login-page.jpg`](login-page.jpg) | Login dengan dukungan parameter `next`. |
 
-![Halaman utama SaLink](homepage-desktop.png)
-
-*1024×576 — hero, ringkasan lima layanan, dan kartu modul.*
-
-### Footer
-
-![Footer SaLink](footer-desktop.png)
-
-*1920×1080 — footer global dengan tautan modul dan informasi kelompok.*
-
----
-
-## Autentikasi
-
-### Halaman login
-
-![Halaman login SaLink](login-page.jpg)
-
-*1024×576 — form login bersama yang dipakai semua modul, termasuk alur `?next=` kembali ke modul asal.*
+![Homepage SaLink](homepage-desktop.png)
 
 ---
 
 ## Saling Beli
 
-### Katalog barang
+| Alur | File | Keterangan |
+| --- | --- | --- |
+| Katalog | [`salingbeli-page.png`](salingbeli-page.png) | Pencarian, filter, sorting, dan grid listing. |
+| Detail barang | [`salingbeli-detailedProduct.png`](salingbeli-detailedProduct.png) | Detail produk, harga, COD, dan aksi transaksi. |
+| Jual / hibah | [`salingbeli-form.png`](salingbeli-form.png) | Form listing, foto, kondisi, harga, dan rekening. |
+| Nego | [`salingbeli-nego.png`](salingbeli-nego.png) | Pengajuan dan respons penawaran harga. |
+| Chat | [`salingbeli-chat.png`](salingbeli-chat.png) | Percakapan per barang dan per pembeli. |
+| Notifikasi | [`salingbeli-notifications.png`](salingbeli-notifications.png) | Badge dan daftar notifikasi transaksi/chat. |
 
 ![Katalog Saling Beli](salingbeli-page.png)
 
-*1920×1080 — pencarian, filter kategori/kondisi, pengurutan, tombol Tersimpan, dan grid barang.*
-
-### Detail barang
-
-![Detail barang Saling Beli](salingbeli-detailedProduct.png)
-
-*1920×1080 — foto, harga, kondisi, titik temu COD, aksi beli/nego/chat, serta tracker transaksi.*
-
-### Form jual / hibah
-
-![Form tambah barang](salingbeli-form.png)
-
-*1920×1080 — form listing dengan unggah foto, kategori, kondisi, harga, dan rekening pencairan.*
-
-### Nego harga
-
-![Modal nego harga](salingbeli-nego.png)
-
-*1920×1080 — pengajuan tawaran dari pembeli dan daftar penawaran yang masuk ke penjual.*
-
-### Chat penjual
-
-![Chat per barang](salingbeli-chat.png)
-
-*1920×1080 — percakapan per pembeli, dengan pemilih pembeli di sisi penjual.*
-
-### Notifikasi in-app
-
-![Notifikasi in-app](salingbeli-notifications.png)
-
-*1918×631 — badge jumlah belum dibaca, daftar notifikasi, dan toast aktivitas baru.*
-
 ---
 
-### Saling Bagi
+## Saling Bagi
 
-### Halaman Saling Bagi
+| Alur | File | Keterangan |
+| --- | --- | --- |
+| Daftar makanan | [`salingbagi-page.jpeg`](salingbagi-page.jpeg) | Etalase makanan berlebih yang tersedia. |
+| Bagikan makanan | [`salingbagi-bagikanmakanan.jpeg`](salingbagi-bagikanmakanan.jpeg) | Form tambah makanan, porsi, lokasi, dan batas konsumsi. |
+| Janji temu | [`salingbagi-janjitemu.jpeg`](salingbagi-janjitemu.jpeg) | Koordinasi pengambilan makanan. |
+| Demo alur | [`salingbagi.mp4`](salingbagi.mp4) | Video singkat alur Saling Bagi. |
 
 ![Halaman Saling Bagi](salingbagi-page.jpeg)
 
-### Form Bagikan Makanan
+[Buka video demo Saling Bagi](salingbagi.mp4)
 
-![Form Bagikan Makanan](salingbagi-bagikanmakanan.jpeg)
-
-### Janji Temu
-
-![Janji Temu](salingbagi-janjitemu.jpeg)
-
-### Demo Fitur Saling Bagi
-
-<video width="100%" controls>
-  <source src="salingbagi.mp4" type="video/mp4">
-</video>
+---
 
 ## Saling Pinjam
 
-### Jadwal pinjam (desktop)
-Kalender untuk memilih tanggal mulai pinjam. Barang yang bebas di tanggal itu tampil di bawahnya, dan panel Pinjaman Saya menampilkan maksimal 2 pinjaman aktif.
+| Alur | File | Keterangan |
+| --- | --- | --- |
+| Katalog dan kalender | [`salingpinjam-page.png`](salingpinjam-page.png) | Jadwal, filter barang, dan ringkasan pinjaman. |
+| Form ajukan pinjam | [`salingpinjam-requestform.png`](salingpinjam-requestform.png) | Pengajuan durasi, pengembalian, dan catatan. |
+| Tambah/edit barang | [`salingpinjam-tambahbarang&edit.png`](salingpinjam-tambahbarang%26edit.png) | Form barang yang ditawarkan untuk dipinjamkan. |
+| Barang pinjaman | [`salingpinjam-borrowbarang.png`](salingpinjam-borrowbarang.png) | Tampilan data barang dan status ketersediaan. |
 
 ![Halaman Saling Pinjam](salingpinjam-page.png)
 
-### Detail barang
-![Detail barang dan form ajukan pinjaman](salingpinjam-detail.png)
+---
 
-### Pinjamkan barang
-![Form pinjamkan barang](salingpinjam-form.png)
+## Saling Tebeng
 
-### Pinjaman saya
-Pemilik barang menyetujui, menolak, dan menandai barang sudah diambil atau dikembalikan dari halaman ini.
+| Alur | File | Keterangan |
+| --- | --- | --- |
+| Jadwal tebeng | [`salingnebeng-jadwaltebeng.png`](salingnebeng-jadwaltebeng.png) | Penawaran rute dan jadwal perjalanan. |
+| Tawar tebeng | [`salingnebeng-lamantawar.png`](salingnebeng-lamantawar.png) | Halaman untuk menawarkan tebengan. |
+| Gabung tebengan | [`salingnebeng-lamangabung.png`](salingnebeng-lamangabung.png) | Konfirmasi bergabung dengan jadwal. |
+| Pesan | [`salingnebeng-pesan.png`](salingnebeng-pesan.png) | Koordinasi driver dan penumpang. |
+| Konfirmasi gabung | [`selingnebeng-gabungtebengan.png`](selingnebeng-gabungtebengan.png) | State konfirmasi keikutsertaan. |
 
-![Halaman Pinjaman Saya](salingpinjam-pinjaman-saya.png)
+![Jadwal Saling Tebeng](salingnebeng-jadwaltebeng.png)
 
 ---
 
-## Panduan capture
+## Panduan Penamaan dan Capture
 
-- Ukuran acuan: **1440×900** untuk desktop dan **390×844** untuk mobile.
-- Nama berkas memakai huruf kecil dan tanda hubung, kecuali berkas yang sudah ada
-  (contoh: `salingbeli-detailedProduct.png`). GitHub membedakan huruf besar/kecil.
-- Untuk alur bergerak, simpan sebagai GIF pendek (maksimal ±5 MB) dengan nama seperti
-  `auth-flow.gif` atau `saling-beli-flow.gif`.
-- Bersihkan data pribadi sebelum menyimpan: ganti nama akun, nomor rekening, dan isi pesan
-  dengan data dummy.
-- Kompres PNG dengan alat seperti `pngquant` atau `oxipng` bila ukuran melebihi 500 KB.
+- Gunakan ukuran acuan **1440×900** untuk desktop dan **390×844** untuk mobile.
+- Gunakan nama lowercase dengan tanda hubung untuk media baru, misalnya `saling-beli-flow.gif`.
+- Untuk alur bergerak, gunakan GIF pendek maksimal sekitar 5 MB atau video MP4 jika kualitas lebih penting.
+- Gunakan data dummy dan hapus informasi pribadi sebelum commit.
+- Kompres PNG besar dengan `pngquant` atau `oxipng`.
+- Tambahkan setiap media baru ke tabel modul yang sesuai agar README tidak memiliki file yatim.
 
----
-
-*Dokumentasi ini adalah bagian dari repositori SaLink. Lihat [README utama](../../README.md)
-untuk gambaran aplikasi dan cara menjalankan proyek.*
+Lihat [README utama](../../README.md) untuk gambaran aplikasi dan instruksi menjalankan proyek.
