@@ -1,57 +1,131 @@
-
 {% load static %}
+
 <!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SaLink - Saling Bagi</title>
 
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Anton&display=swap" rel="stylesheet" />
+    <title>Bagikan Makanan - SaLink</title>
 
-    <link rel="stylesheet" href="{% static 'style.css' %}?v=20261027_04">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Anton&family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="{% static 'style.css' %}">
     <link rel="stylesheet" href="{% static 'navbar-footer.css' %}">
     <link rel="stylesheet" href="{% static 'saling_bagi/saling_bagi.css' %}">
+
+    <!-- JavaScript -->
+    <script src="{% static 'saling_bagi/saling_bagi.js' %}" defer></script>
 </head>
+
 <body>
 
-    {% include "_navbar.html" with active_nav="bagi" %}
+{% include "_navbar.html" with active_nav="bagi" %}
 
-      <main class="bagi">
-        <h2 class="section-title">Bagikan Makanan</h2>
+<main class="bagi-page bagi-form-page">
 
-        <form method="POST" enctype="multipart/form-data">
+    <a href="{% url 'saling_bagi:index' %}" class="bagi-back">
+        ← Kembali ke Saling Bagi
+    </a>
+
+    <section class="bagi-form-card">
+
+        <div class="bagi-form-heading">
+            <span class="bagi-eyebrow">SHARE FOOD, SHARE KINDNESS</span>
+
+            <h1>Bagikan Makanan</h1>
+
+            <p>
+                Bagikan makanan berlebihmu kepada sesama mahasiswa UI.
+                Pastikan informasi makanan dan lokasi pengambilan jelas.
+            </p>
+        </div>
+
+        {% if messages %}
+            <div class="bagi-messages">
+                {% for message in messages %}
+                    <div class="bagi-message {{ message.tags }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <form
+            method="POST"
+            enctype="multipart/form-data"
+            class="bagi-form"
+        >
+
             {% csrf_token %}
 
-            {{ form.non_field_errors }}
-
             {% for field in form %}
-                <div class="bagi__form-row">
-                    <label for="{{ field.id_for_label }}">
-                        {{ field.label }}
-                    </label>
+                {% if field.name != 'lokasi_lainnya' %}
 
-                    {{ field }}
+                    <div class="bagi-form-group">
 
-                    {% for error in field.errors %}
-                        <p class="bagi__error">{{ error }}</p>
-                    {% endfor %}
-                </div>
+                        <label for="{{ field.id_for_label }}">
+                            {{ field.label }}
+                        </label>
+
+                        {{ field }}
+
+                        {% if field.help_text %}
+                            <small>{{ field.help_text }}</small>
+                        {% endif %}
+
+                        {% for error in field.errors %}
+                            <span class="bagi-form-error">
+                                {{ error }}
+                            </span>
+                        {% endfor %}
+
+                    </div>
+
+                    {% if field.name == 'lokasi_pengambilan' %}
+                        <div
+                            class="bagi-form-group"
+                            id="lokasi-lainnya-container"
+                            hidden
+                        >
+                            <label for="{{ form.lokasi_lainnya.id_for_label }}">
+                                Tuliskan Lokasi Pengambilan
+                            </label>
+
+                            {{ form.lokasi_lainnya }}
+
+                            <small>
+                                Masukkan nama gedung, area, atau titik
+                                pengambilan yang mudah ditemukan.
+                            </small>
+
+                            {% for error in form.lokasi_lainnya.errors %}
+                                <span class="bagi-form-error">
+                                    {{ error }}
+                                </span>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+
+                {% endif %}
             {% endfor %}
 
-            <button type="submit" class="food-card__button">
-                Bagikan Makanan
+            <button
+                type="submit"
+                class="bagi-primary-button bagi-submit"
+            >
+                BAGIKAN MAKANAN →
             </button>
+
         </form>
 
-        <p class="bagi__back">
-            <a href="{% url 'saling_bagi:index' %}">
-                Kembali ke Saling Bagi
-            </a>
-        </p>
-    </main>
+    </section>
+
+</main>
 
 </body>
 </html>

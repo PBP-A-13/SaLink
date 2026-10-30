@@ -1,215 +1,880 @@
-/* ==========================================================
-   Saling Bagi - style khusus modul Saling Bagi
-   Variabel warna (--salink-*) & font global ada di style.css,
-   jadi file ini TIDAK mendefinisikan ulang :root atau body.
-   ========================================================== */
 
-/* ===== KONTEN ===== */
-.bagi {
-    padding: 24px 20px 48px;
-    max-width: 1200px;
-    margin: 0 auto;
+:root {
+    --brown: #4D2A00;
+    --orange: #CC6F00;
+    --yellow: #F2A900;
+    --light-yellow: #F9E6A8;
+    --cream: #FFF6DC;
+    --muted-brown: #8C5A1F;
+    --white: #FFFFFF;
 }
 
-.bagi a {
-    color: inherit;
-    text-decoration: none;
+* {
+    box-sizing: border-box;
 }
 
-/* Anton hanya dipakai untuk judul */
-.section-title {
-    font-family: 'Anton', sans-serif;
-    font-size: 28px;
-    font-weight: 400;
-    margin-bottom: 14px;
-    color: var(--salink-dark);
-    text-transform: uppercase;
-    letter-spacing: 0.02em;
+.bagi-page {
+    background: var(--light-yellow);
+    min-height: 100vh;
+    padding: 38px 7.3% 65px;
+    color: var(--brown);
+    font-family: "DM Sans", sans-serif;
 }
 
-/* Tombol + Tambah Makanan */
-.bagi__add-button {
-    display: inline-block;
-    margin-bottom: 24px;
-    padding: 8px 20px;
-    background: var(--salink-dark);
-    color: var(--salink-white);
-    border-radius: 999px;
-    font-size: 14px;
-    text-transform: uppercase;
-    transition: background 0.15s ease;
-}
+/* HERO */
 
-.bagi__add-button:hover {
-    background: var(--salink-primary);
-}
-
-/* ===== GRID KARTU MAKANAN ===== */
-.food-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 16px;
-}
-
-.food-card {
-    position: relative;
+.bagi-hero {
+    background: var(--cream);
+    border: 2px solid var(--brown);
+    border-radius: 28px;
+    box-shadow: 7px 8px 0 var(--brown);
+    min-height: 300px;
+    padding: 42px 55px;
     display: flex;
-    gap: 12px;
-    padding: 10px;
-    min-height: 150px;
-    background: var(--salink-accent);
-    border-radius: 20px;
+    justify-content: space-between;
+    align-items: center;
+    gap: 30px;
     overflow: hidden;
-    transition: transform 0.15s ease;
+    position: relative;
 }
 
-.food-card:hover {
+.bagi-hero__content {
+    max-width: 650px;
+    position: relative;
+    z-index: 1;
+}
+
+.bagi-eyebrow {
+    display: inline-block;
+    color: var(--orange);
+    font-family: "Anton", sans-serif;
+    font-size: 13px;
+    letter-spacing: 1.4px;
+    margin-bottom: 12px;
+}
+
+.bagi-hero h1 {
+    font-family: "Anton", sans-serif;
+    font-size: clamp(34px, 4.3vw, 55px);
+    line-height: 1.12;
+    margin: 0 0 17px;
+    color: var(--brown);
+}
+
+.bagi-hero h1 span {
+    color: var(--orange);
+}
+
+.bagi-hero__content > p {
+    font-size: 15px;
+    line-height: 1.8;
+    color: var(--muted-brown);
+    max-width: 540px;
+    margin-bottom: 25px;
+}
+
+.bagi-hero-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+}
+
+.bagi-primary-button,
+.bagi-secondary-button {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    background: var(--orange);
+    color: var(--cream) !important;
+    border: 2px solid var(--brown);
+    border-radius: 40px;
+    padding: 14px 25px;
+    font-family: "Anton", sans-serif;
+    font-size: 16px;
+    text-decoration: none !important;
+    box-shadow: 4px 5px 0 var(--brown);
+    transition: transform .2s ease, background .2s ease;
+}
+
+.bagi-primary-button:hover {
+    background: var(--yellow);
+    color: var(--brown) !important;
     transform: translateY(-2px);
 }
 
-.food-card__image {
-    flex: 0 0 100px;
-    height: 100px;
-    background: var(--salink-cream);
-    border-radius: 14px;
+.bagi-secondary-button {
+    background: var(--cream);
+    color: var(--brown) !important;
+}
+
+.bagi-secondary-button:hover {
+    background: var(--light-yellow);
+    transform: translateY(-2px);
+}
+
+.bagi-plus {
+    font-size: 27px;
+    line-height: 1;
+}
+
+.bagi-hero__illustration {
+    position: relative;
+    min-width: 220px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.bagi-hero__circle {
+    width: 190px;
+    height: 190px;
+    border-radius: 50%;
+    background: var(--light-yellow);
+    border: 3px solid var(--brown);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transform: rotate(-7deg);
+}
+
+.bagi-hero__circle span {
+    font-size: 90px;
+}
+
+.bagi-hero__note {
+    position: absolute;
+    right: -22px;
+    bottom: 0;
+    background: var(--yellow);
+    border: 2px solid var(--brown);
+    border-radius: 15px;
+    box-shadow: 3px 4px 0 var(--brown);
+    padding: 12px 17px;
+    display: flex;
+    flex-direction: column;
+    font-family: "Anton", sans-serif;
+    font-size: 16px;
+    transform: rotate(5deg);
+}
+
+.bagi-hero__note span {
+    position: absolute;
+    right: 9px;
+    top: -18px;
+    font-size: 24px;
+}
+
+/* MESSAGES */
+
+.bagi-messages {
+    margin: 0 0 28px;
+}
+
+.bagi-message {
+    padding: 14px 20px;
+    margin-bottom: 10px;
+    background: var(--cream);
+    border: 2px solid var(--brown);
+    border-radius: 12px;
+    color: var(--brown);
+    font-weight: 700;
+}
+
+.bagi-message.success {
+    background: #DCECCB;
+    color: #285C20;
+}
+
+.bagi-message.error {
+    background: #F8D8D2;
+    color: #9C3024;
+}
+
+.bagi-message.warning {
+    background: #FFF0C2;
+    color: #805000;
+}
+
+/* CATALOG */
+
+.bagi-catalog {
+    margin-top: 58px;
+}
+
+.bagi-section-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: end;
+    gap: 20px;
+    margin-bottom: 25px;
+}
+
+.bagi-section-heading h2 {
+    font-family: "Anton", sans-serif;
+    font-size: clamp(27px, 3vw, 36px);
+    margin: 0 0 8px;
+}
+
+.bagi-section-heading p {
+    color: var(--muted-brown);
+    margin: 0;
+    font-size: 14px;
+}
+
+.bagi-count {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--brown);
+    color: var(--cream);
+    border-radius: 30px;
+    padding: 11px 19px;
+    white-space: nowrap;
+}
+
+.bagi-count strong {
+    font-family: "Anton", sans-serif;
+    font-size: 24px;
+    color: var(--yellow);
+}
+
+.bagi-count span {
+    font-family: "Anton", sans-serif;
+    font-size: 11px;
+}
+
+/* SEARCH AND FILTER */
+
+.bagi-filter-panel {
+    background: var(--cream);
+    border: 2px solid var(--brown);
+    border-radius: 20px;
+    box-shadow: 5px 6px 0 var(--brown);
+    padding: 19px;
+    display: flex;
+    align-items: end;
+    gap: 16px;
+    margin-bottom: 35px;
+}
+
+.bagi-search {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--white);
+    border: 2px solid var(--brown);
+    border-radius: 35px;
+    padding: 0 18px;
+    min-height: 51px;
+}
+
+.bagi-search > span {
+    font-size: 27px;
+    font-weight: bold;
+}
+
+.bagi-search input {
+    border: none;
+    outline: none;
+    background: transparent;
+    width: 100%;
+    font-family: "DM Sans", sans-serif;
+    font-size: 14px;
+    color: var(--brown);
+}
+
+.bagi-search input::placeholder {
+    color: #9B7952;
+}
+
+.bagi-location-filter {
+    min-width: 190px;
+}
+
+.bagi-location-filter label {
+    display: block;
+    font-family: "Anton", sans-serif;
+    font-size: 12px;
+    margin: 0 0 7px 8px;
+}
+
+.bagi-location-filter select {
+    width: 100%;
+    min-height: 51px;
+    border: 2px solid var(--brown);
+    border-radius: 35px;
+    background: var(--white);
+    color: var(--brown);
+    padding: 0 15px;
+    font-family: "DM Sans", sans-serif;
+    font-size: 13px;
+    outline: none;
+}
+
+.bagi-location-filter select:focus,
+.bagi-search:focus-within {
+    border-color: var(--orange);
+}
+
+/* FOOD GRID */
+
+.bagi-food-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 24px;
+}
+
+.bagi-food-card {
+    background: var(--cream);
+    border: 2px solid var(--brown);
+    border-radius: 20px;
+    box-shadow: 5px 6px 0 var(--brown);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transition: transform .2s ease, box-shadow .2s ease;
+}
+
+.bagi-food-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 7px 10px 0 var(--brown);
+}
+
+.bagi-food-card[hidden],
+.bagi-no-result[hidden] {
+    display: none !important;
+}
+
+.bagi-food-image {
+    height: 190px;
+    position: relative;
+    background: var(--light-yellow);
+    border-bottom: 2px solid var(--brown);
     overflow: hidden;
 }
 
-.food-card__image img {
+.bagi-food-image img {
     width: 100%;
     height: 100%;
     object-fit: cover;
 }
 
-.food-card__info {
-    flex: 1;
-    background: var(--salink-cream);
-    padding: 10px 12px 44px; /* ruang bawah untuk tombol */
-    border-radius: 14px;
-    font-size: 13px;
-    line-height: 1.4;
-    color: var(--salink-dark);
+.bagi-food-placeholder {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 75px;
 }
 
-.food-card__name {
-    font-family: 'Anton', sans-serif;
-    font-size: 18px;
-    font-weight: 400;
-    text-transform: uppercase;
-    margin-bottom: 4px;
-}
-
-.food-card__label {
-    margin-top: 6px;
-    font-size: 13px;
-    color: var(--salink-primary);
-}
-
-.food-card__meta {
-    font-size: 11px;
-    color: var(--salink-muted);
-}
-
-.food-card__form {
+.bagi-available-tag {
     position: absolute;
-    right: 18px;
-    bottom: 18px;
+    top: 13px;
+    left: 13px;
+    background: #386A24;
+    color: white;
+    border-radius: 30px;
+    padding: 7px 12px;
+    font-family: "Anton", sans-serif;
+    font-size: 11px;
 }
 
-.food-card__button {
-    font-family: inherit;
-    font-size: 12px;
-    padding: 6px 16px;
-    background: var(--salink-dark);
-    color: var(--salink-white);
-    border: none;
-    border-radius: 999px;
-    cursor: pointer;
-    text-transform: uppercase;
-    transition: background 0.15s ease;
+.bagi-food-content {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
 }
 
-.food-card__button:hover {
-    background: var(--salink-primary);
-    color: var(--salink-white);
+.bagi-food-topline {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
 }
 
-.empty-text {
-    grid-column: 1 / -1;
-    font-size: 15px;
-    color: var(--salink-muted);
+.bagi-food-category {
+    color: var(--orange);
+    font-family: "Anton", sans-serif;
+    font-size: 11px;
+    letter-spacing: 1px;
 }
 
-/* ===== FORM TAMBAH MAKANAN ===== */
-.bagi__form-row {
-    margin-bottom: 16px;
+.bagi-food-portion {
+    background: var(--light-yellow);
+    border-radius: 30px;
+    padding: 6px 10px;
+    font-size: 11px;
+    font-weight: 700;
 }
 
-.bagi__form-row label {
-    display: block;
-    margin-bottom: 6px;
-    font-size: 14px;
-    color: var(--salink-dark);
+.bagi-food-content h3 {
+    font-family: "Anton", sans-serif;
+    font-size: 24px;
+    margin: 15px 0 8px;
+    color: var(--brown);
+    overflow-wrap: anywhere;
 }
 
-.bagi input[type="text"],
-.bagi input[type="number"],
-.bagi input[type="datetime-local"],
-.bagi select,
-.bagi textarea {
-    width: 100%;
-    max-width: 480px;
-    padding: 8px 12px;
-    font-family: inherit;
-    font-size: 14px;
-    color: var(--salink-dark);
-    background: var(--salink-cream);
-    border: 2px solid var(--salink-accent);
-    border-radius: 10px;
-}
-
-.bagi input:focus,
-.bagi select:focus,
-.bagi textarea:focus {
-    outline: none;
-    border-color: var(--salink-primary);
-}
-
-.bagi__error {
-    margin-top: 4px;
-    font-size: 12px;
-    color: #c0392b;
-}
-
-.bagi__back {
-    margin-top: 20px;
-    font-size: 14px;
-    color: var(--salink-muted);
-}
-
-/* ===== MESSAGES ===== */
-.messages {
-    margin-bottom: 14px;
-}
-
-.messages__item {
-    padding: 10px 14px;
-    margin-bottom: 8px;
+.bagi-food-description {
     font-size: 13px;
-    background: var(--salink-cream);
-    border-radius: 10px;
-    color: var(--salink-dark);
-    border-left: 5px solid var(--salink-primary);
+    color: var(--muted-brown);
+    line-height: 1.7;
+    min-height: 44px;
+    margin: 0 0 17px;
 }
 
-.messages__item.error   { border-left-color: #c0392b; }
-.messages__item.success { border-left-color: #27ae60; }
+.bagi-food-details {
+    border-top: 1px solid #E2C98F;
+    padding-top: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 11px;
+    margin-bottom: 20px;
+}
 
-/* ===== RESPONSIVE ===== */
+.bagi-food-details > div {
+    display: flex;
+    align-items: flex-start;
+    gap: 9px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--brown);
+    line-height: 1.5;
+}
+
+.bagi-detail-icon {
+    flex-shrink: 0;
+}
+
+.bagi-food-content form {
+    margin-top: auto;
+}
+
+.bagi-take-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: 47px;
+    margin-top: auto;
+    border: 2px solid var(--brown);
+    border-radius: 35px;
+    background: var(--yellow);
+    color: var(--brown) !important;
+    padding: 13px 15px;
+    font-family: "Anton", sans-serif;
+    font-size: 15px;
+    text-align: center;
+    text-decoration: none !important;
+    cursor: pointer;
+    box-shadow: 3px 4px 0 var(--brown);
+    transition: .2s ease;
+}
+
+.bagi-take-button:hover {
+    background: var(--orange);
+    color: var(--cream) !important;
+    transform: translateY(-2px);
+}
+
+.bagi-take-button--disabled {
+    background: #D7C9A8;
+    color: #6D5B40 !important;
+    box-shadow: none;
+    cursor: not-allowed;
+}
+
+/* EMPTY STATE */
+
+.bagi-empty,
+.bagi-no-result {
+    grid-column: 1 / -1;
+    background: var(--cream);
+    border: 2px solid var(--brown);
+    border-radius: 22px;
+    padding: 48px 25px;
+    text-align: center;
+    box-shadow: 5px 6px 0 var(--brown);
+}
+
+.bagi-empty__icon,
+.bagi-no-result > span {
+    font-size: 55px;
+}
+
+.bagi-empty h3,
+.bagi-no-result h3 {
+    font-family: "Anton", sans-serif;
+    font-size: 26px;
+    margin: 15px 0 8px;
+}
+
+.bagi-empty p,
+.bagi-no-result p {
+    max-width: 480px;
+    margin: 0 auto 23px;
+    color: var(--muted-brown);
+    line-height: 1.7;
+    font-size: 14px;
+}
+
+/* BOTTOM BANNER */
+
+.bagi-bottom-banner {
+    margin-top: 65px;
+    background: var(--brown);
+    color: var(--cream);
+    border-radius: 20px;
+    padding: 30px 38px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+}
+
+.bagi-bottom-banner .bagi-eyebrow {
+    color: var(--yellow);
+}
+
+.bagi-bottom-banner h2 {
+    font-family: "Anton", sans-serif;
+    font-size: 27px;
+    margin: 0 0 8px;
+}
+
+.bagi-bottom-banner p {
+    color: var(--light-yellow);
+    font-size: 13px;
+    margin: 0;
+}
+
+.bagi-bottom-emoji {
+    font-size: 60px;
+}
+
+/* ADD FOOD AND APPOINTMENT FORM */
+
+.bagi-form-page {
+    max-width: 800px;
+    margin: 10px auto;
+}
+
+.bagi-back {
+    display: inline-block;
+    color: var(--brown) !important;
+    font-weight: 700;
+    text-decoration: none !important;
+    margin-bottom: 22px;
+}
+
+.bagi-back:hover {
+    color: var(--orange) !important;
+}
+
+.bagi-form-card {
+    background: var(--cream);
+    border: 2px solid var(--brown);
+    border-radius: 25px;
+    box-shadow: 6px 7px 0 var(--brown);
+    padding: 35px;
+}
+
+.bagi-form-heading {
+    margin-bottom: 30px;
+}
+
+.bagi-form-heading h1 {
+    font-family: "Anton", sans-serif;
+    font-size: 38px;
+    margin: 0 0 10px;
+    color: var(--brown);
+}
+
+.bagi-form-heading p {
+    color: var(--muted-brown);
+    line-height: 1.7;
+    font-size: 14px;
+}
+
+.bagi-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.bagi-form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.bagi-form-group label {
+    color: var(--brown);
+    font-family: "Anton", sans-serif;
+    font-size: 15px;
+}
+
+.bagi-form-group input,
+.bagi-form-group textarea,
+.bagi-form-group select {
+    width: 100%;
+    min-height: 48px;
+    border: 2px solid var(--brown);
+    border-radius: 12px;
+    padding: 12px 15px;
+    background: white;
+    color: var(--brown);
+    font-family: "DM Sans", sans-serif;
+    font-size: 14px;
+    outline: none;
+}
+
+.bagi-form-group textarea {
+    min-height: 110px;
+    resize: vertical;
+}
+
+.bagi-form-group input:focus,
+.bagi-form-group textarea:focus,
+.bagi-form-group select:focus {
+    border-color: var(--orange);
+    box-shadow: 0 0 0 3px rgba(204, 111, 0, .15);
+}
+
+.bagi-form-group small {
+    color: var(--muted-brown);
+}
+
+.bagi-form-error {
+    color: #B42318;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.bagi-submit {
+    width: 100%;
+    cursor: pointer;
+    margin-top: 10px;
+}
+
+/* APPOINTMENT DASHBOARD */
+
+.bagi-appointment-section {
+    margin-top: 45px;
+}
+
+.bagi-appointment-section h2 {
+    font-family: "Anton", sans-serif;
+    font-size: 28px;
+    margin-bottom: 20px;
+}
+
+.bagi-appointment-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 20px;
+}
+
+.bagi-appointment-card {
+    background: var(--cream);
+    border: 2px solid var(--brown);
+    border-radius: 20px;
+    box-shadow: 4px 5px 0 var(--brown);
+    padding: 22px;
+}
+
+.bagi-appointment-card h3 {
+    font-family: "Anton", sans-serif;
+    font-size: 22px;
+    margin: 0 0 14px;
+}
+
+.bagi-appointment-card p {
+    color: var(--muted-brown);
+    font-size: 13px;
+    line-height: 1.7;
+    margin: 8px 0;
+}
+
+.bagi-status {
+    display: inline-block;
+    padding: 7px 12px;
+    border-radius: 30px;
+    font-size: 11px;
+    font-weight: 800;
+    background: var(--light-yellow);
+    color: var(--brown);
+}
+
+.bagi-status--approved {
+    background: #DCECCB;
+    color: #285C20;
+}
+
+.bagi-status--rejected {
+    background: #F8D8D2;
+    color: #9C3024;
+}
+
+.bagi-status--completed {
+    background: #D9E8F7;
+    color: #24527A;
+}
+
+.bagi-appointment-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 18px;
+}
+
+.bagi-appointment-actions form {
+    flex: 1;
+}
+
+.bagi-approve-button,
+.bagi-reject-button {
+    width: 100%;
+    padding: 11px;
+    border: 2px solid var(--brown);
+    border-radius: 30px;
+    font-family: "Anton", sans-serif;
+    cursor: pointer;
+}
+
+.bagi-approve-button {
+    background: #386A24;
+    color: white;
+}
+
+.bagi-reject-button {
+    background: #FFF0C2;
+    color: var(--brown);
+}
+
+.bagi-appointment-empty {
+    background: var(--cream);
+    border: 2px solid var(--brown);
+    border-radius: 18px;
+    padding: 30px;
+    text-align: center;
+    color: var(--muted-brown);
+}
+
+/* RESPONSIVE */
+
 @media (max-width: 1000px) {
-    .food-grid { grid-template-columns: repeat(2, 1fr); }
+    .bagi-food-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .bagi-hero {
+        padding: 35px;
+    }
+
+    .bagi-filter-panel {
+        flex-wrap: wrap;
+    }
+
+    .bagi-search {
+        flex-basis: 100%;
+    }
 }
 
 @media (max-width: 650px) {
-    .food-grid { grid-template-columns: 1fr; }
+    .bagi-page {
+        padding: 25px 17px 45px;
+    }
+
+    .bagi-hero {
+        padding: 28px 23px;
+        min-height: auto;
+    }
+
+    .bagi-hero__illustration {
+        display: none;
+    }
+
+    .bagi-hero h1 {
+        font-size: 37px;
+    }
+
+    .bagi-hero-actions {
+        flex-direction: column;
+    }
+
+    .bagi-hero-actions a {
+        width: 100%;
+    }
+
+    .bagi-section-heading {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .bagi-filter-panel {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .bagi-search {
+        flex-basis: auto;
+    }
+
+    .bagi-location-filter {
+        min-width: 0;
+    }
+
+    .bagi-food-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .bagi-bottom-banner {
+        padding: 25px;
+    }
+
+    .bagi-bottom-emoji {
+        font-size: 40px;
+    }
+
+    .bagi-form-card {
+        padding: 23px 18px;
+    }
+
+    .bagi-form-heading h1 {
+        font-size: 31px;
+    }
+
+    .bagi-appointment-list {
+        grid-template-columns: 1fr;
+    }
+
+    .bagi-appointment-actions {
+        flex-direction: column;
+    }
+
+        /* Samakan tipografi halaman Bagikan Makanan */
+    .bagi-form-page h1,
+    .bagi-form-page h2,
+    .bagi-form-card h1,
+    .bagi-form-card h2,
+    .bagi-form-title {
+        font-family: 'Anton', sans-serif !important;
+        font-weight: 400;
+    }
+
+    /* Font isi tetap DM Sans */
+    .bagi-form-page,
+    .bagi-form-card,
+    .bagi-form-page p,
+    .bagi-form-card p,
+    .bagi-form-page label,
+    .bagi-form-card label,
+    .bagi-form-page input,
+    .bagi-form-page textarea,
+    .bagi-form-page select {
+        font-family: 'DM Sans', sans-serif;
+    }
 }

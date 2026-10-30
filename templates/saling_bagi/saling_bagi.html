@@ -1,3 +1,4 @@
+
 {% load static %}
 <!DOCTYPE html>
 <html lang="id">
@@ -6,96 +7,364 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SaLink - Saling Bagi</title>
 
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Anton&display=swap" rel="stylesheet" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Anton&family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-    <link rel="stylesheet" href="{% static 'style.css' %}?v=20261027_04">
+    <link rel="stylesheet" href="{% static 'style.css' %}">
     <link rel="stylesheet" href="{% static 'navbar-footer.css' %}">
     <link rel="stylesheet" href="{% static 'saling_bagi/saling_bagi.css' %}">
 </head>
+
 <body>
+{% include "_navbar.html" with active_nav="bagi" %}
 
-    {% include "_navbar.html" with active_nav="bagi" %}
+<main class="bagi-page">
 
-    <main class="bagi">
-        <h2 class="section-title">Saling Bagi Makanan</h2>
-
-        {% if messages %}
-            <div class="messages">
-                {% for message in messages %}
-                    <div class="messages__item {{ message.tags }}">
-                        {{ message }}
-                    </div>
-                {% endfor %}
-            </div>
-        {% endif %}
-
-        <a class="bagi__add-button" href="{% url 'saling_bagi:tambah_makanan' %}">
-            + Tambah Makanan
-        </a>
-
-        <h3 class="section-title">Baru Saja Dibagikan</h3>
-
-        <div class="food-grid">
-            {% for makanan in makanan_list %}
-                <article class="food-card">
-
-                    <div class="food-card__image">
-                        {% if makanan.foto %}
-                            <img
-                                src="{{ makanan.foto.url }}"
-                                alt="{{ makanan.nama_makanan }}"
-                            >
-                        {% endif %}
-                    </div>
-
-                    <div class="food-card__info">
-                        <h4 class="food-card__name">
-                            {{ makanan.nama_makanan }}
-                        </h4>
-
-                        <p>{{ makanan.deskripsi }}</p>
-
-                        <p class="food-card__label">
-                            Porsi: {{ makanan.porsi }}
-                        </p>
-
-                        <p class="food-card__meta">
-                            Lokasi: {{ makanan.get_lokasi_pengambilan_display }}
-                        </p>
-
-                        <p class="food-card__meta">
-                            Batas konsumsi:
-                            {{ makanan.batas_layak_konsumsi|date:"d/m/Y H:i" }}
-                        </p>
-
-                        <p class="food-card__meta">
-                            Pemberi: {{ makanan.pemberi.username }}
-                        </p>
-                    </div>
-
-                    <form
-                        class="food-card__form"
-                        action="{% url 'saling_bagi:ambil_makanan' makanan.id %}"
-                        method="POST"
-                    >
-                        {% csrf_token %}
-                        <button class="food-card__button" type="submit">
-                            Ambil Makanan
-                        </button>
-                    </form>
-
-                </article>
-            {% empty %}
-                <p class="empty-text">
-                    Belum ada makanan yang dibagikan.
-                </p>
-            {% endfor %}
+    <!-- NOTIFIKASI -->
+    {% if messages %}
+    <div class="bagi-messages">
+        {% for message in messages %}
+        <div class="bagi-message {{ message.tags }}">
+            {{ message }}
         </div>
-    </main>
+        {% endfor %}
+    </div>
+    {% endif %}
 
-    {% include "_footer.html" %}
+    <!-- HERO -->
+    <section class="bagi-hero">
+
+        <div class="bagi-hero__content">
+            <span class="bagi-eyebrow">SHARE FOOD, SHARE KINDNESS</span>
+
+            <h1>Saling Bagi <span>Makanan.</span></h1>
+
+            <p>
+                Punya makanan berlebih? Jangan dibuang!
+                Bagikan kepada sesama mahasiswa UI dan bantu
+                mengurangi food waste di lingkungan kampus.
+                Temukan makanan gratis dan atur janji temu
+                untuk mengambilnya secara langsung.
+            </p>
+
+            <div class="bagi-hero-actions">
+                {% if user.is_authenticated %}
+                    <a href="{% url 'saling_bagi:tambah_makanan' %}"
+                       class="bagi-primary-button">
+                        <span class="bagi-plus">+</span>
+                        BAGIKAN MAKANAN
+                    </a>
+
+                    <a href="{% url 'saling_bagi:janji_temu' %}"
+                       class="bagi-secondary-button">
+                        🗓 JANJI TEMU SAYA
+                    </a>
+                {% else %}
+                    <a href="{% url 'saling_bagi:login' %}"
+                       class="bagi-primary-button">
+                        LOGIN UNTUK BERBAGI →
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="bagi-hero__illustration">
+            <div class="bagi-hero__circle">
+                <span>🍱</span>
+            </div>
+
+            <div class="bagi-hero__note">
+                <span>✦</span>
+                SHARE
+                <strong>THE LOVE!</strong>
+            </div>
+        </div>
+
+    </section>
+
+    <!-- KATALOG -->
+    <section class="bagi-catalog">
+
+        <div class="bagi-section-heading">
+            <div>
+                <span class="bagi-eyebrow">FOOD SHARING COMMUNITY</span>
+                <h2>Temukan Makanan</h2>
+                <p>
+                    Makanan berlebih dari mahasiswa, untuk mahasiswa.
+                </p>
+            </div>
+
+            <div class="bagi-count">
+                <strong id="bagiResultCount">{{ makanan_list|length }}</strong>
+                <span>MAKANAN<br>TERSEDIA</span>
+            </div>
+        </div>
+
+        <!-- SEARCH DAN FILTER -->
+        <div class="bagi-filter-panel">
+
+            <div class="bagi-search">
+                <span>⌕</span>
+                <input
+                    type="search"
+                    id="bagiSearch"
+                    placeholder="Cari nama makanan atau deskripsi..."
+                    aria-label="Cari makanan"
+                >
+            </div>
+
+            <div class="bagi-location-filter">
+                <label for="bagiLocation">FILTER LOKASI</label>
+                <select id="bagiLocation">
+                    <option value="">Semua Lokasi</option>
+                    <option value="Kantin Fasilkom">Kantin Fasilkom</option>
+                    <option value="Perpusat UI">Perpustakaan Pusat UI</option>
+                    <option value="Stasiun UI">Stasiun UI</option>
+                    <option value="Asrama UI">Asrama UI</option>
+                    <option value="Kantin RIK">Kantin RIK</option>
+                    <option value="Lainnya">Lainnya</option>
+                </select>
+            </div>
+
+            <div class="bagi-location-filter bagi-sort-filter">
+                <label for="bagiSort">URUTKAN</label>
+                <select id="bagiSort">
+                    <option value="newest">Terbaru</option>
+                    <option value="oldest">Terlama</option>
+                    <option value="name">Nama A - Z</option>
+                </select>
+            </div>
+
+        </div>
+
+        <!-- DAFTAR MAKANAN -->
+        <div class="bagi-food-grid" id="bagiFoodGrid">
+
+            {% for makanan in makanan_list %}
+
+            <article
+                class="bagi-food-card"
+                data-name="{{ makanan.nama_makanan|lower }}"
+                data-description="{{ makanan.deskripsi|lower }}"
+                data-location="{{ makanan.lokasi_pengambilan }}"
+                data-date="{{ makanan.id }}"
+            >
+
+                <div class="bagi-food-image">
+
+                    {% if makanan.foto %}
+                        <img
+                            src="{{ makanan.foto.url }}"
+                            alt="{{ makanan.nama_makanan }}"
+                            loading="lazy"
+                        >
+                    {% else %}
+                        <div class="bagi-food-placeholder">🍱</div>
+                    {% endif %}
+
+                    <span class="bagi-available-tag">
+                        ● TERSEDIA
+                    </span>
+                </div>
+
+                <div class="bagi-food-content">
+
+                    <div class="bagi-food-topline">
+                        <span class="bagi-food-category">
+                            FOOD SHARING
+                        </span>
+
+                        <span class="bagi-food-portion">
+                            🍴 {{ makanan.porsi }} Porsi
+                        </span>
+                    </div>
+
+                    <h3>{{ makanan.nama_makanan }}</h3>
+
+                    <p class="bagi-food-description">
+                        {{ makanan.deskripsi|truncatechars:100 }}
+                    </p>
+
+                    <div class="bagi-food-details">
+
+                        <div>
+                            <span class="bagi-detail-icon">📍</span>
+                            <span>
+                                {{ makanan.get_lokasi_pengambilan_display }}
+                            </span>
+                        </div>
+
+                        <div>
+                            <span class="bagi-detail-icon">👤</span>
+                            <span>
+                                Dibagikan oleh
+                                <strong>{{ makanan.pemberi.username }}</strong>
+                            </span>
+                        </div>
+
+                        <div>
+                            <span class="bagi-detail-icon">⏰</span>
+                            <span>
+                                Batas konsumsi:
+                                {{ makanan.batas_layak_konsumsi|date:"d M Y, H:i" }} WIB
+                            </span>
+                        </div>
+
+                    </div>
+
+                    {% if user.is_authenticated %}
+
+                        {% if makanan.pemberi_id == user.id %}
+                            <button
+                                class="bagi-take-button bagi-take-button--disabled"
+                                type="button"
+                                disabled
+                            >
+                                MAKANAN SAYA
+                            </button>
+                        {% else %}
+                            <a
+                                href="{% url 'saling_bagi:ajukan_janji' makanan.id %}"
+                                class="bagi-take-button"
+                            >
+                                AJUKAN JANJI TEMU →
+                            </a>
+                        {% endif %}
+
+                    {% else %}
+                        <a
+                            href="{% url 'saling_bagi:login' %}"
+                            class="bagi-take-button"
+                        >
+                            LOGIN UNTUK MENGAMBIL →
+                        </a>
+                    {% endif %}
+
+                </div>
+            </article>
+
+            {% empty %}
+
+            <div class="bagi-empty" id="bagiEmpty">
+                <span class="bagi-empty__icon">🍱</span>
+                <h3>Belum Ada Makanan Dibagikan</h3>
+                <p>
+                    Jadilah orang pertama yang berbagi makanan
+                    dan sebarkan kebaikan di lingkungan kampus!
+                </p>
+
+                {% if user.is_authenticated %}
+                    <a href="{% url 'saling_bagi:tambah_makanan' %}"
+                       class="bagi-primary-button">
+                        + BAGIKAN MAKANAN
+                    </a>
+                {% endif %}
+            </div>
+
+            {% endfor %}
+
+            <div class="bagi-no-result" id="bagiNoResult" hidden>
+                <span>🔎</span>
+                <h3>Makanan Tidak Ditemukan</h3>
+                <p>
+                    Coba kata kunci atau lokasi yang berbeda.
+                </p>
+            </div>
+
+        </div>
+
+    </section>
+
+    <!-- BOTTOM BANNER -->
+    <section class="bagi-bottom-banner">
+        <div>
+            <span class="bagi-eyebrow">SMALL ACTS, BIG IMPACT</span>
+            <h2>Satu Makanan, Banyak Kebaikan.</h2>
+            <p>
+                Kurangi makanan terbuang dan bangun budaya saling berbagi.
+            </p>
+        </div>
+        <span class="bagi-bottom-emoji">💛</span>
+    </section>
+
+</main>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    const searchInput = document.getElementById("bagiSearch");
+    const locationSelect = document.getElementById("bagiLocation");
+    const sortSelect = document.getElementById("bagiSort");
+    const foodGrid = document.getElementById("bagiFoodGrid");
+    const resultCount = document.getElementById("bagiResultCount");
+    const noResult = document.getElementById("bagiNoResult");
+
+    const cards = Array.from(
+        foodGrid.querySelectorAll(".bagi-food-card")
+    );
+
+    function filterFoods() {
+        const keyword = searchInput.value.toLowerCase().trim();
+        const location = locationSelect.value;
+
+        let visibleCount = 0;
+
+        cards.forEach(function (card) {
+            const name = card.dataset.name || "";
+            const description = card.dataset.description || "";
+            const cardLocation = card.dataset.location || "";
+
+            const matchesKeyword =
+                name.includes(keyword) ||
+                description.includes(keyword);
+
+            const matchesLocation =
+                location === "" || cardLocation === location;
+
+            const visible = matchesKeyword && matchesLocation;
+
+            card.hidden = !visible;
+
+            if (visible) {
+                visibleCount++;
+            }
+        });
+
+        resultCount.textContent = visibleCount;
+
+        noResult.hidden = !(cards.length > 0 && visibleCount === 0);
+    }
+
+    function sortFoods() {
+        const sortType = sortSelect.value;
+        const sortedCards = [...cards];
+
+        sortedCards.sort(function (a, b) {
+            if (sortType === "oldest") {
+                return Number(a.dataset.date) - Number(b.dataset.date);
+            }
+
+            if (sortType === "name") {
+                return a.dataset.name.localeCompare(b.dataset.name);
+            }
+
+            return Number(b.dataset.date) - Number(a.dataset.date);
+        });
+
+        sortedCards.forEach(function (card) {
+            foodGrid.insertBefore(card, noResult);
+        });
+
+        filterFoods();
+    }
+
+    searchInput.addEventListener("input", filterFoods);
+    locationSelect.addEventListener("change", filterFoods);
+    sortSelect.addEventListener("change", sortFoods);
+
+});
+</script>
 
 </body>
 </html>

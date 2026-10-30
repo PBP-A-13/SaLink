@@ -8,15 +8,24 @@ app_name = 'saling_bagi'
 
 urlpatterns = [
     path('login/', module_login, name='login'),
+
     path('', views.index, name='index'),
+
+    path('tambah/', views.tambah_makanan, name='tambah_makanan'),
+
+    path('ajukan/<int:id>/', views.ajukan_janji, name='ajukan_janji'),
+
+    path('janji-temu/', views.janji_temu, name='janji_temu'),
+
     path(
-        'tambah/',
-        views.tambah_makanan,
-        name='tambah_makanan'
+        'janji-temu/<int:id>/keputusan/',
+        views.keputusan_janji,
+        name='keputusan_janji'
     ),
+
     path(
-        '<int:id>/ambil/',
-        views.ambil_makanan,
-        name='ambil_makanan'
+        'janji-temu/<int:id>/selesai/',
+        views.selesaikan_janji,
+        name='selesaikan_janji'
     ),
 ]
