@@ -36,15 +36,19 @@ Buka **Settings → Secrets and variables → Actions**.
 
 | Nama | Isi |
 |---|---|
-| `PWS_USERNAME` | username PWS pemilik project, contoh `balqis.raihana` |
-| `PWS_PASSWORD` | password PWS, atau Git password/token dari dashboard PWS |
+| `PWS_USERNAME` | username PWS pemilik project, contoh `muhammad.hasbi52` |
+| `PWS_PASSWORD` | password PWS / Git password dari dashboard PWS |
+| `PWS_TOKEN` | alternatif: dipakai bila `PWS_PASSWORD` tidak diisi |
 
 ### Variables
 
 | Nama | Isi |
 |---|---|
-| `PWS_REPO_URL` | `https://pws.cs.ui.ac.id/<username>/<app>` |
-| `PWS_BRANCH` | opsional, default `master`. Isi `main` bila project PWS memakai branch itu |
+| `PWS_REPO_URL` | opsional. Default: `https://pws.cs.ui.ac.id/muhammad.hasbi52/salink` |
+| `PWS_BRANCH` | opsional, default `main` |
+
+Hanya satu workflow deploy yang aktif: `.github/workflows/deploy-pws.yml`.
+Workflow lama `deploy.yml` dihapus agar satu push tidak menghasilkan dua status deploy.
 
 Variable dan secret hanya perlu diisi sekali oleh admin repositori.
 
