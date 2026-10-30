@@ -233,6 +233,20 @@ svg.icon {
   padding-right: 20px;
 }
 
+.pill-search input[type="date"] {
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+  border: none;
+  background: transparent;
+  outline: none;
+  font-family: var(--font);
+  font-size: 0.95rem;
+  letter-spacing: 0.02em;
+  color: var(--salink-dark);
+  cursor: pointer;
+}
+
 .pill-search::after {
   content: "▼";
   font-size: 0.65rem;
@@ -240,6 +254,10 @@ svg.icon {
   position: absolute;
   right: 14px;
   pointer-events: none;
+}
+
+.pill-search--date::after {
+  content: none;
 }
 
 .pill-search .clear-btn {
@@ -405,6 +423,14 @@ svg.icon {
   color: var(--salink-dark);
 }
 
+.ride-card__badge--matched {
+  color: #1B5E20;
+}
+
+.ride-card__badge--different {
+  color: #8A5A00;
+}
+
 .badge-check-circle {
   display: inline-flex;
   align-items: center;
@@ -416,6 +442,11 @@ svg.icon {
   color: var(--salink-accent);
   font-size: 0.8rem;
   font-weight: bold;
+}
+
+.ride-card__badge--matched .badge-check-circle {
+  background: #2E7D32;
+  color: var(--salink-white);
 }
 
 .ride-card__actions {
@@ -801,5 +832,8 @@ svg.icon {
       "route route"
       "badge badge"
       "actions actions";
+  }
+  .search-field {
+    width: min(100%, 300px);
   }
 }

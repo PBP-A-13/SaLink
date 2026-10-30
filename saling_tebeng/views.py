@@ -54,8 +54,26 @@ def evaluate_matched(schedule, origin, destination, requested_time):
     if not time_matched and not destination_matched and not origin_matched:
         reasons.append('Not Matched')
 
+    if not origin_matched and not destination_matched:
+        match_rank = 2
+        match_label = 'Beda Asal & Tujuan'
+    elif not origin_matched:
+        match_rank = 1
+        match_label = 'Beda Asal'
+    elif not destination_matched:
+        match_rank = 1
+        match_label = 'Beda Tujuan'
+    elif not time_matched:
+        match_rank = 1
+        match_label = 'Beda Jam'
+    else:
+        match_rank = 0
+        match_label = 'Searah'
+
     return {
         'matched': origin_matched and destination_matched and time_matched,
+        'match_rank': match_rank,
+        'match_label': match_label,
         'origin_matched': origin_matched,
         'destination_matched': destination_matched,
         'time_matched': time_matched,
@@ -131,7 +149,11 @@ def nebeng_list(request):
     Menampilkan tebengan yang tersedia beserta rute, kapasitas, harga, & status SEARAH.
     Dapat diakses oleh publik tanpa harus login.
     """
-    form = RideSearchForm(request.GET or None)
+    today = timezone.localdate()
+    form = RideSearchForm(
+        request.GET or None,
+        initial={'tanggal': today},
+    )
     results = []
 
     asal = request.GET.get('asal', '').strip()
@@ -141,6 +163,9 @@ def nebeng_list(request):
 
     req_time = parse_time(jam_str) if jam_str else None
     searched = bool(asal or tujuan or jam_str)
+    selected_date = parse_date(tanggal_str) if tanggal_str else today
+    if selected_date is None:
+        selected_date = today
 
     qs = (
         RideSchedule.objects.filter(
@@ -154,18 +179,7 @@ def nebeng_list(request):
     if request.user.is_authenticated:
         qs = qs.exclude(ride_offer__driver=request.user)
 
-    if tanggal_str:
-        req_date = parse_date(tanggal_str)
-        if req_date:
-            qs = qs.filter(date=req_date)
-    else:
-        qs = qs.filter(date__gte=timezone.localdate())
-
-    if searched:
-        if asal:
-            qs = qs.filter(origin__icontains=asal)
-        if tujuan:
-            qs = qs.filter(destination__icontains=tujuan)
+    qs = qs.filter(date=selected_date).order_by('departure_time', 'pk')
 
     booked_ids = set()
     if request.user.is_authenticated:
@@ -185,6 +199,8 @@ def nebeng_list(request):
                 'destination_matched': True,
                 'time_matched': True,
                 'time_difference': 0,
+                'match_rank': 0,
+                'match_label': '',
                 'reasons': [],
             }
         info.update({
@@ -195,8 +211,12 @@ def nebeng_list(request):
         })
         results.append(info)
 
-    # Matched tebengan diutamakan
-    results.sort(key=lambda r: (not r['matched'], len(r.get('reasons', [])), r.get('time_difference', 0)))
+    if searched:
+        results.sort(key=lambda r: (
+            r['match_rank'],
+            r['time_difference'],
+            r['schedule'].departure_time,
+        ))
 
     return render(request, 'saling_tebeng/saling_tebeng.html', {
         'form': form,
@@ -207,6 +227,7 @@ def nebeng_list(request):
         'selected_asal': asal,
         'selected_tujuan': tujuan,
         'selected_jam': jam_str,
+        'selected_date': selected_date,
     })
 
 

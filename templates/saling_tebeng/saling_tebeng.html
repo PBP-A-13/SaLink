@@ -75,10 +75,23 @@
       {% endif %}
     </div>
   </div>
+
+  <div class="search-field">
+    <label class="search-field__label" for="select-tanggal">Tanggal</label>
+    <div class="pill-search pill-search--date">
+      <input
+        type="date"
+        name="tanggal"
+        id="select-tanggal"
+        value="{{ selected_date|date:'Y-m-d' }}"
+        onchange="document.getElementById('search-form').submit();"
+      >
+    </div>
+  </div>
 </form>
 
 {% if results %}
-  <section class="rides-list" aria-label="Daftar tebengan yang tersedia">
+  <section class="rides-list" aria-label="Daftar nebeng yang tersedia">
     {% for r in results %}
     {% with s=r.schedule %}
     <article class="ride-card">
@@ -112,11 +125,12 @@
         </svg>
       </div>
 
-      {# Status Searah di Kanan Atas #}
-      <div class="ride-card__badge">
-        <span>SEARAH</span>
-        <span class="badge-check-circle">✔</span>
+      {% if searched %}
+      <div class="ride-card__badge ride-card__badge--{% if r.match_rank == 0 %}matched{% else %}different{% endif %}">
+        <span>{{ r.match_label|upper }}</span>
+        {% if r.match_rank == 0 %}<span class="badge-check-circle">✔</span>{% endif %}
       </div>
+      {% endif %}
 
       {# Tombol Aksi di Kanan Bawah #}
       <div class="ride-card__actions">
@@ -127,10 +141,10 @@
             <form method="post" action="{% url 'saling_tebeng:join_ride' s.id %}" style="display:inline; margin:0;">
               {% csrf_token %}
               <input type="hidden" name="seats" value="1">
-              <button type="submit" class="btn-white-pill">Gabung Tebengan</button>
+              <button type="submit" class="btn-white-pill">Gabung Nebeng</button>
             </form>
           {% else %}
-            <a href="{% url 'user_page:login' %}?next={{ request.get_full_path|urlencode }}" class="btn-white-pill">Gabung Tebengan</a>
+            <a href="{% url 'user_page:login' %}?next={{ request.get_full_path|urlencode }}" class="btn-white-pill">Gabung Nebeng</a>
           {% endif %}
         {% endif %}
         {% if user.is_authenticated %}
@@ -145,8 +159,8 @@
   </section>
 {% else %}
   <div class="empty-state">
-    <strong>Belum ada tawaran tebengan</strong>
-    <p>Coba pilih lokasi asal, tujuan, atau jam yang berbeda, atau tawarkan tebenganmu sendiri!</p>
+    <strong>Belum ada tawaran nebeng pada tanggal ini</strong>
+    <p>Coba pilih tanggal lain, atau tawarkan tebenganmu sendiri!</p>
     {% if user.is_authenticated %}
       <a href="{% url 'saling_tebeng:tawarkan_tebengan' %}" class="btn-white-pill" style="border: 2px solid var(--salink-dark); margin-top: 10px;">Tawarkan Tebengan</a>
     {% else %}
