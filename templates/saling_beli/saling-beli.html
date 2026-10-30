@@ -114,6 +114,30 @@
       {% endfor %}
     </section>
 
+        {% if saved_items %}
+    <section class="saved-items-section" style="max-width: 1040px; margin: var(--space-5) auto 0; padding-top: var(--space-4); border-top: var(--border-thick);">
+      <h3 style="font-size: 1.25rem; text-transform: uppercase; margin-bottom: var(--space-3); display: flex; align-items: center; gap: 8px; color: var(--salink-dark);">
+        <span>⭐ Barang Tersimpan</span>
+        <span style="font-size: 0.75rem; font-weight: normal; font-family: var(--font-body); text-transform: none; opacity: 0.8; background: var(--salink-light); padding: 2px 8px; border-radius: 999px; border: 1px solid var(--salink-dark);">(Tersimpan di Cookie Browser)</span>
+      </h3>
+      <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: var(--space-3);">
+        {% for s_item in saved_items %}
+        <a href="{% url 'saling_beli:item_detail' s_item.id %}" style="text-decoration: none; color: inherit; border: var(--border-thick); border-radius: var(--radius-card); padding: 10px; display: flex; gap: 10px; align-items: center; background: var(--salink-white); box-shadow: 3px 3px 0px var(--salink-dark); transition: transform 0.12s ease, box-shadow 0.12s ease;">
+          {% if s_item.display_image %}
+            <img src="{{ s_item.display_image }}" alt="{{ s_item.title }}" style="width: 52px; height: 52px; object-fit: cover; border-radius: 8px; border: 1.5px solid var(--salink-dark);">
+          {% else %}
+            <div style="width: 52px; height: 52px; background: var(--salink-light); display: flex; align-items: center; justify-content: center; font-size: 0.65rem; border-radius: 8px; border: 1.5px solid var(--salink-dark);">No Pic</div>
+          {% endif %}
+          <div style="overflow: hidden;">
+            <p style="font-weight: 600; font-size: 0.9rem; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-transform: uppercase;">{{ s_item.title }}</p>
+            <p style="font-size: 0.85rem; margin: 2px 0 0; color: var(--salink-primary); font-weight: bold;">{% if s_item.is_free %}Gratis{% else %}Rp{{ s_item.price|floatformat:"0g" }}{% endif %}</p>
+          </div>
+        </a>
+        {% endfor %}
+      </div>
+    </section>
+    {% endif %}
+
     {% if recently_viewed_items %}
     <section class="recently-viewed" style="max-width: 1040px; margin: var(--space-5) auto 0; padding-top: var(--space-4); border-top: var(--border-thick);">
       <h3 style="font-size: 1.25rem; text-transform: uppercase; margin-bottom: var(--space-3); display: flex; align-items: center; gap: 8px; color: var(--salink-dark);">

@@ -547,13 +547,33 @@
           saved = [];
         }
       }
-      if (!saved.includes(itemId)) {
+      const statusEl = document.getElementById('cookie-status');
+      const btn = document.getElementById('btn-save-cookie');
+      const index = saved.indexOf(itemId);
+      if (index === -1) {
         saved.push(itemId);
+        if (statusEl) statusEl.innerHTML = '⭐ Barang berhasil disimpan! Lihat di katalog <a href="/saling-beli/" style="text-decoration: underline; font-weight: bold; color: var(--salink-primary);">Saling Beli</a> pada bagian <b>Barang Tersimpan</b>.';
+        if (btn) btn.innerHTML = '⭐ Tersimpan';
+      } else {
+        saved.splice(index, 1);
+        if (statusEl) statusEl.innerHTML = 'Barang dihapus dari daftar tersimpan browser.';
+        if (btn) btn.innerHTML = '☆ Simpan';
       }
       document.cookie = "salink_saved_items=" + encodeURIComponent(JSON.stringify(saved)) + "; path=/; max-age=604800";
-      const statusEl = document.getElementById('cookie-status');
-      statusEl.textContent = 'Barang berhasil disimpan di riwayat favorit browser Anda (Cookie)!';
     }
+
+    document.addEventListener('DOMContentLoaded', function() {
+      const cookie = document.cookie.split('; ').find(row => row.startsWith('salink_saved_items='));
+      if (cookie) {
+        try {
+          const saved = JSON.parse(decodeURIComponent(cookie.split('=')[1]));
+          if (saved.includes('{{ item.id }}')) {
+            const btn = document.getElementById('btn-save-cookie');
+            if (btn) btn.innerHTML = '⭐ Tersimpan';
+          }
+        } catch (e) {}
+      }
+    });
 
     function uploadItemPicture(e) {
       e.preventDefault();
