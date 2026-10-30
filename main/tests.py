@@ -1,8 +1,12 @@
+from datetime import timedelta
+
 from django.core.cache import cache
 from django.test import TestCase
 from django.urls import reverse
+from django.utils import timezone
 
 from django.contrib.auth.models import User
+from saling_bagi.models import Makanan
 from saling_beli.models import ItemListing
 
 
@@ -46,5 +50,21 @@ class HomePageTests(TestCase):
             '/saling-nebeng/nebeng/',
             fetch_redirect_response=False,
         )
+
+    def test_home_hides_expired_food(self):
+        giver = User.objects.create_user(username='pemberi', password='test-password')
+        Makanan.objects.create(
+            nama_makanan='Makanan Kedaluwarsa QA',
+            deskripsi='Sudah lewat batas',
+            porsi=1,
+            pemberi=giver,
+            batas_layak_konsumsi=timezone.now() - timedelta(hours=1),
+            is_available=True,
+        )
+
+        response = self.client.get(reverse('main:show_main'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, 'Makanan Kedaluwarsa QA')
 
 # Create your tests here.

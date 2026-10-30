@@ -5,6 +5,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django.db import transaction
 from django.db.models import Min, Q
 from django.utils import timezone
 from django.utils.http import url_has_allowed_host_and_scheme
@@ -380,45 +381,52 @@ def update_request_status(request, request_id, new_status):
     """
     Aksi persetujuan (Approve/Reject/Return) oleh pemilik barang.
     """
-    borrow_req = get_object_or_404(
-        BorrowRequest.objects.select_related('item'), id=request_id, item__owner=request.user
-    )
-    item = borrow_req.item
-
-    if new_status not in ALLOWED_TRANSITIONS.get(borrow_req.status, []):
-        messages.error(request, 'Status tidak valid.')
-        return redirect('saling_pinjam:my_borrows')
-
-    if new_status == BorrowRequest.Status.APPROVED and conflicting_bookings(
-        item, borrow_req.start_date, borrow_req.end_date, exclude_id=borrow_req.id
-    ).exists():
-        messages.error(request, 'Tidak bisa disetujui: tanggalnya bentrok dengan pinjaman lain yang sudah disetujui.')
-        return redirect('saling_pinjam:my_borrows')
-
-    borrow_req.status = new_status
-    borrow_req.save()
-
-    auto_rejected = 0
-    if new_status == BorrowRequest.Status.APPROVED:
-        # Pengajuan lain di tanggal yang bentrok otomatis ditolak, supaya slot peminjamnya kosong lagi
-        auto_rejected = (
-            BorrowRequest.objects
-            .filter(
-                item=item,
-                status=BorrowRequest.Status.PENDING,
-                start_date__lte=borrow_req.end_date,
-                end_date__gte=borrow_req.start_date,
-            )
-            .exclude(id=borrow_req.id)
-            .update(status=BorrowRequest.Status.REJECTED, updated_at=timezone.now())
+    with transaction.atomic():
+        borrow_req = get_object_or_404(
+            BorrowRequest.objects.select_for_update().select_related('item'),
+            id=request_id,
+            item__owner=request.user,
         )
-    elif new_status == BorrowRequest.Status.ONGOING:
-        # Status barang baru berubah saat benar-benar diambil, bukan saat disetujui
-        item.status = BorrowItem.Status.BORROWED
-        item.save()
-    elif new_status == BorrowRequest.Status.RETURNED:
-        item.status = BorrowItem.Status.AVAILABLE
-        item.save()
+        item = borrow_req.item
+
+        if new_status not in ALLOWED_TRANSITIONS.get(borrow_req.status, []):
+            messages.error(request, 'Status tidak valid.')
+            return redirect('saling_pinjam:my_borrows')
+
+        if new_status == BorrowRequest.Status.APPROVED and conflicting_bookings(
+            item, borrow_req.start_date, borrow_req.end_date, exclude_id=borrow_req.id
+        ).exists():
+            messages.error(request, 'Tidak bisa disetujui: tanggalnya bentrok dengan pinjaman lain yang sudah disetujui.')
+            return redirect('saling_pinjam:my_borrows')
+
+        if new_status == BorrowRequest.Status.APPROVED and item.status == BorrowItem.Status.UNAVAILABLE:
+            messages.error(request, 'Barang sedang dinonaktifkan pemilik sehingga tidak bisa disetujui.')
+            return redirect('saling_pinjam:my_borrows')
+
+        borrow_req.status = new_status
+        borrow_req.save()
+
+        auto_rejected = 0
+        if new_status == BorrowRequest.Status.APPROVED:
+            # Pengajuan lain di tanggal yang bentrok otomatis ditolak, supaya slot peminjamnya kosong lagi
+            auto_rejected = (
+                BorrowRequest.objects
+                .filter(
+                    item=item,
+                    status=BorrowRequest.Status.PENDING,
+                    start_date__lte=borrow_req.end_date,
+                    end_date__gte=borrow_req.start_date,
+                )
+                .exclude(id=borrow_req.id)
+                .update(status=BorrowRequest.Status.REJECTED, updated_at=timezone.now())
+            )
+        elif new_status == BorrowRequest.Status.ONGOING:
+            # Status barang baru berubah saat benar-benar diambil, bukan saat disetujui
+            item.status = BorrowItem.Status.BORROWED
+            item.save()
+        elif new_status == BorrowRequest.Status.RETURNED:
+            item.status = BorrowItem.Status.AVAILABLE
+            item.save()
 
     message = f'Status pengajuan diperbarui menjadi "{borrow_req.get_status_display()}".'
     if auto_rejected:

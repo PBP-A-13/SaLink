@@ -1,5 +1,7 @@
 from django.core.cache import cache
 from django.shortcuts import render
+from django.utils import timezone
+
 from saling_beli.models import ItemListing
 from saling_bagi.models import Makanan
 from saling_pinjam.models import BorrowItem
@@ -13,7 +15,12 @@ def show_main(request):
     if public_data is None:
         public_data = {
             'featured_beli': list(ItemListing.objects.filter(status=ItemListing.Status.AVAILABLE).order_by('-created_at')[:4]),
-            'latest_bagi': list(Makanan.objects.filter(is_available=True)[:3]),
+            'latest_bagi': list(
+                Makanan.objects.filter(
+                    is_available=True,
+                    batas_layak_konsumsi__gt=timezone.now(),
+                )[:3]
+            ),
             'borrow_items': list(BorrowItem.objects.filter(status='AVAILABLE')[:3]),
             'count_beli': ItemListing.objects.filter(status=ItemListing.Status.AVAILABLE).count(),
             'count_bagi': Makanan.objects.count(),
@@ -21,6 +28,7 @@ def show_main(request):
             'count_tebeng': RideSchedule.objects.filter(
                 is_active=True,
                 ride_offer__is_active=True,
+                date__gte=timezone.localdate(),
             ).count(),
         }
         cache.set(HOME, public_data, timeout=60)

@@ -638,3 +638,35 @@ class PageRenderTests(TestCase):
 		self.assertEqual(response.status_code, 200)
 		self.assertContains(response, 'Masuk untuk Chat')
 		self.assertNotContains(response, 'id="chat-form"')
+
+
+class ListingPriceValidationTests(TestCase):
+	def setUp(self):
+		self.user = User.objects.create_user(username='penjual-harga', password='test-password')
+		self.client.force_login(self.user)
+
+	def test_negative_price_is_rejected_by_api(self):
+		response = self.client.post(
+			reverse('saling_beli:listing-create'),
+			data=json.dumps({'title': 'Harga Minus', 'description': 'QA', 'price': -1000}),
+			content_type='application/json',
+		)
+
+		self.assertEqual(response.status_code, 400)
+		self.assertIn('price', response.json().get('errors', {}))
+		self.assertFalse(ItemListing.objects.filter(title='Harga Minus').exists())
+
+	def test_free_listing_forces_zero_price_by_api(self):
+		response = self.client.post(
+			reverse('saling_beli:listing-create'),
+			data=json.dumps({
+				'title': 'Hibah QA',
+				'description': 'QA',
+				'is_free': True,
+				'price': 50000,
+			}),
+			content_type='application/json',
+		)
+
+		self.assertEqual(response.status_code, 201)
+		self.assertEqual(ItemListing.objects.get(title='Hibah QA').price, 0)

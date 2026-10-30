@@ -186,6 +186,8 @@ def _create_booking(user, schedule_id, ride_date, seats=1):
         )
         if not schedule.is_active or not schedule.ride_offer.is_active:
             return None, 'Tebengan ini sudah tidak aktif.'
+        if ride_date < timezone.localdate():
+            return None, 'Tanggal nebeng sudah lewat.'
         if ride_date < schedule.date or ride_date.weekday() != schedule.date.weekday():
             return None, 'Jadwal ini tidak tersedia pada tanggal tersebut.'
         if schedule.ride_offer.driver_id == user.id:
@@ -560,7 +562,11 @@ def cancel_schedule(request, schedule_id):
 @require_POST
 def join_ride(request, schedule_id):
     schedule = get_object_or_404(RideSchedule, pk=schedule_id)
-    seats = int(request.POST.get('seats', 1) or 1)
+    form = SeatsForm(request.POST)
+    if not form.is_valid():
+        messages.error(request, 'Jumlah kursi tidak valid.')
+        return redirect('saling_tebeng:nebeng_list')
+    seats = form.cleaned_data['seats']
     ride_date = parse_date(request.POST.get('ride_date', ''))
     if not ride_date:
         messages.error(request, 'Tanggal nebeng tidak valid.')

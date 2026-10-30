@@ -1,5 +1,7 @@
 import uuid
+
 from django.contrib.auth.models import User
+from django.core.exceptions import ValidationError
 from django.db import models
 
 
@@ -44,6 +46,14 @@ class ItemListing(models.Model):
 
     class Meta:
         ordering = ['-created_at']
+
+    def clean(self):
+        """Validasi konsistensi harga: barang gratis selalu Rp0, harga tidak boleh negatif."""
+        super().clean()
+        if self.is_free:
+            self.price = 0
+        elif self.price is not None and self.price < 0:
+            raise ValidationError({'price': 'Harga barang tidak boleh negatif.'})
 
     @property
     def display_image(self):
