@@ -1,0 +1,59 @@
+{% extends "saling_tebeng/base_tebeng.html" %}
+
+{% block title %}Pesan Nebeng | SaLink{% endblock %}
+
+{% block sidebar %}
+  <div class="side-group">
+    <a class="side-item" href="{% url 'saling_tebeng:nebeng_list' %}">
+      <svg class="icon" aria-hidden="true"><use href="#i-home"/></svg>
+      <span>Cari Nebeng</span>
+    </a>
+    <a class="side-item is-active" href="{% url 'saling_tebeng:ride_messages' %}" aria-current="page">
+      <svg class="icon" aria-hidden="true"><use href="#i-chat"/></svg>
+      <span>Pesan</span>
+    </a>
+  </div>
+  <a class="side-cta" href="{% url 'saling_tebeng:tawarkan_tebengan' %}">Tawarkan Tebengan</a>
+{% endblock %}
+
+{% block page_content %}
+<h1 class="offer-title">Pesan Nebeng</h1>
+{% if conversations %}
+  <section class="ride-message-list" aria-label="Daftar percakapan nebeng">
+    {% for conversation in conversations %}
+      {% url 'saling_tebeng:ride_chat' conversation.ride_schedule_id as chat_url %}
+      {% if conversation.passenger_id == user.id %}
+        <a class="ride-message-card" href="{{ chat_url }}?tanggal={{ conversation.ride_schedule.date|date:'Y-m-d' }}">
+      {% else %}
+        <a class="ride-message-card" href="{{ chat_url }}?peer={{ conversation.passenger_id }}&tanggal={{ conversation.ride_schedule.date|date:'Y-m-d' }}">
+      {% endif %}
+        <div class="ride-message-card__heading">
+          <strong>
+            {% if conversation.passenger_id == user.id %}
+              @{{ conversation.ride_schedule.ride_offer.driver.username }}
+            {% else %}
+              @{{ conversation.passenger.username }}
+            {% endif %}
+          </strong>
+          <span>{{ conversation.updated_at|date:"d M Y H:i" }}</span>
+        </div>
+        <span>{{ conversation.ride_schedule.origin }} → {{ conversation.ride_schedule.destination }}</span>
+        <span>{{ conversation.ride_schedule.departure_time|time:"H.i" }}</span>
+        {% with last_message=conversation.messages.last %}
+          {% if last_message %}
+            <p>{{ last_message.sender.username }}: {{ last_message.message|truncatechars:100 }}</p>
+          {% else %}
+            <p>Belum ada pesan.</p>
+          {% endif %}
+        {% endwith %}
+      </a>
+    {% endfor %}
+  </section>
+{% else %}
+  <div class="empty-state">
+    <strong>Belum ada percakapan</strong>
+    <p>Buka tawaran nebeng dan tekan Chat untuk mulai bertukar pesan.</p>
+    <a class="btn-white-pill" href="{% url 'saling_tebeng:nebeng_list' %}">Cari Nebeng</a>
+  </div>
+{% endif %}
+{% endblock %}

@@ -1,15 +1,28 @@
-from datetime import date as date_cls, datetime, timedelta
+import json
+from datetime import timedelta
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.db.models import Q, Sum
+from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.utils import timezone
 from django.utils.dateparse import parse_date, parse_time
-from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_http_methods, require_POST
 
+from .models import (
+    RideBooking,
+    RideChatMessage,
+    RideConversation,
+    RideOffer,
+    RideRequest,
+    RideSchedule,
+    Vehicle,
+)
+from saling_beli.models import UserNotification
 from .forms import (
     DAY_NAMES,
     LOCATIONS,
@@ -20,7 +33,6 @@ from .forms import (
     RideSearchForm,
     SeatsForm,
 )
-from .models import RideBooking, RideOffer, RideRequest, RideSchedule, Vehicle
 
 KURUN_WAKTU = 30
 HARI_NAMES = [
@@ -38,7 +50,14 @@ def _minutes(t):
     return t.hour * 60 + t.minute
 
 
-def evaluate_matched(schedule, origin, destination, requested_time):
+def evaluate_matched(
+    schedule,
+    origin,
+    destination,
+    requested_time,
+    requested_date=None,
+    occurrence_date=None,
+):
     origin_matched = True
     if origin:
         origin_matched = schedule.origin.strip().lower() == origin.strip().lower()
@@ -53,7 +72,18 @@ def evaluate_matched(schedule, origin, destination, requested_time):
         time_difference = _minutes(schedule.departure_time) - _minutes(requested_time)
         time_matched = 0 <= time_difference <= KURUN_WAKTU
 
+    day_matched = (
+        requested_date is None
+        or occurrence_date is None
+        or requested_date == occurrence_date
+    )
+    date_difference = (
+        abs((occurrence_date - requested_date).days)
+        if requested_date and occurrence_date else 0
+    )
     reasons = []
+    if not day_matched:
+        reasons.append('Hari Berbeda')
     if not origin_matched:
         reasons.append('Asal Berbeda')
     if not destination_matched:
@@ -63,26 +93,55 @@ def evaluate_matched(schedule, origin, destination, requested_time):
     if not time_matched and not destination_matched and not origin_matched:
         reasons.append('Not Matched')
 
+    match_rank = sum((
+        not day_matched,
+        not origin_matched,
+        not destination_matched,
+        not time_matched,
+    ))
     if not origin_matched and not destination_matched:
-        match_rank = 2
         match_label = 'Beda Asal & Tujuan'
     elif not origin_matched:
-        match_rank = 1
         match_label = 'Beda Asal'
     elif not destination_matched:
-        match_rank = 1
         match_label = 'Beda Tujuan'
-    elif not time_matched:
-        match_rank = 1
+    elif origin and destination and not time_matched:
         match_label = 'Beda Jam'
-    else:
-        match_rank = 0
+    elif origin and destination:
         match_label = 'Searah'
+    else:
+        match_label = ''
+
+    if not day_matched:
+        match_priority = 4
+    elif requested_time and origin and origin_matched and time_matched:
+        match_priority = 0
+    elif requested_time and destination and destination_matched and time_matched:
+        match_priority = 1
+    elif (
+        requested_time
+        and origin
+        and destination
+        and origin_matched
+        and destination_matched
+    ):
+        match_priority = 2
+    elif origin and destination and origin_matched and destination_matched:
+        match_priority = 0
+    elif origin and origin_matched:
+        match_priority = 0
+    elif destination and destination_matched:
+        match_priority = 1
+    else:
+        match_priority = 3
 
     return {
-        'matched': origin_matched and destination_matched and time_matched,
+        'matched': match_rank == 0,
         'match_rank': match_rank,
+        'match_priority': match_priority,
         'match_label': match_label,
+        'date_difference': date_difference,
+        'day_matched': day_matched,
         'origin_matched': origin_matched,
         'destination_matched': destination_matched,
         'time_matched': time_matched,
@@ -147,6 +206,27 @@ def _create_booking(user, schedule_id, ride_date, seats=1):
             seats=seats,
             status='confirmed',
         )
+        RideConversation.objects.get_or_create(
+            ride_schedule=schedule,
+            passenger=user,
+        )
+        driver_chat_url = reverse(
+            'saling_tebeng:ride_chat',
+            args=[schedule.pk],
+        )
+        UserNotification.objects.create(
+            user=schedule.ride_offer.driver,
+            title='Penumpang bergabung',
+            message=(
+                f'@{user.username} bergabung ke tebenganmu '
+                f'pada {ride_date:%d %b %Y}.'
+            ),
+            notification_type=UserNotification.NotifType.OFFER,
+            link=(
+                f'{driver_chat_url}?peer={user.pk}'
+                f'&tanggal={ride_date.isoformat()}'
+            ),
+        )
 
         RideRequest.objects.filter(
             passenger=user,
@@ -181,39 +261,68 @@ def nebeng_list(request):
     tanggal_str = request.GET.get('tanggal', '').strip()
 
     req_time = parse_time(jam_str) if jam_str else None
-    searched = bool(asal or tujuan or jam_str)
+    searched = bool(asal or tujuan or jam_str or tanggal_str)
     selected_date = parse_date(tanggal_str) if tanggal_str else today
     if selected_date is None:
         selected_date = today
 
     qs = (
-        RideSchedule.objects.filter(
-            date__lte=selected_date,
-            date__week_day=selected_date.isoweekday() % 7 + 1,
-        )
+        RideSchedule.objects.all()
         .select_related('ride_offer__driver', 'ride_offer__vehicle')
-        .order_by('-date', '-departure_time', '-pk')
+        .order_by('date', 'departure_time', 'pk')
     )
 
-    if request.user.is_authenticated:
-        qs = qs.exclude(ride_offer__driver=request.user)
-
-    latest_schedules = {}
+    schedule_slots = {}
     for schedule in qs:
-        slot = (schedule.ride_offer.driver_id, schedule.departure_time)
-        latest_schedules.setdefault(slot, schedule)
-    schedules = [
-        schedule for schedule in latest_schedules.values()
-        if schedule.is_active and schedule.ride_offer.is_active
-    ]
-    schedules.sort(key=lambda schedule: (schedule.departure_time, schedule.pk))
+        slot = (
+            schedule.ride_offer.driver_id,
+            schedule.departure_time,
+            schedule.date.weekday(),
+        )
+        schedule_slots.setdefault(slot, []).append(schedule)
+
+    occurrences = []
+    for slot_schedules in schedule_slots.values():
+        past_schedules = [
+            schedule for schedule in slot_schedules
+            if schedule.date <= selected_date
+        ]
+        if past_schedules:
+            schedule = max(past_schedules, key=lambda item: item.date)
+            if not schedule.is_active or not schedule.ride_offer.is_active:
+                continue
+        else:
+            future_schedules = [
+                schedule for schedule in slot_schedules
+                if schedule.is_active and schedule.ride_offer.is_active
+            ]
+            if not future_schedules:
+                continue
+            schedule = min(future_schedules, key=lambda item: item.date)
+
+        if schedule.date >= selected_date:
+            occurrence_date = schedule.date
+        else:
+            days_until_schedule = (
+                schedule.date.weekday() - selected_date.weekday()
+            ) % 7
+            occurrence_date = selected_date + timedelta(days=days_until_schedule)
+        occurrences.append((schedule, occurrence_date))
+    occurrences.sort(key=lambda item: (
+        item[1],
+        item[0].departure_time,
+        item[0].pk,
+    ))
 
     available_by_schedule = {
-        row['ride_schedule_id']: row['booked_seats'] or 0
+        (row['ride_schedule_id'], row['ride_date']): row['booked_seats'] or 0
         for row in RideBooking.objects.filter(
-            ride_schedule__in=schedules,
-            ride_date=selected_date,
-        ).exclude(status='cancelled').values('ride_schedule_id').annotate(
+            ride_schedule__in=[schedule for schedule, _ in occurrences],
+            ride_date__in=[occurrence_date for _, occurrence_date in occurrences],
+        ).exclude(status='cancelled').values(
+            'ride_schedule_id',
+            'ride_date',
+        ).annotate(
             booked_seats=Sum('seats'),
         )
     }
@@ -223,29 +332,45 @@ def nebeng_list(request):
         booked_ids = set(
             RideBooking.objects.filter(
                 passenger=request.user,
-                ride_date=selected_date,
+                ride_schedule__in=[
+                    schedule for schedule, _ in occurrences
+                ],
+                ride_date__in=[
+                    occurrence_date for _, occurrence_date in occurrences
+                ],
             )
             .exclude(status='cancelled')
-            .values_list('ride_schedule_id', flat=True)
+            .values_list('ride_schedule_id', 'ride_date')
         )
 
-    for s in schedules:
+    for s, occurrence_date in occurrences:
         s.available_seats = max(
             0,
-            s.total_seats - available_by_schedule.get(s.id, 0),
+            s.total_seats - available_by_schedule.get(
+                (s.id, occurrence_date),
+                0,
+            ),
         )
-        if s.available_seats == 0:
-            continue
         if searched:
-            info = evaluate_matched(s, asal, tujuan, req_time)
+            info = evaluate_matched(
+                s,
+                asal,
+                tujuan,
+                req_time,
+                selected_date,
+                occurrence_date,
+            )
         else:
             info = {
                 'matched': True,
                 'origin_matched': True,
                 'destination_matched': True,
                 'time_matched': True,
+                'day_matched': True,
                 'time_difference': 0,
+                'date_difference': 0,
                 'match_rank': 0,
+                'match_priority': 0,
                 'match_label': '',
                 'reasons': [],
             }
@@ -253,15 +378,20 @@ def nebeng_list(request):
             'schedule': s,
             'driver': s.ride_offer.driver,
             'vehicle': s.ride_offer.vehicle,
-            'already_booked': s.id in booked_ids,
-            'weekday': HARI_NAMES[selected_date.weekday()],
+            'already_booked': (s.id, occurrence_date) in booked_ids,
+            'weekday': HARI_NAMES[occurrence_date.weekday()],
+            'occurrence_date': occurrence_date,
         })
         results.append(info)
 
     if searched:
         results.sort(key=lambda r: (
-            r['match_rank'],
+            not r['day_matched'],
+            r['match_priority'],
+            r['date_difference'],
             r['time_difference'],
+            r['schedule'].origin.casefold(),
+            r['schedule'].destination.casefold(),
             r['schedule'].departure_time,
         ))
 
@@ -436,7 +566,7 @@ def join_ride(request, schedule_id):
         messages.error(request, 'Tanggal nebeng tidak valid.')
         return redirect('saling_tebeng:nebeng_list')
 
-    booking, err = _create_booking(request.user, schedule.id, ride_date, seats)
+    _, err = _create_booking(request.user, schedule.id, ride_date, seats)
     if err:
         messages.error(request, err)
         return redirect('saling_tebeng:nebeng_list')
@@ -451,16 +581,158 @@ def ride_chat(request, schedule_id):
         pk=schedule_id,
     )
     ride_date = parse_date(request.GET.get('tanggal', '')) or schedule.date
-    available_seats = _available_seats(schedule, ride_date)
+    conversations = schedule.conversations.select_related('passenger').all()
+    peer_id = request.GET.get('peer')
+    if schedule.ride_offer.driver_id == request.user.id:
+        conversation = None
+        if peer_id:
+            conversation = get_object_or_404(
+                conversations,
+                passenger_id=peer_id,
+            )
+        elif conversations:
+            conversation = conversations.first()
+    else:
+        conversation, _ = RideConversation.objects.get_or_create(
+            ride_schedule=schedule,
+            passenger=request.user,
+        )
+
     return render(request, 'saling_tebeng/ride_chat.html', {
         'schedule': schedule,
         'driver': schedule.ride_offer.driver,
         'ride_date': ride_date,
         'weekday': HARI_NAMES[ride_date.weekday()],
-        'available_seats': available_seats,
-        'asal': request.GET.get('asal', ''),
-        'tujuan': request.GET.get('tujuan', ''),
-        'jam': request.GET.get('jam', ''),
+        'available_seats': _available_seats(schedule, ride_date),
+        'conversation': conversation,
+        'conversations': conversations,
+        'peer': conversation.passenger if conversation else None,
+    })
+
+
+def _get_ride_conversation(schedule, user, peer_id=None):
+    if schedule.ride_offer.driver_id == user.id:
+        if not peer_id:
+            return None
+        return RideConversation.objects.filter(
+            ride_schedule=schedule,
+            passenger_id=peer_id,
+        ).first()
+    if peer_id and str(user.id) != str(peer_id):
+        return None
+    conversation, _ = RideConversation.objects.get_or_create(
+        ride_schedule=schedule,
+        passenger=user,
+    )
+    return conversation
+
+
+@login_required
+@require_http_methods(['GET', 'POST'])
+def ride_chat_messages(request, schedule_id):
+    schedule = get_object_or_404(
+        RideSchedule.objects.select_related('ride_offer__driver'),
+        pk=schedule_id,
+    )
+    peer_id = request.GET.get('peer') or request.POST.get('peer')
+    conversation = _get_ride_conversation(schedule, request.user, peer_id)
+    if conversation is None:
+        return JsonResponse(
+            {'error': 'Percakapan tidak ditemukan atau kamu tidak memiliki akses.'},
+            status=404,
+        )
+
+    if request.method == 'POST':
+        message = request.POST.get('message', '')
+        if request.content_type == 'application/json':
+            try:
+                body = json.loads(request.body)
+            except (json.JSONDecodeError, UnicodeDecodeError):
+                return JsonResponse({'error': 'Format pesan tidak valid.'}, status=400)
+            if not isinstance(body, dict):
+                return JsonResponse({'error': 'Format pesan tidak valid.'}, status=400)
+            message = body.get('message', '')
+        if not isinstance(message, str):
+            return JsonResponse({'error': 'Pesan harus berupa teks.'}, status=400)
+        message = message.strip()
+        if not message:
+            return JsonResponse({'error': 'Pesan tidak boleh kosong.'}, status=400)
+        if len(message) > 2000:
+            return JsonResponse({'error': 'Pesan maksimal 2.000 karakter.'}, status=400)
+
+        recipient = (
+            conversation.passenger
+            if request.user.id == schedule.ride_offer.driver_id
+            else schedule.ride_offer.driver
+        )
+        chat_url = reverse(
+            'saling_tebeng:ride_chat',
+            args=[schedule.pk],
+        )
+        if recipient.id == schedule.ride_offer.driver_id:
+            chat_url = (
+                f'{chat_url}?peer={conversation.passenger_id}'
+                f'&tanggal={schedule.date.isoformat()}'
+            )
+        else:
+            chat_url = f'{chat_url}?tanggal={schedule.date.isoformat()}'
+        with transaction.atomic():
+            chat = RideChatMessage.objects.create(
+                conversation=conversation,
+                sender=request.user,
+                message=message,
+            )
+            RideConversation.objects.filter(pk=conversation.pk).update(
+                updated_at=timezone.now(),
+            )
+            UserNotification.objects.create(
+                user=recipient,
+                title=f'Pesan nebeng dari @{request.user.username}',
+                message=message[:200],
+                notification_type=UserNotification.NotifType.CHAT,
+                link=chat_url,
+            )
+        return JsonResponse({
+            'success': True,
+            'chat': {
+                'id': chat.pk,
+                'sender': request.user.username,
+                'is_me': True,
+                'message': chat.message,
+                'created_at': timezone.localtime(chat.created_at).strftime('%H:%M, %d %b'),
+            },
+        })
+
+    chats = conversation.messages.select_related('sender').all()
+    conversation.messages.filter(
+        is_read=False,
+    ).exclude(sender=request.user).update(is_read=True)
+    return JsonResponse({
+        'success': True,
+        'chats': [
+            {
+                'id': chat.pk,
+                'sender': chat.sender.username,
+                'is_me': chat.sender_id == request.user.id,
+                'message': chat.message,
+                'created_at': timezone.localtime(chat.created_at).strftime('%H:%M, %d %b'),
+            }
+            for chat in chats
+        ],
+    })
+
+
+@login_required
+def ride_messages(request):
+    conversations = RideConversation.objects.filter(
+        Q(passenger=request.user)
+        | Q(ride_schedule__ride_offer__driver=request.user)
+    ).select_related(
+        'passenger',
+        'ride_schedule__ride_offer__driver',
+    ).prefetch_related('messages').order_by('-updated_at')
+    return render(request, 'saling_tebeng/ride_messages.html', {
+        'conversations': conversations,
     })
 
 
@@ -475,7 +747,7 @@ def join_from_chat(request, schedule_id):
     if not ride_date:
         messages.error(request, 'Tanggal nebeng tidak valid.')
         return redirect('saling_tebeng:ride_chat', schedule_id=schedule_id)
-    booking, err = _create_booking(
+    _, err = _create_booking(
         request.user,
         schedule_id,
         ride_date,

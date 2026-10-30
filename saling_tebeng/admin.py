@@ -1,5 +1,13 @@
 from django.contrib import admin
-from .models import Vehicle, RideOffer, RideBooking, RideRequest, RideSchedule
+from .models import (
+    RideBooking,
+    RideChatMessage,
+    RideConversation,
+    RideOffer,
+    RideRequest,
+    RideSchedule,
+    Vehicle,
+)
 
 @admin.register(Vehicle)
 class VehicleAdmin(admin.ModelAdmin):
@@ -16,6 +24,14 @@ class RideScheduleAdmin(admin.ModelAdmin):
 @admin.register(RideBooking)
 class RideBookingAdmin(admin.ModelAdmin):
     list_display = ('ride_schedule', 'ride_date', 'passenger', 'seats', 'status', 'booked_at')
+
+@admin.register(RideConversation)
+class RideConversationAdmin(admin.ModelAdmin):
+    list_display = ('ride_schedule', 'passenger', 'updated_at')
+
+@admin.register(RideChatMessage)
+class RideChatMessageAdmin(admin.ModelAdmin):
+    list_display = ('conversation', 'sender', 'created_at', 'is_read')
 
 @admin.register(RideRequest)
 class RideRequestAdmin(admin.ModelAdmin):

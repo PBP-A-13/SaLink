@@ -173,3 +173,52 @@ class RideBooking(models.Model):
             f"{self.passenger.username} - "
             f"{self.ride_schedule}"
         )
+
+
+class RideConversation(models.Model):
+    ride_schedule = models.ForeignKey(
+        RideSchedule,
+        on_delete=models.CASCADE,
+        related_name='conversations',
+    )
+    passenger = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='ride_conversations',
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-updated_at']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['ride_schedule', 'passenger'],
+                name='uniq_ride_conversation_schedule_passenger',
+            ),
+        ]
+
+    def __str__(self):
+        return f"Chat {self.ride_schedule} - @{self.passenger.username}"
+
+
+class RideChatMessage(models.Model):
+    conversation = models.ForeignKey(
+        RideConversation,
+        on_delete=models.CASCADE,
+        related_name='messages',
+    )
+    sender = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='sent_ride_messages',
+    )
+    message = models.TextField(max_length=2000)
+    created_at = models.DateTimeField(auto_now_add=True)
+    is_read = models.BooleanField(default=False)
+
+    class Meta:
+        ordering = ['created_at']
+
+    def __str__(self):
+        return f"Ride message from @{self.sender.username}"

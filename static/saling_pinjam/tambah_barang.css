@@ -1,0 +1,280 @@
+/* ==========================================================
+   SaLink - Form Pinjamkan Barang
+   Dipanggil setelah saling_pinjam.css, jadi variabel warna
+   (--salink-*) dan font Anton diambil dari sana.
+   ========================================================== */
+
+.upload {
+    max-width: 1000px;
+    font-family: var(--font);
+    margin: 0 auto;
+    padding: 28px 20px 56px;
+}
+
+.upload__back {
+    display: inline-block;
+    font-size: 15px;
+    color: var(--salink-primary);
+    transition: color 0.15s ease;
+}
+
+.upload__back:hover {
+    color: var(--salink-dark);
+}
+
+.upload__title {
+    margin: 10px 0 4px;
+    font-size: clamp(30px, 4vw, 42px);
+    font-weight: 400;
+    letter-spacing: 0.02em;
+}
+
+.upload__lead {
+    margin: 0 0 22px;
+    font-size: 15px;
+    color: var(--salink-muted);
+}
+
+/* ---------- KARTU FORM ---------- */
+.upload-form {
+    display: grid;
+    grid-template-columns: 300px minmax(0, 1fr);
+    gap: 28px;
+    padding: 28px;
+    background: var(--salink-cream);
+    border: 2px solid rgba(77, 42, 0, 0.1);
+    border-radius: 24px;
+}
+
+.upload-form__alert,
+.upload-form__actions {
+    grid-column: 1 / -1;
+}
+
+.upload-form__alert {
+    padding: 12px 16px;
+    font-size: 14px;
+    color: #9B2C1F;
+    background: #FBE3DC;
+    border-radius: 12px;
+}
+
+.upload-form__alert p {
+    margin: 0;
+}
+
+.upload-form__fields {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.field-row {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+}
+
+/* ---------- FIELD ---------- */
+.field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.field__label {
+    font-size: 16px;
+    letter-spacing: 0.02em;
+    color: var(--salink-dark);
+}
+
+.field input[type="text"],
+.field input[type="date"],
+.field textarea {
+    width: 100%;
+    padding: 12px 14px;
+    font-family: var(--font);
+    font-size: 16px;
+    letter-spacing: 0.02em;
+    color: var(--salink-dark);
+    background: var(--salink-white);
+    border: 2px solid rgba(77, 42, 0, 0.18);
+    border-radius: 12px;
+    outline: none;
+    color-scheme: light;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.field textarea {
+    min-height: 120px;
+    resize: vertical;
+}
+
+.field input::placeholder,
+.field textarea::placeholder {
+    color: rgba(77, 42, 0, 0.4);
+}
+
+.field input:hover,
+.field textarea:hover {
+    border-color: rgba(77, 42, 0, 0.35);
+}
+
+.field input:focus,
+.field textarea:focus {
+    border-color: var(--salink-primary);
+    box-shadow: 0 0 0 3px rgba(242, 169, 0, 0.35);
+}
+
+.field--error input[type="text"],
+.field--error input[type="date"],
+.field--error textarea,
+.field--error .photo-drop {
+    border-color: #C0392B;
+}
+
+.field__error {
+    margin: 0;
+    font-size: 13px;
+    color: #9B2C1F;
+}
+
+/* ---------- FOTO ---------- */
+.photo-drop {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    min-height: 280px;
+    padding: 20px;
+    text-align: center;
+    background: var(--salink-light);
+    border: 2px dashed rgba(77, 42, 0, 0.3);
+    border-radius: 18px;
+    transition: border-color 0.15s ease;
+}
+
+.photo-drop:hover,
+.photo-drop:has(input:focus-visible) {
+    border-color: var(--salink-primary);
+}
+
+.photo-drop svg {
+    width: 56px;
+    height: 56px;
+    fill: none;
+    stroke: var(--salink-dark);
+    stroke-width: 1.6;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    opacity: 0.35;
+}
+
+.photo-drop__hint {
+    font-size: 13px;
+    color: var(--salink-muted);
+}
+
+.photo-drop input[type="file"] {
+    max-width: 100%;
+    font-family: var(--font);
+    letter-spacing: 0.02em;
+    font-size: 13px;
+    color: var(--salink-dark);
+}
+
+.photo-drop input[type="file"]::file-selector-button {
+    margin-right: 10px;
+    padding: 8px 16px;
+    font-family: var(--font);
+    font-size: 14px;
+    letter-spacing: 0.02em;
+    color: var(--salink-cream);
+    background: var(--salink-dark);
+    border: none;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+}
+
+.photo-drop input[type="file"]::file-selector-button:hover {
+    background: var(--salink-primary);
+}
+
+/* ---------- TOMBOL ---------- */
+.upload-form__actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    padding-top: 20px;
+    border-top: 2px dashed rgba(77, 42, 0, 0.15);
+}
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 12px 26px;
+    font-family: var(--font);
+    font-size: 18px;
+    letter-spacing: 0.02em;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: transform 0.12s ease, box-shadow 0.12s ease, background-color 0.15s ease;
+}
+
+/* sama seperti tombol lain di SaLink: timbul, lalu turun waktu ditekan */
+.btn--primary {
+    color: var(--salink-dark);
+    background: var(--salink-accent);
+    border: none;
+    box-shadow: 0 5px 0 var(--salink-dark);
+}
+
+.btn--primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 7px 0 var(--salink-dark);
+}
+
+.btn--primary:active {
+    transform: translateY(3px);
+    box-shadow: 0 2px 0 var(--salink-dark);
+}
+
+.btn--ghost {
+    color: var(--salink-dark);
+    background: transparent;
+    border: 2px solid rgba(77, 42, 0, 0.25);
+}
+
+.btn--ghost:hover {
+    background: rgba(77, 42, 0, 0.06);
+}
+
+/* ---------- RESPONSIVE ---------- */
+@media (max-width: 760px) {
+    .upload-form {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 22px;
+        padding: 20px;
+    }
+
+    .photo-drop {
+        min-height: 200px;
+    }
+
+    .upload-form__actions {
+        flex-direction: column-reverse;
+    }
+
+    .btn {
+        width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    .field-row {
+        grid-template-columns: 1fr;
+    }
+}

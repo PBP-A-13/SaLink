@@ -11,6 +11,9 @@ urlpatterns = [
     path('create/', views.item_create, name='item_create'),
     path('my-borrows/', views.my_borrows, name='my_borrows'),
     path('<uuid:id>/', views.item_detail, name='item_detail'),
+    path('<uuid:id>/edit/', views.item_edit, name='item_edit'),
+    path('<uuid:id>/delete/', views.item_delete, name='item_delete'),
     path('<uuid:id>/request/', views.request_borrow, name='request_borrow'),
-    path('request/<uuid:request_id>/status/<str:new_status>/', views.update_request_status, name='update_status'),
+    path('request/<uuid:request_id>/cancel/', views.cancel_request, name='cancel_request'),
+    path('request/<uuid:request_id>/<str:new_status>/', views.update_request_status, name='update_request_status'),
 ]
