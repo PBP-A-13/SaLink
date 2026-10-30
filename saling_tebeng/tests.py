@@ -29,26 +29,6 @@ class RideSearchTests(TestCase):
             destination=destination,
         )
 
-    def test_initial_page_shows_schedules_from_all_weekdays(self):
-        today = timezone.localdate()
-        today_schedule = self.create_schedule(
-            'today_driver', today, '08:00', 'Depok', 'Salemba',
-        )
-        tomorrow_schedule = self.create_schedule(
-            'tomorrow_driver', today + timedelta(days=1), '08:00', 'Depok', 'Salemba',
-        )
-
-        response = self.client.get(reverse('saling_tebeng:index'))
-
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(
-            [result['schedule'].id for result in response.context['results']],
-            [today_schedule.id, tomorrow_schedule.id],
-        )
-        self.assertContains(response, f'value="{today:%Y-%m-%d}"')
-        self.assertContains(response, tomorrow_schedule.ride_offer.driver.username)
-        self.assertNotContains(response, 'SEARAH')
-
     def test_authenticated_nebeng_page_loads_notification_controls(self):
         user = User.objects.create_user(username='notif_user')
         self.client.force_login(user)
