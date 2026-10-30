@@ -96,6 +96,12 @@ menggunakan data seed yang sudah dianonimkan.
 
 ![Janji Temu](salingbagi-janjitemu.jpeg)
 
+### Demo Fitur Saling Bagi
+
+<video width="100%" controls>
+  <source src="salingbagi.mp4" type="video/mp4">
+</video>
+
 ---
 
 ## Panduan capture
