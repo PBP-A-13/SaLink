@@ -1,17 +1,25 @@
+import secrets
+import logging
+
+logger = logging.getLogger(__name__)
+
 from django.contrib import messages
 from django.contrib.auth import login, logout
 from django.contrib.auth.views import LoginView
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
-from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_POST, require_GET
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils.http import url_has_allowed_host_and_scheme
 from urllib.parse import urlencode
+from django.db import IntegrityError, transaction
 
 from saling_tebeng.models import RideBooking
+from django_cas_ng.utils import get_cas_client
 
 from .forms import ProfileForm, SaLinkAuthenticationForm, SignUpForm
+from .models import SSOIdentity
 
 
 def module_login(request):
@@ -129,9 +137,16 @@ def profile(request):
             'tone': 'beige',
         }
     ]
+
+    sso_identity = SSOIdentity.objects.filter(
+        user=user,
+        provider='ui',
+    ).first()
+
     return render(request, 'user_page/profile.html', {
         'form': form,
         'stats': stats,
+        'sso_linked': sso_identity is not None,
     })
 
 
@@ -144,3 +159,232 @@ def delete_account(request):
     user.delete()
     messages.success(request, f'Akun @{username} telah berhasil dihapus. Username sekarang tersedia kembali untuk digunakan.')
     return redirect('user_page:login')
+
+
+def _start_sso_flow(request, mode, next_url=None):
+    """
+    Memulai proses autentikasi UI SSO.
+    State disimpan di session untuk menghubungkan callback
+    dengan proses login atau linking yang dimulai pengguna.
+    """
+    state = secrets.token_urlsafe(32)
+
+    flows = request.session.get('ui_sso_flows', {})
+    flows[state] = {
+        'mode': mode,
+        'user_id': str(request.user.pk) if mode == 'link' else None,
+        'next': next_url or reverse('user_page:profile'),
+    }
+
+    # Batasi jumlah flow yang tersimpan dalam session.
+    while len(flows) > 5:
+        flows.pop(next(iter(flows)))
+
+    request.session['ui_sso_flows'] = flows
+
+    callback_url = request.build_absolute_uri(
+        reverse('user_page:sso_callback')
+    )
+    service_url = f'{callback_url}?{urlencode({"state": state})}'
+
+    client = get_cas_client(
+        service_url=service_url,
+        request=request,
+    )
+
+    return redirect(client.get_login_url())
+
+
+@require_GET
+def sso_login(request):
+    """
+    Memulai login UI SSO untuk pengguna yang sudah
+    menghubungkan identitas SSO dengan akun SaLink.
+    """
+    if request.user.is_authenticated:
+        return redirect('user_page:profile')
+
+    next_url = request.GET.get('next') or reverse('user_page:profile')
+
+    if not url_has_allowed_host_and_scheme(
+        next_url,
+        allowed_hosts={request.get_host()},
+        require_https=request.is_secure(),
+    ):
+        next_url = reverse('user_page:profile')
+
+    return _start_sso_flow(request, 'login', next_url)
+
+
+@login_required
+@require_GET
+def sso_link(request):
+    """
+    Memulai proses linking UI SSO dengan akun SaLink
+    yang sedang login.
+    """
+    return _start_sso_flow(request, 'link')
+
+
+@require_GET
+def sso_callback(request):
+    """
+    Memvalidasi CAS ticket dan menyelesaikan proses
+    login atau linking akun SaLink.
+    """
+    ticket = request.GET.get('ticket')
+    state = request.GET.get('state')
+
+    flows = request.session.get('ui_sso_flows', {})
+    flow = flows.pop(state, None) if state else None
+
+    request.session['ui_sso_flows'] = flows
+
+    if not ticket or not flow:
+        messages.error(
+            request,
+            'Proses UI SSO tidak valid atau sudah kedaluwarsa. Silakan coba lagi.',
+        )
+        return redirect('user_page:login')
+
+    callback_url = request.build_absolute_uri(
+        reverse('user_page:sso_callback')
+    )
+    service_url = f'{callback_url}?{urlencode({"state": state})}'
+
+    try:
+        client = get_cas_client(
+            service_url=service_url,
+            request=request,
+        )
+
+        username, attributes, pgtiou = client.verify_ticket(ticket)
+
+        if not username:
+            raise ValueError('CAS tidak mengembalikan username.')
+
+    except Exception:
+        logger.exception('UI SSO ticket verification failed')
+        messages.error(
+            request,
+            'Verifikasi UI SSO gagal. Silakan coba beberapa saat lagi.',
+        )
+        return redirect('user_page:login')
+
+    subject = str(username).strip()
+
+    if not subject:
+        messages.error(request, 'Identitas UI SSO tidak valid.')
+        return redirect('user_page:login')
+
+    # PROSES LINKING
+    if flow['mode'] == 'link':
+        if (
+            not request.user.is_authenticated
+            or str(request.user.pk) != flow['user_id']
+        ):
+            messages.error(
+                request,
+                'Sesi akun SaLink berubah. Silakan login kembali sebelum menghubungkan UI SSO.',
+            )
+            return redirect('user_page:login')
+
+        user = request.user
+
+        existing_identity = SSOIdentity.objects.filter(
+            provider='ui',
+            subject=subject,
+        ).first()
+
+        if existing_identity and existing_identity.user_id != user.pk:
+            messages.error(
+                request,
+                'Identitas UI SSO tersebut sudah terhubung ke akun SaLink lain.',
+            )
+            return redirect('user_page:profile')
+
+        user_identity = SSOIdentity.objects.filter(
+            user=user,
+        ).first()
+
+        if user_identity and user_identity.subject != subject:
+            messages.error(
+                request,
+                'Akun SaLink ini sudah terhubung dengan identitas UI SSO lain.',
+            )
+            return redirect('user_page:profile')
+
+        if user_identity:
+            messages.info(
+                request,
+                'Identitas UI SSO sudah terhubung dengan akun ini.',
+            )
+            return redirect('user_page:profile')
+
+        try:
+            with transaction.atomic():
+                SSOIdentity.objects.create(
+                    user=user,
+                    provider='ui',
+                    subject=subject,
+                )
+        except IntegrityError:
+            messages.error(
+                request,
+                'Identitas UI SSO gagal dihubungkan karena sudah digunakan.',
+            )
+            return redirect('user_page:profile')
+
+        messages.success(
+            request,
+            'Akun UI SSO berhasil dihubungkan dengan akun SaLink!',
+        )
+        return redirect('user_page:profile')
+
+    # PROSES LOGIN
+    if flow['mode'] == 'login':
+        identity = SSOIdentity.objects.select_related('user').filter(
+            provider='ui',
+            subject=subject,
+        ).first()
+
+        if not identity:
+            messages.warning(
+                request,
+                'Identitas UI SSO belum terhubung. Silakan login menggunakan akun SaLink terlebih dahulu untuk menghubungkannya.',
+            )
+            return redirect('user_page:login')
+
+        user = identity.user
+
+        if not user.is_active:
+            messages.error(
+                request,
+                'Akun SaLink ini tidak aktif.',
+            )
+            return redirect('user_page:login')
+
+        login(
+            request,
+            user,
+            backend='django.contrib.auth.backends.ModelBackend',
+        )
+
+        next_url = flow.get('next') or reverse('user_page:profile')
+
+        if not url_has_allowed_host_and_scheme(
+            next_url,
+            allowed_hosts={request.get_host()},
+            require_https=request.is_secure(),
+        ):
+            next_url = reverse('user_page:profile')
+
+        messages.success(
+            request,
+            'Berhasil login menggunakan UI SSO. Selamat datang kembali!',
+        )
+        return redirect(next_url)
+
+    messages.error(request, 'Jenis autentikasi UI SSO tidak dikenali.')
+    return redirect('user_page:login')
+
