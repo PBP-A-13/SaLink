@@ -1,0 +1,118 @@
+name: Deploy to PWS
+
+# Deploy hanya berjalan setelah workflow "SaLink CI" selesai sukses di branch main.
+# Bisa juga dijalankan manual dari tab Actions (workflow_dispatch).
+on:
+  workflow_run:
+    workflows: ["SaLink CI"]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "Git ref yang akan di-deploy (branch/tag/SHA)"
+        required: true
+        default: "main"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pws-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Push main ke PWS
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.head_branch == 'main')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    env:
+      PWS_REPO_URL: ${{ vars.PWS_REPO_URL || 'https://pws.cs.ui.ac.id/muhammad.hasbi52/salink' }}
+      PWS_USERNAME: ${{ secrets.PWS_USERNAME }}
+      PWS_PASSWORD: ${{ secrets.PWS_PASSWORD || secrets.PWS_TOKEN }}
+      PWS_BRANCH: ${{ vars.PWS_BRANCH || 'main' }}
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.ref || github.event.workflow_run.head_sha }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Validate configuration
+        run: |
+          set -euo pipefail
+          missing=0
+
+          if [ -z "${PWS_REPO_URL}" ]; then
+            echo "::error::Repository variable PWS_REPO_URL belum diisi."
+            missing=1
+          fi
+          if [ -z "${PWS_USERNAME}" ]; then
+            echo "::error::Secret PWS_USERNAME belum diisi."
+            missing=1
+          fi
+          if [ -z "${PWS_PASSWORD}" ]; then
+            echo "::error::Secret PWS_PASSWORD atau PWS_TOKEN belum diisi."
+            missing=1
+          fi
+
+          if [ "${missing}" -ne 0 ]; then
+            exit 1
+          fi
+
+          case "${PWS_REPO_URL}" in
+            https://*)
+              ;;
+            *)
+              echo "::error::PWS_REPO_URL harus diawali https://"
+              exit 1
+              ;;
+          esac
+
+          echo "Target : ${PWS_REPO_URL}"
+          echo "Branch : ${PWS_BRANCH}"
+          echo "Commit : $(git rev-parse --short HEAD)"
+
+      - name: Push to PWS
+        run: |
+          set -euo pipefail
+
+          # Kredensial tidak ditulis ke URL atau ke file repo, hanya dibaca
+          # oleh GIT_ASKPASS dari environment yang disediakan GitHub Secrets.
+          askpass="${RUNNER_TEMP}/pws-askpass.sh"
+          cat > "${askpass}" <<'EOF'
+          #!/bin/sh
+          case "$1" in
+            *Username*) printf '%s\n' "${PWS_USERNAME}" ;;
+            *Password*) printf '%s\n' "${PWS_PASSWORD}" ;;
+            *) printf '\n' ;;
+          esac
+          EOF
+          chmod +x "${askpass}"
+
+          git remote add pws "${PWS_REPO_URL}"
+
+          echo "Mendorong $(git rev-parse --short HEAD) ke ${PWS_BRANCH}..."
+          if timeout 180 env GIT_ASKPASS="${askpass}" GIT_TERMINAL_PROMPT=0 \
+              git -c credential.helper= push pws "HEAD:${PWS_BRANCH}"; then
+            echo "Push fast-forward berhasil."
+          else
+            echo "::warning::Push biasa ditolak; mencoba force push ke branch deploy."
+            timeout 180 env GIT_ASKPASS="${askpass}" GIT_TERMINAL_PROMPT=0 \
+              git -c credential.helper= push --force pws "HEAD:${PWS_BRANCH}"
+          fi
+
+          {
+            echo "### Deploy PWS berhasil"
+            echo ""
+            echo "- Commit: \`$(git rev-parse --short HEAD)\`"
+            echo "- Target: ${PWS_REPO_URL}"
+            echo "- Branch: ${PWS_BRANCH}"
+          } >> "${GITHUB_STEP_SUMMARY}"
