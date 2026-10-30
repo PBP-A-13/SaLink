@@ -789,3 +789,13 @@ a {
   background: #fca5a5 !important;
   color: #7f1d1d !important;
 }
+
+
+/* Sticky Navbar for Saling Beli */
+.navbar {
+  position: -webkit-sticky !important;
+  position: sticky !important;
+  top: 16px !important;
+  z-index: 1000 !important;
+  box-shadow: 0 8px 24px rgba(77, 42, 0, 0.25) !important;
+}

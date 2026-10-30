@@ -47,8 +47,10 @@
   border-radius: var(--radius-card);
   color: var(--salink-white);
   box-sizing: border-box;
-  position: relative;
-  z-index: 50;
+  position: sticky;
+  top: 16px;
+  z-index: 1000;
+  box-shadow: 0 8px 24px rgba(77, 42, 0, 0.25);
 }
 
 .navbar__logo {
