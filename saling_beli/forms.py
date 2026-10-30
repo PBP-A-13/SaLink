@@ -15,7 +15,6 @@ class ItemListingForm(forms.ModelForm):
         ('OVO', 'OVO'),
         ('ShopeePay', 'ShopeePay'),
         ('DANA', 'DANA'),
-        ('Test', Test)
     ]
 
     payout_method = forms.ChoiceField(
