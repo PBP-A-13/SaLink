@@ -126,3 +126,4 @@ Keputusan yang harus dipelihara manusia meliputi batas modul, kebijakan autentik
 - Deployment: <https://muhammad-hasbi52-salink.pws.cs.ui.ac.id/>
 - Design: <https://www.figma.com/design/mLX7a6qFC62AiaaPumui8N/SaLink>
 - OpenStreetMap Overpass API: <https://wiki.openstreetmap.org/wiki/Overpass_API>
+.
