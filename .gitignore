@@ -4,7 +4,8 @@ __pycache__/
 db.sqlite3
 .vscode/
 *.log
-media/
+/media/
+!docs/media/
 .cache/
 staticfiles/
 .env

@@ -77,6 +77,8 @@ a {
   position: relative;
   background: var(--salink-primary);
   overflow: hidden;
+  margin-top: -71px;
+  padding-top: 71px;
 }
 
 .hero {
@@ -424,6 +426,13 @@ a {
   .footer-container {
     grid-template-columns: 1fr;
     gap: 28px;
+  }
+}
+
+@media (max-width: 720px) {
+  .hero-wrapper {
+    margin-top: -115px;
+    padding-top: 115px;
   }
 }
 

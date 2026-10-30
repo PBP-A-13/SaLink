@@ -1,5 +1,6 @@
 import datetime
 import json
+from urllib.parse import unquote
 import time
 
 from django.contrib import messages
@@ -252,6 +253,18 @@ def index(request):
 		id_map = {str(item.id): item for item in ItemListing.objects.filter(id__in=recently_viewed_ids)}
 		recently_viewed_items = [id_map[i_id] for i_id in recently_viewed_ids if i_id in id_map]
 
+	# Ambil data barang yang disimpan pengguna dari Cookie browser
+	saved_cookie = request.COOKIES.get('salink_saved_items', None)
+	saved_items = []
+	if saved_cookie:
+		try:
+			saved_ids = json.loads(unquote(saved_cookie))
+			if isinstance(saved_ids, list) and saved_ids:
+				saved_id_map = {str(item.id): item for item in ItemListing.objects.filter(id__in=saved_ids)}
+				saved_items = [saved_id_map[i_id] for i_id in saved_ids if i_id in saved_id_map]
+		except Exception:
+			saved_items = []
+
 	context = {
 		'items': items,
 		'query': query,
@@ -265,6 +278,7 @@ def index(request):
 		'last_visit_cookie': last_visit_cookie,
 		'last_login_cookie': last_login_cookie,
 		'recently_viewed_items': recently_viewed_items,
+		'saved_items': saved_items,
 	}
 
 	response = render(request, 'saling_beli/saling-beli.html', context)
