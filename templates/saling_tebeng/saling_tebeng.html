@@ -133,9 +133,9 @@
       </div>
 
       {% if searched %}
-      <div class="ride-card__badge ride-card__badge--{% if r.match_rank == 0 %}matched{% else %}different{% endif %}">
+      <div class="ride-card__badge ride-card__badge--{% if r.day_matched %}day-match{% else %}day-different{% endif %}">
         <span>{{ r.match_label|upper }}</span>
-        {% if r.match_rank == 0 %}<span class="badge-check-circle" aria-hidden="true">✔</span>{% endif %}
+        {% if r.match_label == 'Searah' %}<span class="badge-check-circle" aria-hidden="true">✔</span>{% endif %}
       </div>
       {% endif %}
 

@@ -431,12 +431,12 @@ svg.icon {
   border-radius: 999px;
 }
 
-.ride-card__badge--matched {
-  background: #c9d99b;
-  color: var(--salink-dark);
+.ride-card__badge--day-match {
+  background: var(--salink-dark);
+  color: var(--salink-cream);
 }
 
-.ride-card__badge--different {
+.ride-card__badge--day-different {
   background: var(--salink-light);
   color: var(--salink-dark);
 }
@@ -454,9 +454,9 @@ svg.icon {
   font-weight: bold;
 }
 
-.ride-card__badge--matched .badge-check-circle {
-  background: var(--salink-dark);
-  color: #c9d99b;
+.ride-card__badge--day-match .badge-check-circle {
+  background: var(--salink-cream);
+  color: var(--salink-dark);
 }
 
 .ride-card__actions {
@@ -528,21 +528,6 @@ svg.icon {
   border-radius: 20px;
   background: var(--salink-cream);
   box-shadow: var(--shadow-flat-lg);
-  font-family: var(--font-body);
-}
-
-.ride-chat .offer-title {
-  font-family: inherit;
-  letter-spacing: normal;
-}
-
-.ride-chat .btn-white-pill {
-  font-family: inherit;
-  letter-spacing: normal;
-}
-
-.ride-message-list {
-  font-family: var(--font-body);
 }
 
 .ride-notification-empty {
@@ -557,7 +542,6 @@ svg.icon {
   padding: 8px;
   border-radius: 8px;
   color: var(--salink-dark);
-  font-family: var(--font-body);
   text-decoration: none;
 }
 
@@ -588,7 +572,6 @@ svg.icon {
   background: var(--salink-cream);
   box-shadow: var(--shadow-flat);
   color: var(--salink-dark);
-  font-family: var(--font-body);
   text-decoration: none;
 }
 
@@ -681,6 +664,8 @@ svg.icon {
 
 .ride-chat__bubble p {
   margin: 0;
+  font-family: var(--font-body);
+  font-size: 0.875rem;
   white-space: pre-wrap;
 }
 

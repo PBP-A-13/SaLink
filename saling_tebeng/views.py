@@ -99,7 +99,16 @@ def evaluate_matched(
         not destination_matched,
         not time_matched,
     ))
-    match_label = 'Searah' if match_rank == 0 else 'Tidak Searah'
+    if not origin_matched and not destination_matched:
+        match_label = 'Beda Asal & Tujuan'
+    elif not origin_matched:
+        match_label = 'Beda Asal'
+    elif not destination_matched:
+        match_label = 'Beda Tujuan'
+    elif origin and destination:
+        match_label = 'Searah'
+    else:
+        match_label = ''
 
     return {
         'matched': match_rank == 0,

@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}SaLink - Pinjam {{ item.name }}{% endblock %}
+
+{% block extra_head %}
+    <link rel="stylesheet" href="{% static 'saling_pinjam/saling_pinjam.css' %}">
+    <link rel="stylesheet" href="{% static 'saling_pinjam/tambah_barang.css' %}">
+    <link rel="stylesheet" href="{% static 'saling_pinjam/item_detail.css' %}">
+{% endblock %}
+
+{% block navbar %}
+    {% include "_navbar.html" with active_nav="pinjam" %}
+{% endblock %}
+
+{% block content %}
+<main class="detail detail--narrow">
+    <a href="{% url 'saling_pinjam:item_detail' item.id %}" class="upload__back">&larr; Kembali ke detail barang</a>
+
+    <h1 class="detail__name">Ajukan Pinjaman</h1>
+
+    <div class="borrow-summary">
+        <div class="borrow-summary__photo">
+            {% if item.image_url %}<img src="{{ item.image_url }}" alt="Foto {{ item.name }}">{% endif %}
+        </div>
+        <div>
+            <p class="borrow-summary__name">{{ item.name }}</p>
+            <p class="borrow-summary__meta">{{ item.pickup_location }} &middot; maksimal {{ item.max_duration_days }} hari</p>
+        </div>
+    </div>
+
+    <section class="borrow-panel">
+        {% include "saling_pinjam/_borrow_form.html" %}
+    </section>
+</main>
+{% endblock %}

@@ -103,15 +103,33 @@ class RideSearchTests(TestCase):
             [result['match_label'] for result in results],
             [
                 'Searah',
-                'Tidak Searah',
-                'Tidak Searah',
-                'Tidak Searah',
-                'Tidak Searah',
+                'Beda Asal',
+                'Beda Tujuan',
+                'Searah',
+                'Beda Asal & Tujuan',
             ],
         )
-        self.assertContains(response, 'ride-card__badge--matched')
-        self.assertContains(response, 'ride-card__badge--different')
-        self.assertContains(response, 'TIDAK SEARAH')
+        self.assertEqual(
+            [result['day_matched'] for result in results],
+            [True, True, True, False, True],
+        )
+        self.assertContains(response, 'ride-card__badge--day-match')
+        self.assertContains(response, 'ride-card__badge--day-different')
+        self.assertContains(response, 'BEDA ASAL')
+        self.assertContains(response, 'BEDA TUJUAN')
+
+    def test_date_only_search_does_not_label_offers_as_searah(self):
+        today = timezone.localdate()
+        self.create_schedule(
+            'date_only_driver', today, '08:00', 'Depok', 'Salemba',
+        )
+
+        response = self.client.get(reverse('saling_tebeng:index'), {
+            'tanggal': today.isoformat(),
+        })
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context['results'][0]['match_label'], '')
 
     def test_schedule_repeats_on_its_weekday_for_a_later_date(self):
         selected_date = timezone.localdate() + timedelta(days=10)

@@ -1,0 +1,336 @@
+/* ==========================================================
+   SaLink - Detail Barang & Ajukan Pinjaman
+   Dipanggil setelah saling_pinjam.css dan tambah_barang.css.
+   Isian form, tombol (.btn) dan link kembali diambil dari
+   tambah_barang.css, jadi di sini cuma bagian khusus detail.
+   ========================================================== */
+
+.detail {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 28px 20px 56px;
+    font-family: var(--font);
+}
+
+.detail--narrow {
+    max-width: 640px;
+}
+
+.detail__grid {
+    display: grid;
+    grid-template-columns: 360px minmax(0, 1fr);
+    gap: 32px;
+    margin-top: 18px;
+}
+
+/* ---------- PESAN (berhasil / gagal) ---------- */
+.notices {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 14px;
+}
+
+.notice {
+    margin: 0;
+    padding: 12px 16px;
+    font-size: 15px;
+    letter-spacing: 0.02em;
+    color: var(--salink-dark);
+    background: var(--salink-cream);
+    border-radius: 12px;
+}
+
+.notice--success {
+    color: #2F5A12;
+    background: #E4F0D4;
+}
+
+.notice--warning {
+    background: #FCE7B2;
+}
+
+.notice--error {
+    color: #9B2C1F;
+    background: #FBE3DC;
+}
+
+/* ---------- FOTO ---------- */
+.detail__photo {
+    position: sticky;
+    top: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    align-self: start;
+    aspect-ratio: 1 / 1;
+    overflow: hidden;
+    background: var(--salink-accent);
+    border-radius: 24px;
+    box-shadow: 0 6px 0 var(--salink-primary);
+}
+
+.detail__photo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.detail__photo svg {
+    width: 80px;
+    height: 80px;
+    fill: none;
+    stroke: var(--salink-dark);
+    stroke-width: 1.6;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    opacity: 0.35;
+}
+
+/* ---------- INFO BARANG ---------- */
+.status-pill {
+    display: inline-block;
+    padding: 5px 14px;
+    font-size: 13px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--salink-cream);
+    background: var(--salink-dark);
+    border-radius: 999px;
+}
+
+.status-pill--available {
+    color: var(--salink-dark);
+    background: var(--salink-accent);
+}
+
+.status-pill--unavailable {
+    background: var(--salink-muted);
+}
+
+.detail__name {
+    margin: 10px 0 4px;
+    font-size: clamp(30px, 4vw, 42px);
+    font-weight: 400;
+    line-height: 1.1;
+    letter-spacing: 0.02em;
+}
+
+.detail__owner {
+    margin: 0 0 20px;
+    font-size: 15px;
+    color: var(--salink-muted);
+}
+
+.facts {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    margin: 0 0 24px;
+}
+
+.fact {
+    padding: 12px 14px;
+    background: var(--salink-cream);
+    border-radius: 14px;
+}
+
+.fact--wide {
+    grid-column: 1 / -1;
+}
+
+.fact dt {
+    margin-bottom: 2px;
+    font-size: 13px;
+    color: var(--salink-muted);
+}
+
+.fact dd {
+    margin: 0;
+    font-size: 17px;
+    color: var(--salink-dark);
+}
+
+.detail__subtitle {
+    margin: 0 0 8px;
+    font-size: 22px;
+    font-weight: 400;
+    letter-spacing: 0.02em;
+}
+
+.detail__desc {
+    margin: 0;
+    font-size: 16px;
+    line-height: 1.55;
+    letter-spacing: 0.02em;
+}
+
+/* ---------- AJUKAN PINJAMAN ---------- */
+.borrow-panel {
+    margin-top: 28px;
+    padding: 24px;
+    background: var(--salink-cream);
+    border: 2px solid rgba(77, 42, 0, 0.1);
+    border-radius: 24px;
+}
+
+.borrow-panel__note {
+    margin: 0 0 16px;
+    font-size: 16px;
+    letter-spacing: 0.02em;
+    color: var(--salink-muted);
+}
+
+.borrow-form {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.borrow-form .field__help {
+    margin-top: -6px;
+}
+
+.borrow-form__submit {
+    align-self: flex-end;
+}
+
+/* ringkasan barang di halaman request_form.html */
+.borrow-summary {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-top: 14px;
+}
+
+.borrow-summary__photo {
+    flex: none;
+    width: 72px;
+    height: 72px;
+    overflow: hidden;
+    background: var(--salink-accent);
+    border-radius: 16px;
+}
+
+.borrow-summary__photo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.borrow-summary__name {
+    margin: 0;
+    font-size: 20px;
+}
+
+.borrow-summary__meta {
+    margin: 2px 0 0;
+    font-size: 14px;
+    color: var(--salink-muted);
+}
+
+/* ---------- KELOLA BARANG (khusus pemilik) ---------- */
+.owner-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.danger-zone {
+    margin-top: 22px;
+    padding-top: 16px;
+    border-top: 2px dashed rgba(77, 42, 0, 0.15);
+}
+
+.danger-zone summary {
+    display: inline-block;
+    font-size: 15px;
+    letter-spacing: 0.02em;
+    color: #9B2C1F;
+    list-style: none;
+    cursor: pointer;
+}
+
+.danger-zone summary::-webkit-details-marker {
+    display: none;
+}
+
+.danger-zone summary::after {
+    content: " \25BE";
+}
+
+.danger-zone[open] summary::after {
+    content: " \25B4";
+}
+
+.danger-zone summary:hover {
+    text-decoration: underline;
+}
+
+.danger-zone__body {
+    margin-top: 12px;
+    padding: 14px 16px;
+    background: #FBE3DC;
+    border-radius: 14px;
+}
+
+.danger-zone__body p {
+    margin: 0 0 12px;
+    font-size: 15px;
+    line-height: 1.45;
+    letter-spacing: 0.02em;
+    color: #9B2C1F;
+}
+
+.danger-zone__body p:last-child {
+    margin-bottom: 0;
+}
+
+.danger-zone form {
+    margin: 0;
+}
+
+/* tombol merah, efek timbul dan tekan sama seperti .btn--primary */
+.btn--danger {
+    color: var(--salink-cream);
+    background: #B03A2E;
+    border: none;
+    box-shadow: 0 5px 0 #6E1F17;
+}
+
+.btn--danger:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 7px 0 #6E1F17;
+}
+
+.btn--danger:active {
+    transform: translateY(3px);
+    box-shadow: 0 2px 0 #6E1F17;
+}
+
+/* ---------- RESPONSIVE ---------- */
+@media (max-width: 760px) {
+    .detail__grid {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 22px;
+    }
+
+    .detail__photo {
+        position: static;
+        aspect-ratio: 16 / 11;
+    }
+
+    .borrow-panel {
+        padding: 20px;
+    }
+
+    .borrow-form__submit {
+        align-self: stretch;
+    }
+}
+
+@media (max-width: 420px) {
+    .facts {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}

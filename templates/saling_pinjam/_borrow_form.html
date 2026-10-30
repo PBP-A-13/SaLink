@@ -1,0 +1,38 @@
+{# Form pengajuan pinjam. Dipakai di item_detail.html dan request_form.html #}
+<form method="post" action="{% url 'saling_pinjam:request_borrow' item.id %}" class="borrow-form">
+    {% csrf_token %}
+
+    {% if form.non_field_errors %}
+    <div class="upload-form__alert">
+        {% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="field-row">
+        <div class="field{% if form.start_date.errors %} field--error{% endif %}">
+            <label for="id_start_date" class="field__label">Mulai pinjam</label>
+            <input type="date" name="start_date" id="id_start_date" class="field__input"
+                   min="{% now 'Y-m-d' %}"
+                   value="{% if form.is_bound %}{{ form.start_date.value|default_if_none:'' }}{% endif %}" required>
+            {% for error in form.start_date.errors %}<p class="field__error">{{ error }}</p>{% endfor %}
+        </div>
+
+        <div class="field{% if form.end_date.errors %} field--error{% endif %}">
+            <label for="id_end_date" class="field__label">Tanggal kembali</label>
+            <input type="date" name="end_date" id="id_end_date" class="field__input"
+                   min="{% now 'Y-m-d' %}"
+                   value="{% if form.is_bound %}{{ form.end_date.value|default_if_none:'' }}{% endif %}" required>
+            {% for error in form.end_date.errors %}<p class="field__error">{{ error }}</p>{% endfor %}
+        </div>
+    </div>
+    <p class="field__help">Maksimal {{ item.max_duration_days }} hari.</p>
+
+    <div class="field{% if form.notes.errors %} field--error{% endif %}">
+        <label for="id_notes" class="field__label">Pesan untuk pemilik</label>
+        <textarea name="notes" id="id_notes" class="field__input" rows="3"
+                  placeholder="Mau dipakai buat apa, dan kapan bisa diambil">{% if form.is_bound %}{{ form.notes.value|default_if_none:'' }}{% endif %}</textarea>
+        {% for error in form.notes.errors %}<p class="field__error">{{ error }}</p>{% endfor %}
+    </div>
+
+    <button type="submit" class="btn btn--primary borrow-form__submit">Ajukan Pinjaman</button>
+</form>
