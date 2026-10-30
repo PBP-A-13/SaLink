@@ -5,6 +5,8 @@ from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
 
+from saling_beli.models import UserNotification
+
 from .models import RideOffer, RideSchedule, Vehicle
 
 
@@ -46,6 +48,17 @@ class RideSearchTests(TestCase):
         self.assertContains(response, f'value="{today:%Y-%m-%d}"')
         self.assertContains(response, tomorrow_schedule.ride_offer.driver.username)
         self.assertNotContains(response, 'SEARAH')
+
+    def test_authenticated_nebeng_page_loads_notification_controls(self):
+        user = User.objects.create_user(username='notif_user')
+        self.client.force_login(user)
+
+        response = self.client.get(reverse('saling_tebeng:index'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'id="notif-dropdown"')
+        self.assertContains(response, reverse('saling_beli:user-notifications'))
+        self.assertContains(response, reverse('saling_beli:notification-stream'))
 
     def test_search_shows_and_orders_matching_and_mismatching_routes(self):
         today = timezone.localdate()
@@ -156,6 +169,13 @@ class RideSearchTests(TestCase):
             schedule.bookings.get(passenger=passenger).ride_date,
             ride_date,
         )
+        notification = UserNotification.objects.get(user=driver)
+        self.assertEqual(
+            notification.notification_type,
+            UserNotification.NotifType.OFFER,
+        )
+        self.assertIn(f'peer={passenger.pk}', notification.link)
+        self.assertIn(f'tanggal={ride_date.isoformat()}', notification.link)
 
         next_occurrence = ride_date + timedelta(days=7)
         next_response = self.client.get(reverse('saling_tebeng:index'), {
@@ -196,6 +216,14 @@ class RideSearchTests(TestCase):
         )
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response.json()['success'])
+        driver_notification = UserNotification.objects.get(
+            user=schedule.ride_offer.driver,
+        )
+        self.assertEqual(
+            driver_notification.notification_type,
+            UserNotification.NotifType.CHAT,
+        )
+        self.assertIn(f'peer={passenger.pk}', driver_notification.link)
 
         self.client.force_login(schedule.ride_offer.driver)
         response = self.client.get(chat_url, {'peer': passenger.id})
@@ -209,6 +237,12 @@ class RideSearchTests(TestCase):
             content_type='application/json',
         )
         self.assertEqual(response.status_code, 200)
+        passenger_notification = UserNotification.objects.get(user=passenger)
+        self.assertEqual(
+            passenger_notification.notification_type,
+            UserNotification.NotifType.CHAT,
+        )
+        self.assertNotIn('peer=', passenger_notification.link)
 
         self.client.force_login(passenger)
         response = self.client.get(chat_url)

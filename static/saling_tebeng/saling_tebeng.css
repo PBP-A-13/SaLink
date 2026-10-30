@@ -528,6 +528,68 @@ svg.icon {
   border-radius: 20px;
   background: var(--salink-cream);
   box-shadow: var(--shadow-flat-lg);
+  font-family: var(--font-body);
+}
+
+.ride-chat .offer-title {
+  font-family: inherit;
+  letter-spacing: normal;
+}
+
+.ride-chat .btn-white-pill {
+  font-family: inherit;
+  letter-spacing: normal;
+}
+
+.ride-message-list {
+  font-family: var(--font-body);
+}
+
+.ride-notification-empty {
+  margin: 8px 0;
+  color: var(--salink-muted);
+  text-align: center;
+}
+
+.ride-notification {
+  display: grid;
+  gap: 3px;
+  padding: 8px;
+  border-radius: 8px;
+  color: var(--salink-dark);
+  font-family: var(--font-body);
+  text-decoration: none;
+}
+
+.ride-notification:hover {
+  background: rgba(204, 111, 0, 0.12);
+}
+
+.ride-notification small {
+  color: var(--salink-muted);
+}
+
+.salink-toast-container {
+  position: fixed;
+  top: 84px;
+  right: 20px;
+  z-index: 1200;
+  display: grid;
+  gap: 8px;
+  width: min(340px, calc(100vw - 40px));
+}
+
+.salink-toast {
+  display: grid;
+  gap: 4px;
+  padding: 14px 16px;
+  border: 2px solid var(--salink-dark);
+  border-radius: 12px;
+  background: var(--salink-cream);
+  box-shadow: var(--shadow-flat);
+  color: var(--salink-dark);
+  font-family: var(--font-body);
+  text-decoration: none;
 }
 
 .ride-chat__header,

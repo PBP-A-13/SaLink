@@ -11,7 +11,11 @@
 
 {% block navbar %}
   {% with active_nav='tebeng' %}
-    {% include "_navbar.html" %}
+    {% if user.is_authenticated %}
+      {% include "_navbar.html" with show_notifications=True %}
+    {% else %}
+      {% include "_navbar.html" %}
+    {% endif %}
   {% endwith %}
 {% endblock %}
 
@@ -77,5 +81,176 @@
       <circle cx="29" cy="21" r="4" fill="#D9D9D9" stroke="#000" stroke-width="2"/>
     </symbol>
   </svg>
+
+  {% if user.is_authenticated %}
+  <script>
+    (function () {
+      const badge = document.getElementById('notif-badge');
+      const list = document.getElementById('notif-list');
+      const dropdown = document.getElementById('notif-dropdown');
+      const seen = new Set();
+      let cursor = null;
+      let initialLoad = true;
+      let pollingError = false;
+
+      function safeLink(value) {
+        try {
+          const target = new URL(value || '#', window.location.origin);
+          return target.origin === window.location.origin
+            ? target.pathname + target.search + target.hash
+            : '#';
+        } catch (error) {
+          return '#';
+        }
+      }
+
+      function updateBadge(count) {
+        badge.textContent = count;
+        badge.style.display = count > 0 ? 'inline-block' : 'none';
+      }
+
+      function renderList(notifications) {
+        list.replaceChildren();
+        if (!notifications.length) {
+          const empty = document.createElement('p');
+          empty.textContent = 'Tidak ada notifikasi baru.';
+          empty.className = 'ride-notification-empty';
+          list.appendChild(empty);
+          return;
+        }
+        notifications.forEach(function (notification) {
+          const item = document.createElement('a');
+          item.className = 'ride-notification';
+          item.href = safeLink(notification.link);
+          const title = document.createElement('strong');
+          title.textContent = notification.title;
+          const message = document.createElement('span');
+          message.textContent = notification.message;
+          const date = document.createElement('small');
+          date.textContent = notification.created_at;
+          item.append(title, message, date);
+          list.appendChild(item);
+        });
+      }
+
+      function refreshNotifications() {
+        return fetch('{% url "saling_beli:user-notifications" %}', {
+          cache: 'no-store'
+        })
+          .then(function (response) {
+            if (!response.ok) throw new Error('Notifikasi tidak dapat dimuat.');
+            return response.json();
+          })
+          .then(function (data) {
+            updateBadge(data.unread_count || 0);
+            cursor = data.cursor || cursor;
+            (data.notifications || []).forEach(function (notification) {
+              seen.add(notification.id);
+            });
+            renderList(data.notifications || []);
+          });
+      }
+
+      function showToast(notification) {
+        const container = document.getElementById('salink-toast-container')
+          || document.createElement('div');
+        container.id = 'salink-toast-container';
+        container.className = 'salink-toast-container';
+        if (!container.isConnected) document.body.appendChild(container);
+
+        const toast = document.createElement('a');
+        toast.className = 'salink-toast';
+        toast.href = safeLink(notification.link);
+        const title = document.createElement('strong');
+        title.textContent = notification.title;
+        const message = document.createElement('span');
+        message.textContent = notification.message;
+        toast.append(title, message);
+        container.appendChild(toast);
+        window.setTimeout(function () { toast.remove(); }, 6000);
+      }
+
+      async function pollNotifications() {
+        try {
+          const url = new URL(
+            '{% url "saling_beli:notification-stream" %}',
+            window.location.origin
+          );
+          if (cursor) url.searchParams.set('after', cursor);
+          const response = await fetch(url, {cache: 'no-store'});
+          if (!response.ok) throw new Error('Notifikasi tidak dapat diperbarui.');
+          const data = await response.json();
+          if (pollingError) {
+            await refreshNotifications();
+            pollingError = false;
+          }
+          updateBadge(data.unread_count || 0);
+          cursor = data.cursor || cursor;
+          let hasNew = false;
+          (data.notifications || []).forEach(function (notification) {
+            if (seen.has(notification.id)) return;
+            seen.add(notification.id);
+            hasNew = true;
+            if (!initialLoad && !notification.is_read) showToast(notification);
+          });
+          if (hasNew) {
+            refreshNotifications().catch(function () {
+              pollingError = true;
+              if (dropdown.style.display === 'block') {
+                list.textContent = 'Notifikasi belum dapat diperbarui. Mencoba lagi.';
+              }
+            });
+          }
+          initialLoad = false;
+        } catch (error) {
+          pollingError = true;
+          if (dropdown.style.display === 'block') {
+            list.textContent = 'Koneksi notifikasi terputus. Mencoba lagi.';
+          }
+          await new Promise(function (resolve) {
+            window.setTimeout(resolve, 3000);
+          });
+        }
+        window.setTimeout(pollNotifications, 300);
+      }
+
+      window.toggleNotifDropdown = function () {
+        dropdown.style.display =
+          dropdown.style.display === 'none' || !dropdown.style.display
+            ? 'block'
+            : 'none';
+        if (dropdown.style.display === 'block') refreshNotifications();
+      };
+
+      window.markAllNotifsRead = function () {
+        const token = document.querySelector(
+          '.navbar__profile input[name="csrfmiddlewaretoken"]'
+        );
+        fetch('{% url "saling_beli:mark-notifications-read" %}', {
+          method: 'POST',
+          headers: {'X-CSRFToken': token ? token.value : ''}
+        })
+          .then(function (response) {
+            if (!response.ok) throw new Error('Notifikasi gagal ditandai dibaca.');
+            return refreshNotifications();
+          })
+          .catch(function () {
+            list.textContent = 'Notifikasi belum dapat diperbarui. Coba lagi.';
+          });
+      };
+
+      refreshNotifications()
+        .then(function () {
+          initialLoad = false;
+          pollNotifications();
+        })
+        .catch(function () {
+          list.textContent = 'Notifikasi belum dapat dimuat. Coba lagi.';
+          pollingError = true;
+          pollNotifications();
+        });
+    })();
+  </script>
+  {% endif %}
 
 {% endblock %}
