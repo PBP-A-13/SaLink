@@ -32,14 +32,14 @@ jobs:
     timeout-minutes: 10
 
     env:
-      PWS_REPO_URL: ${{ vars.PWS_REPO_URL }}
+      PWS_REPO_URL: ${{ vars.PWS_REPO_URL || 'https://pws.cs.ui.ac.id/muhammad.hasbi52/salink' }}
       PWS_USERNAME: ${{ secrets.PWS_USERNAME }}
-      PWS_PASSWORD: ${{ secrets.PWS_PASSWORD }}
-      PWS_BRANCH: ${{ vars.PWS_BRANCH || 'master' }}
+      PWS_PASSWORD: ${{ secrets.PWS_PASSWORD || secrets.PWS_TOKEN }}
+      PWS_BRANCH: ${{ vars.PWS_BRANCH || 'main' }}
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           ref: ${{ github.event_name == 'workflow_dispatch' && inputs.ref || github.event.workflow_run.head_sha }}
           fetch-depth: 0
@@ -59,7 +59,7 @@ jobs:
             missing=1
           fi
           if [ -z "${PWS_PASSWORD}" ]; then
-            echo "::error::Secret PWS_PASSWORD belum diisi."
+            echo "::error::Secret PWS_PASSWORD atau PWS_TOKEN belum diisi."
             missing=1
           fi
 
