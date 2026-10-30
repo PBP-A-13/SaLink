@@ -1,3 +1,4 @@
+import sys
 from django.db import migrations
 
 
@@ -89,6 +90,10 @@ SEED_ITEMS = [
 
 
 def seed_saling_beli_data(apps, schema_editor):
+    db_name = str(schema_editor.connection.settings_dict.get('NAME', ''))
+    if 'test' in sys.argv or db_name.startswith('test_') or ':memory:' in db_name:
+        return
+
     User = apps.get_model('auth', 'User')
     ItemListing = apps.get_model('saling_beli', 'ItemListing')
 
@@ -131,6 +136,10 @@ def seed_saling_beli_data(apps, schema_editor):
 
 
 def reverse_seed_data(apps, schema_editor):
+    db_name = str(schema_editor.connection.settings_dict.get('NAME', ''))
+    if 'test' in sys.argv or db_name.startswith('test_') or ':memory:' in db_name:
+        return
+
     ItemListing = apps.get_model('saling_beli', 'ItemListing')
     titles = [item.get('title') for item in SEED_ITEMS if item.get('title')]
     if titles:
