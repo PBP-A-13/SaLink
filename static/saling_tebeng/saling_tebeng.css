@@ -348,6 +348,7 @@ svg.icon {
   color: var(--salink-dark);
   text-align: center;
   line-height: 1;
+  text-transform: uppercase;
 }
 
 /* Info column */
