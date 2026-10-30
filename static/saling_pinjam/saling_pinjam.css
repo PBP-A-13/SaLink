@@ -60,6 +60,38 @@ a {
     color: var(--salink-muted);
 }
 
+/* ---------- PESAN (berhasil / gagal) ---------- */
+.notices {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.notice {
+    margin: 0;
+    padding: 12px 16px;
+    font-size: 15px;
+    letter-spacing: 0.02em;
+    color: var(--salink-dark);
+    background: var(--salink-cream);
+    border-radius: 12px;
+}
+
+.notice--success {
+    color: #2F5A12;
+    background: #E4F0D4;
+}
+
+.notice--warning {
+    background: #FCE7B2;
+}
+
+.notice--error {
+    color: #9B2C1F;
+    background: #FBE3DC;
+}
+
 /* ---------- JADWAL PINJAM ---------- */
 .today {
     margin: 0 0 10px;
@@ -67,6 +99,53 @@ a {
     font-weight: 400;
     letter-spacing: 0.02em;
     color: var(--salink-dark);
+}
+
+/* judul bulan + tombol ganti bulan */
+.calendar__nav {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    margin-bottom: 12px;
+}
+
+.calendar__nav .section-title {
+    margin: 0;
+    text-align: center;
+}
+
+.calendar__nav-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: none;
+    width: 36px;
+    height: 36px;
+    padding-bottom: 3px;
+    font-size: 26px;
+    line-height: 1;
+    color: var(--salink-dark);
+    background: var(--salink-cream);
+    border-radius: 50%;
+    box-shadow: 0 3px 0 var(--salink-dark);
+    transition: transform 0.12s ease, box-shadow 0.12s ease, background-color 0.15s ease;
+}
+
+a.calendar__nav-btn:hover {
+    background: var(--salink-accent);
+    transform: translateY(-2px);
+    box-shadow: 0 5px 0 var(--salink-dark);
+}
+
+a.calendar__nav-btn:active {
+    transform: translateY(2px);
+    box-shadow: 0 1px 0 var(--salink-dark);
+}
+
+.calendar__nav-btn--off {
+    opacity: 0.3;
+    box-shadow: none;
 }
 
 .calendar__days {
@@ -80,17 +159,21 @@ a {
 
 .calendar__grid {
     display: grid;
-    grid-template-columns: repeat(7, 1fr);
+    grid-template-columns: repeat(7, minmax(0, 1fr));
     gap: 8px;
 }
 
 .calendar__cell {
     position: relative;
     aspect-ratio: 1 / 1;
+    min-width: 0;
+    overflow: hidden;
     background: var(--salink-cream);
     border-radius: 12px;
     display: flex;
+    flex-direction: column;
     align-items: flex-start;
+    gap: 4px;
     padding: 6px 8px;
     transition: transform 0.15s ease;
 }
@@ -106,40 +189,58 @@ a {
     opacity: 0.6;
 }
 
+/* tanggal yang sudah lewat: tidak bisa diklik */
+.calendar__cell--past {
+    background: rgba(255, 246, 220, 0.45);
+}
+
+.calendar__cell--past .calendar__date {
+    color: var(--salink-muted);
+    opacity: 0.6;
+}
+
 .calendar__cell--today {
     background: var(--salink-cream);
     outline: 3px solid var(--salink-primary);
     outline-offset: -1px;
 }
 
-/* radio disembunyikan, tapi tetap bisa difokus lewat keyboard */
-.calendar__radio {
-    position: absolute;
-    opacity: 0;
-    pointer-events: none;
-}
-
-label.calendar__cell {
+/* tanggal yang bisa diklik (link) */
+a.calendar__cell {
     cursor: pointer;
 }
 
 /* hover = tampilan sama dengan tanggal yang dipilih (kuning + aksen cokelat) */
-label.calendar__cell:hover,
-label.calendar__cell:has(:focus-visible),
-label.calendar__cell:has(:checked) {
+a.calendar__cell:hover,
+a.calendar__cell:focus-visible,
+.calendar__cell.is-selected {
     background: var(--salink-accent);
-    border-color: var(--salink-dark);
     box-shadow: 0 4px 0 var(--salink-dark);
 }
 
-label.calendar__cell:hover,
-label.calendar__cell:has(:focus-visible) {
+a.calendar__cell:hover,
+a.calendar__cell:focus-visible {
     transform: translateY(-2px);
 }
 
-label.calendar__cell:active {
+a.calendar__cell:active {
     transform: translateY(2px);
     box-shadow: 0 1px 0 var(--salink-dark);
+}
+
+/* label nama barang di tanggal yang sedang kamu pinjam */
+.calendar__booking {
+    max-width: 100%;
+    padding: 1px 6px;
+    overflow: hidden;
+    font-size: 11px;
+    line-height: 1.4;
+    letter-spacing: 0.02em;
+    color: var(--salink-cream);
+    background: var(--salink-dark);
+    border-radius: 6px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 /* ---------- SIDEBAR ---------- */
@@ -147,6 +248,38 @@ label.calendar__cell:active {
     display: flex;
     flex-direction: column;
     gap: 24px;
+}
+
+.barang__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.barang__head .section-title {
+    margin: 0;
+}
+
+.barang__add {
+    padding: 8px 16px;
+    font-size: 15px;
+    color: var(--salink-dark);
+    background: var(--salink-accent);
+    border-radius: 999px;
+    box-shadow: 0 4px 0 var(--salink-dark);
+    transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+.barang__add:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 0 var(--salink-dark);
+}
+
+.barang__add:active {
+    transform: translateY(2px);
+    box-shadow: 0 2px 0 var(--salink-dark);
 }
 
 /* Barang */
@@ -232,7 +365,19 @@ label.calendar__cell:active {
     text-transform: uppercase;
 }
 
-/* Pinjaman Saya */
+/* ---------- PINJAMAN SAYA (2 slot) ---------- */
+.pinjaman-saya {
+    scroll-margin-top: 16px;
+}
+
+.slot-count {
+    padding: 4px 12px;
+    font-size: 14px;
+    letter-spacing: 0.02em;
+    background: var(--salink-cream);
+    border-radius: 999px;
+}
+
 .pinjaman-saya__box {
     min-height: 180px;
     padding: 12px;
@@ -243,37 +388,316 @@ label.calendar__cell:active {
     gap: 10px;
 }
 
-.pinjaman-saya__row {
-    display: flex;
-    justify-content: space-between;
+.pinjaman-saya__box .empty-text {
+    color: var(--salink-cream);
+}
+
+.slot {
+    display: grid;
+    grid-template-columns: 56px minmax(0, 1fr) auto;
     align-items: center;
     gap: 12px;
-    padding: 10px 16px;
-    font-size: 17px;
+    padding: 10px;
     background: var(--salink-cream);
-    color: var(--salink-dark);
-    border-radius: 999px;
-    transition: transform 0.12s ease;
+    border-radius: 16px;
 }
 
-.pinjaman-saya__row:hover {
-    transform: scale(1.01);
-}
-
-.pinjaman-saya__status {
-    font-size: 12px;
-    padding: 4px 12px;
+.slot__photo {
+    width: 56px;
+    height: 56px;
+    overflow: hidden;
     background: var(--salink-accent);
-    color: var(--salink-dark);
-    border-radius: 999px;
-    font-weight: bold;
+    border-radius: 12px;
+}
+
+.slot__photo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.slot__body {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 3px;
+    min-width: 0;
+}
+
+.slot__name {
+    max-width: 100%;
+    overflow: hidden;
+    font-size: 17px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.slot__meta {
+    max-width: 100%;
+    overflow: hidden;
+    font-size: 13px;
+    color: var(--salink-muted);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.slot__status {
+    padding: 2px 10px;
+    font-size: 11px;
+    letter-spacing: 0.03em;
     text-transform: uppercase;
+    color: var(--salink-dark);
+    background: var(--salink-accent);
+    border-radius: 999px;
+}
+
+.slot__status--approved {
+    color: #2F5A12;
+    background: #E4F0D4;
+}
+
+.slot__status--ongoing {
+    color: var(--salink-cream);
+    background: var(--salink-dark);
+}
+
+.slot__cancel {
+    margin: 0;
+}
+
+.slot__cancel button {
+    padding: 6px 12px;
+    font-family: var(--font);
+    font-size: 13px;
+    letter-spacing: 0.02em;
+    color: var(--salink-dark);
+    background: transparent;
+    border: 2px solid rgba(77, 42, 0, 0.25);
+    border-radius: 999px;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+}
+
+.slot__cancel button:hover {
+    background: rgba(77, 42, 0, 0.08);
+}
+
+.slot--empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 76px;
+    font-size: 15px;
+    letter-spacing: 0.02em;
+    text-align: center;
+    color: var(--salink-cream);
+    background: transparent;
+    border: 2px dashed rgba(255, 246, 220, 0.6);
+}
+
+.pinjaman-saya__all {
+    align-self: flex-end;
+    margin-top: auto;
+    font-size: 14px;
+    letter-spacing: 0.02em;
+    color: var(--salink-cream);
+}
+
+.pinjaman-saya__all:hover {
+    text-decoration: underline;
+}
+
+/* ---------- BARANG BEBAS DIPINJAM (bawah kalender) ---------- */
+.tersedia {
+    grid-column: 1 / -1;
+    margin-top: 8px;
+    scroll-margin-top: 16px;
+}
+
+.tersedia__list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.avail-card {
+    display: grid;
+    grid-template-columns: 110px minmax(0, 1fr) 240px;
+    align-items: center;
+    gap: 18px;
+    padding: 10px;
+    background: var(--salink-cream);
+    border-radius: 20px;
+}
+
+.avail-card__photo {
+    aspect-ratio: 1 / 1;
+    overflow: hidden;
+    background: var(--salink-accent) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%234D2A00' fill-opacity='.35'%3E%3Cpath d='M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z'/%3E%3C/svg%3E") center / 40% no-repeat;
+    border-radius: 14px;
+}
+
+.avail-card__photo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.avail-card__name {
+    font-size: 22px;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    transition: color 0.15s ease;
+}
+
+.avail-card__name:hover {
+    color: var(--salink-primary);
+}
+
+.avail-card__meta {
+    margin: 2px 0 0;
+    font-size: 14px;
+    color: var(--salink-primary);
+}
+
+.avail-card__desc {
+    margin: 6px 0 0;
+    font-size: 14px;
+    line-height: 1.45;
+    letter-spacing: 0.02em;
+}
+
+.avail-card__facts {
+    margin: 6px 0 0;
+    font-size: 13px;
+    letter-spacing: 0.02em;
+    color: var(--salink-muted);
+}
+
+.avail-card__action {
+    display: flex;
+    flex-direction: column;
+    padding-right: 6px;
+}
+
+.avail-form {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.avail-form__label {
+    font-size: 13px;
+    color: var(--salink-muted);
+}
+
+.avail-form__select {
+    width: 100%;
+    padding: 10px 36px 10px 12px;
+    font-family: var(--font);
+    font-size: 15px;
+    letter-spacing: 0.02em;
+    color: var(--salink-dark);
+    background: var(--salink-white) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%234D2A00' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") right 12px center / 14px no-repeat;
+    border: 2px solid rgba(77, 42, 0, 0.18);
+    border-radius: 12px;
+    outline: none;
+    appearance: none;
+    cursor: pointer;
+}
+
+.avail-form__select:focus {
+    border-color: var(--salink-primary);
+    box-shadow: 0 0 0 3px rgba(242, 169, 0, 0.35);
+}
+
+.avail-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 18px;
+    font-family: var(--font);
+    font-size: 16px;
+    letter-spacing: 0.02em;
+    color: var(--salink-dark);
+    background: var(--salink-accent);
+    border: none;
+    border-radius: 999px;
+    box-shadow: 0 4px 0 var(--salink-dark);
+    cursor: pointer;
+    transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+.avail-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 0 var(--salink-dark);
+}
+
+.avail-btn:active {
+    transform: translateY(2px);
+    box-shadow: 0 2px 0 var(--salink-dark);
+}
+
+.avail-card__note {
+    padding: 10px;
+    font-size: 15px;
+    letter-spacing: 0.02em;
+    text-align: center;
+    color: var(--salink-muted);
+    background: rgba(77, 42, 0, 0.06);
+    border-radius: 12px;
+}
+
+.tersedia__busy {
+    margin: 12px 0 0;
+    font-size: 14px;
+    letter-spacing: 0.02em;
+    color: var(--salink-muted);
 }
 
 /* ---------- RESPONSIVE ---------- */
 @media (max-width: 960px) {
     .pinjam {
-        grid-template-columns: 1fr;
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+@media (max-width: 700px) {
+    .avail-card {
+        grid-template-columns: 80px minmax(0, 1fr);
+        gap: 14px;
     }
 
+    .avail-card__action {
+        grid-column: 1 / -1;
+        padding-right: 0;
+    }
+
+    .avail-card__name {
+        font-size: 19px;
+    }
+}
+
+@media (max-width: 600px) {
+    .calendar__grid {
+        gap: 5px;
+    }
+
+    .calendar__cell {
+        padding: 4px 5px;
+        border-radius: 9px;
+    }
+
+    /* di HP nama barang tidak muat, jadi labelnya dijadikan garis */
+    .calendar__booking {
+        width: 100%;
+        height: 5px;
+        padding: 0;
+        font-size: 0;
+        border-radius: 3px;
+    }
+
+    .calendar__nav .section-title {
+        font-size: 19px;
+    }
 }

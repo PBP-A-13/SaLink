@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}SaLink - {{ title }}{% endblock %}
+
+{% block extra_head %}
+    <link rel="stylesheet" href="{% static 'saling_pinjam/saling_pinjam.css' %}">
+    <link rel="stylesheet" href="{% static 'saling_pinjam/tambah_barang.css' %}">
+{% endblock %}
+
+{% block navbar %}
+    {% include "_navbar.html" with active_nav="pinjam" %}
+{% endblock %}
+
+{% block content %}
+<main class="upload">
+    {# `item` hanya dikirim oleh view item_edit, jadi dipakai untuk membedakan mode tambah dan edit #}
+    {% if item %}
+    <a href="{% url 'saling_pinjam:item_detail' item.id %}" class="upload__back">&larr; Kembali ke detail barang</a>
+    {% else %}
+    <a href="{% url 'saling_pinjam:item_list' %}" class="upload__back">&larr; Kembali ke jadwal pinjam</a>
+    {% endif %}
+
+    <h1 class="upload__title">{{ title }}</h1>
+    {% if item %}
+    <p class="upload__lead">Perubahan langsung tampil di halaman barang dan di kalender Pinjam.</p>
+    {% else %}
+    <p class="upload__lead">Setelah disimpan, barang kamu langsung muncul di daftar Barang dan bisa diajukan untuk dipinjam.</p>
+    {% endif %}
+
+    <form method="post" class="upload-form">
+        {% csrf_token %}
+
+        {% if form.non_field_errors %}
+        <div class="upload-form__alert">
+            {% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Kiri: foto -->
+        <div class="upload-form__photo">
+            <div class="photo-preview">
+                {% if form.image_url.value %}
+                    <img src="{{ form.image_url.value }}" alt="Foto {{ form.name.value|default:'barang' }}">
+                {% else %}
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <rect x="3" y="3" width="18" height="18" rx="3"></rect>
+                        <circle cx="9" cy="9" r="2"></circle>
+                        <path d="m21 15-4.5-4.5L6 21"></path>
+                    </svg>
+                    <span class="photo-preview__hint">Foto akan tampil di sini</span>
+                {% endif %}
+            </div>
+
+            <div class="field{% if form.image_url.errors %} field--error{% endif %}">
+                <label for="{{ form.image_url.id_for_label }}" class="field__label">{{ form.image_url.label }}</label>
+                {{ form.image_url }}
+                <p class="field__help">Link gambar JPG atau PNG. Boleh dikosongkan.</p>
+                {% for error in form.image_url.errors %}<p class="field__error">{{ error }}</p>{% endfor %}
+            </div>
+        </div>
+
+        <!-- Kanan: data barang -->
+        <div class="upload-form__fields">
+            <div class="field{% if form.name.errors %} field--error{% endif %}">
+                <label for="{{ form.name.id_for_label }}" class="field__label">{{ form.name.label }}</label>
+                {{ form.name }}
+                {% for error in form.name.errors %}<p class="field__error">{{ error }}</p>{% endfor %}
+            </div>
+
+            <div class="field-row">
+                <div class="field{% if form.category.errors %} field--error{% endif %}">
+                    <label for="{{ form.category.id_for_label }}" class="field__label">{{ form.category.label }}</label>
+                    {{ form.category }}
+                    {% for error in form.category.errors %}<p class="field__error">{{ error }}</p>{% endfor %}
+                </div>
+
+                <div class="field{% if form.condition.errors %} field--error{% endif %}">
+                    <label for="{{ form.condition.id_for_label }}" class="field__label">{{ form.condition.label }}</label>
+                    {{ form.condition }}
+                    {% for error in form.condition.errors %}<p class="field__error">{{ error }}</p>{% endfor %}
+                </div>
+            </div>
+
+            <div class="field{% if form.pickup_location.errors %} field--error{% endif %}">
+                <label for="{{ form.pickup_location.id_for_label }}" class="field__label">{{ form.pickup_location.label }}</label>
+                {{ form.pickup_location }}
+                {% for error in form.pickup_location.errors %}<p class="field__error">{{ error }}</p>{% endfor %}
+            </div>
+
+            <div class="field-row">
+                <div class="field{% if form.max_duration_days.errors %} field--error{% endif %}">
+                    <label for="{{ form.max_duration_days.id_for_label }}" class="field__label">{{ form.max_duration_days.label }}</label>
+                    <div class="input-group">
+                        {{ form.max_duration_days }}
+                        <span class="input-group__addon">hari</span>
+                    </div>
+                    {% for error in form.max_duration_days.errors %}<p class="field__error">{{ error }}</p>{% endfor %}
+                </div>
+
+                <div class="field{% if form.deposit_fee.errors %} field--error{% endif %}">
+                    <label for="{{ form.deposit_fee.id_for_label }}" class="field__label">{{ form.deposit_fee.label }}</label>
+                    <div class="input-group">
+                        <span class="input-group__addon">Rp</span>
+                        {{ form.deposit_fee }}
+                    </div>
+                    <p class="field__help">Isi 0 kalau tanpa jaminan.</p>
+                    {% for error in form.deposit_fee.errors %}<p class="field__error">{{ error }}</p>{% endfor %}
+                </div>
+            </div>
+
+            <div class="field{% if form.description.errors %} field--error{% endif %}">
+                <label for="{{ form.description.id_for_label }}" class="field__label">{{ form.description.label }}</label>
+                {{ form.description }}
+                {% for error in form.description.errors %}<p class="field__error">{{ error }}</p>{% endfor %}
+            </div>
+        </div>
+
+        <div class="upload-form__actions">
+            {% if item %}
+            <a href="{% url 'saling_pinjam:item_detail' item.id %}" class="btn btn--ghost">Batal</a>
+            <button type="submit" class="btn btn--primary">Simpan Perubahan</button>
+            {% else %}
+            <a href="{% url 'saling_pinjam:item_list' %}" class="btn btn--ghost">Batal</a>
+            <button type="submit" class="btn btn--primary">Pinjamkan Barang</button>
+            {% endif %}
+        </div>
+    </form>
+</main>
+{% endblock %}
