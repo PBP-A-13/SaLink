@@ -34,9 +34,17 @@
                 <div class="calendar__grid">
                     {% for week in calendar_weeks %}
                         {% for day in week %}
-                        <div class="calendar__cell{% if not day.in_month %} calendar__cell--muted{% endif %}{% if day.is_today %} calendar__cell--today{% endif %}">
-                            <span class="calendar__date">{{ day.date.day }}</span>
-                        </div>
+                            {% if day.in_month %}
+                            <label class="calendar__cell{% if day.is_today %} calendar__cell--today{% endif %}">
+                                <input type="radio" name="tanggal" class="calendar__radio"
+                                    value="{{ day.date|date:'Y-m-d' }}"{% if day.is_today %} checked{% endif %}>
+                                <span class="calendar__date">{{ day.date.day }}</span>
+                            </label>
+                            {% else %}
+                            <div class="calendar__cell calendar__cell--muted">
+                                <span class="calendar__date">{{ day.date.day }}</span>
+                            </div>
+                            {% endif %}
                         {% endfor %}
                     {% endfor %}
                 </div>

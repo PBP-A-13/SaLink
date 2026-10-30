@@ -33,5 +33,18 @@ class HomePageTests(TestCase):
         self.assertContains(response, 'Belum ada barang tersedia')
         self.assertContains(response, 'Lihat Semua (0)')
         self.assertNotContains(response, 'Buku Kalkulus Purcel')
+        self.assertContains(response, 'Saling Nebeng')
+        self.assertNotContains(response, 'Saling Tebeng')
+
+    def test_saling_nebeng_uses_new_url_and_redirects_legacy_url(self):
+        canonical_url = reverse('saling_tebeng:index')
+        self.assertEqual(canonical_url, '/saling-nebeng/')
+
+        legacy_response = self.client.get('/saling-tebeng/nebeng/')
+        self.assertRedirects(
+            legacy_response,
+            '/saling-nebeng/nebeng/',
+            fetch_redirect_response=False,
+        )
 
 # Create your tests here.

@@ -8,11 +8,35 @@ Produk ini dirancang untuk alur kampus yang sederhana: pengguna dapat menjelajah
 
 | Area | Tujuan | Alur utama |
 | --- | --- | --- |
-| Saling Beli | Marketplace barang bekas dan hibah gratis | Menjelajah, melihat detail, menawar, memesan, dan mengelola listing |
+| Saling Beli | Marketplace barang bekas dan hibah gratis | Menjelajah, melihat detail, menawar (nego), memesan (COD), konfirmasi 2-arah, chat, dan mengelola listing |
 | Saling Pinjam | Akses sementara terhadap barang yang dibutuhkan | Menjelajah, mengajukan, menyetujui, dan melacak pengembalian |
 | Saling Bagi | Redistribusi makanan berlebih | Melihat makanan tersedia dan mengambil porsi |
-| Saling Tebeng | Berbagi perjalanan di area kampus | Mencari rute, menawarkan tebengan, bergabung, dan mengelola booking |
+| Saling Nebeng | Berbagi perjalanan di area kampus | Mencari rute, menawarkan tebengan, bergabung, dan mengelola booking |
 | User Page | Identitas dan aksi akun bersama | Mendaftar, login, mengubah profil, dan kembali ke modul asal |
+
+## Endpoint API Saling Beli
+
+Modul `saling_beli` menyediakan REST / JSON API yang lengkap untuk integrasi client-side, mobile, atau pengujian otomatis:
+
+### 1. Data Listing & Barang
+- `GET /saling-beli/json/` atau `GET /saling-beli/json/all/`: Mengambil daftar seluruh barang dagangan dalam format JSON.
+- `POST /saling-beli/create/`: Menambahkan listing barang baru (memerlukan autentikasi, payload JSON).
+- `GET /saling-beli/<uuid:listing_id>/`: Mengambil detail informasi 1 barang tertentu.
+- `PUT / PATCH /saling-beli/<uuid:listing_id>/update/`: Memperbarui data barang (hanya pemilik barang).
+- `DELETE /saling-beli/<uuid:listing_id>/delete/`: Menghapus data barang (hanya pemilik barang).
+- `POST /saling-beli/<uuid:listing_id>/upload-image/`: Mengunggah atau mengganti foto barang via multipart form data.
+
+### 2. Transaksi & Penawaran Nego
+- `POST /saling-beli/detail/<uuid:listing_id>/offer/`: Mengajukan penawaran harga (nego) terhadap barang.
+- `POST /saling-beli/offer/<uuid:offer_id>/respond/`: Menyetujui (`accept`) atau menolak (`reject`) penawaran harga oleh penjual.
+- `POST /saling-beli/detail/<uuid:listing_id>/order/`: Membuat pesanan langsung (*Buy Now*) dengan harga normal.
+- `POST /saling-beli/order/<uuid:order_id>/update-stage/`: Memperbarui tahapan status transaksi / tracker COD 2-arah (`BUKTI_DIUNGGAH`, `DIKONFIRMASI`, `JANJI_TEMU_COD`, `SELESAI`, `BATAL`).
+
+### 3. Komunikasi & Notifikasi
+- `GET / POST /saling-beli/detail/<uuid:listing_id>/chats/`: Mengambil riwayat pesan atau mengirim pesan chat antar pembeli dan penjual.
+- `GET /saling-beli/api/notifications/`: Mengambil daftar notifikasi milik pengguna yang sedang login.
+- `GET /saling-beli/api/notifications/stream/`: Endpoint *long-polling* untuk streaming pembaruan notifikasi secara realtime.
+- `POST /saling-beli/api/notifications/mark-read/`: Menandai seluruh notifikasi yang belum dibaca menjadi terbaca.
 
 ## Screenshot dan GIF
 
@@ -99,6 +123,6 @@ Keputusan yang harus dipelihara manusia meliputi batas modul, kebijakan autentik
 
 ## Tautan
 
-- Deployment: <https://pws.cs.ui.ac.id/muhammad.hasbi52/salink>
+- Deployment: <https://muhammad-hasbi52-salink.pws.cs.ui.ac.id/>
 - Design: <https://www.figma.com/design/mLX7a6qFC62AiaaPumui8N/SaLink>
 - OpenStreetMap Overpass API: <https://wiki.openstreetmap.org/wiki/Overpass_API>

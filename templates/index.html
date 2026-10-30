@@ -51,9 +51,9 @@
         <a href="{% url 'saling_tebeng:index' %}" class="module-card">
           <div class="module-card__icon">🛵</div>
           <div class="module-card__body">
-            <h3 class="module-card__title">Saling Tebeng</h3>
+            <h3 class="module-card__title">Saling Nebeng</h3>
             <p class="module-card__desc">Cari atau tawarkan tebengan hemat & ramah lingkungan di sekeliling area kampus Depok & Salemba.</p>
-            <span class="module-card__action">Cari Tebengan →</span>
+            <span class="module-card__action">Cari Tebengan ({{ count_tebeng|default_if_none:"0" }}) →</span>
           </div>
         </a>
 

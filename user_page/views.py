@@ -9,6 +9,8 @@ from django.urls import reverse
 from django.utils.http import url_has_allowed_host_and_scheme
 from urllib.parse import urlencode
 
+from saling_tebeng.models import RideBooking
+
 from .forms import ProfileForm, SaLinkAuthenticationForm, SignUpForm
 
 
@@ -47,8 +49,9 @@ class SaLinkLoginView(LoginView):
             ('/saling-beli/', 'Saling Beli'),
             ('/saling-pinjam/', 'Saling Pinjam'),
             ('/saling-bagi/', 'Saling Bagi'),
-            ('/saling-tebeng/', 'Saling Tebeng'),
-            ('/nebeng/', 'Saling Tebeng'),
+            ('/saling-nebeng/', 'Saling Nebeng'),
+            ('/saling-tebeng/', 'Saling Nebeng'),
+            ('/nebeng/', 'Saling Nebeng'),
         )
         context['module_name'] = next(
             (name for prefix, name in module_paths if next_path.startswith(prefix)),
@@ -91,6 +94,11 @@ def profile(request):
     transaction_count = TransactionOrder.objects.filter(
         Q(seller=user) | Q(buyer=user),
     ).exclude(stage=TransactionOrder.Stage.BATAL).count()
+    ride_count = RideBooking.objects.filter(
+        ride_schedule__ride_offer__driver=user,
+    ).exclude(
+        Q(passenger=user) | Q(status='cancelled'),
+    ).count()
     stats = [
         {
             'label': 'Saling Beli',
@@ -113,6 +121,13 @@ def profile(request):
             'url': reverse('saling_bagi:index'),
             'tone': 'orange',
         },
+        {
+            'label': 'Saling Nebeng',
+            'value': ride_count,
+            'detail': 'orang pernah ditebengi',
+            'url': reverse('saling_tebeng:index'),
+            'tone': 'beige',
+        }
     ]
     return render(request, 'user_page/profile.html', {
         'form': form,

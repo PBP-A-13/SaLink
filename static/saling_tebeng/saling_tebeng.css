@@ -1,20 +1,24 @@
-/* SaLink - Saling Tebeng Stylesheet
-   Designed to match Figma wireframe layout & typography */
+/* SaLink - Saling Nebeng Stylesheet
+   Unified with SaLink Design System */
+
+@import url('../navbar-footer.css');
 
 :root {
-  --salink-bg: #FFFFFF;
-  --salink-black: #000000;
-  --salink-dark: #1E1E1E;
-  --salink-grey: #D9D9D9;
-  --salink-grey-dark: #C4C4C4;
-  --salink-grey-light: #ECECEC;
+  --salink-dark: #4D2A00;
+  --salink-primary: #CC6F00;
+  --salink-accent: #F2A900;
+  --salink-light: #F9E6A8;
+  --salink-cream: #FFF6DC;
   --salink-white: #FFFFFF;
+  --salink-muted: #8C5A1F;
 
-  --font-display: 'Anton', 'Impact', 'Arial Narrow', sans-serif;
-  --font-ui: 'Oswald', 'Arial Narrow', sans-serif;
-  --font-body: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font: "Anton", sans-serif;
+  --font-display: "Anton", "Arial Narrow", Impact, sans-serif;
+  --font-ui: "Anton", "Oswald", sans-serif;
 
-  --border-black: 2px solid #000000;
+  --border-dark: 2px solid var(--salink-dark);
+  --shadow-flat: 3px 3px 0 var(--salink-dark);
+  --shadow-flat-lg: 4px 4px 0 var(--salink-dark);
 }
 
 *, *::before, *::after {
@@ -24,9 +28,10 @@
 body {
   margin: 0;
   padding: 0;
-  background: var(--salink-bg);
-  color: var(--salink-black);
-  font-family: var(--font-ui);
+  background: var(--salink-light);
+  color: var(--salink-dark);
+  font-family: var(--font);
+  font-weight: 400;
   line-height: 1.35;
   -webkit-font-smoothing: antialiased;
 }
@@ -50,9 +55,9 @@ svg.icon {
    ========================================================================== */
 .shell {
   display: grid;
-  grid-template-columns: 210px minmax(0, 1fr);
-  min-height: calc(100vh - 65px);
-  background: #FFFFFF;
+  grid-template-columns: 220px minmax(0, 1fr);
+  min-height: calc(100vh - 76px);
+  background: var(--salink-light);
 }
 
 /* Sidebar */
@@ -61,8 +66,8 @@ svg.icon {
   flex-direction: column;
   justify-content: space-between;
   padding: 24px 0 28px;
-  border-right: 2px solid #000000;
-  background: #FFFFFF;
+  border-right: 2px solid var(--salink-dark);
+  background: var(--salink-light);
 }
 
 .side-group {
@@ -77,21 +82,24 @@ svg.icon {
   gap: 12px;
   padding: 10px 18px;
   margin-right: 14px;
-  font-family: var(--font-display);
+  font-family: var(--font);
   font-size: 1.15rem;
   letter-spacing: 0.04em;
-  color: #000000;
+  color: var(--salink-dark);
   text-decoration: none;
   border-radius: 0 999px 999px 0;
-  transition: background 0.15s;
+  transition: background 0.15s, color 0.15s;
 }
 
 .side-item:hover {
-  background: var(--salink-grey-light);
+  background: var(--salink-cream);
 }
 
 .side-item.is-active {
-  background: var(--salink-grey);
+  background: var(--salink-cream);
+  border: 2px solid var(--salink-dark);
+  border-left: none;
+  box-shadow: 2px 2px 0 var(--salink-dark);
 }
 
 .side-cta {
@@ -99,31 +107,36 @@ svg.icon {
   display: block;
   text-align: center;
   text-decoration: none;
-  font-family: var(--font-display);
+  font-family: var(--font);
   font-size: 1rem;
   letter-spacing: 0.04em;
   padding: 10px 16px;
   border-radius: 999px;
-  background: var(--salink-grey);
-  color: #000000;
-  border: none;
+  background: var(--salink-accent);
+  color: var(--salink-dark);
+  border: 2px solid var(--salink-dark);
+  box-shadow: var(--shadow-flat);
   cursor: pointer;
-  transition: background 0.15s, transform 0.1s;
+  transition: background 0.15s, transform 0.1s, box-shadow 0.1s;
 }
 
 .side-cta:hover {
-  background: var(--salink-grey-dark);
+  background: var(--salink-primary);
+  color: var(--salink-white);
+  transform: translate(-1px, -1px);
+  box-shadow: 4px 4px 0 var(--salink-dark);
 }
 
 .side-cta:active {
-  transform: scale(0.98);
+  transform: translate(1px, 1px);
+  box-shadow: 1px 1px 0 var(--salink-dark);
 }
 
 /* Main Content Area */
 .main {
   padding: 28px 40px 48px;
   min-width: 0;
-  background: #FFFFFF;
+  background: var(--salink-light);
 }
 
 /* Flash Messages */
@@ -138,11 +151,11 @@ svg.icon {
 .message {
   padding: 0.75rem 1.25rem;
   border-radius: 12px;
-  border: 2px solid #000000;
-  background: #FFFFFF;
-  font-family: var(--font-ui);
-  font-weight: 600;
-  color: #000000;
+  border: 2px solid var(--salink-dark);
+  background: var(--salink-cream);
+  font-family: var(--font);
+  color: var(--salink-dark);
+  box-shadow: var(--shadow-flat);
 }
 
 .message.success {
@@ -176,26 +189,27 @@ svg.icon {
 }
 
 .search-field__label {
-  font-family: var(--font-display);
+  font-family: var(--font);
   font-size: 1.05rem;
   letter-spacing: 0.04em;
-  color: #000000;
+  color: var(--salink-dark);
 }
 
 .pill-search {
   display: flex;
   align-items: center;
   gap: 8px;
-  background: var(--salink-grey);
+  background: var(--salink-cream);
+  border: 2px solid var(--salink-dark);
+  box-shadow: 2px 2px 0 var(--salink-dark);
   border-radius: 999px;
   padding: 6px 14px;
-  height: 40px;
+  height: 42px;
   position: relative;
-  border: none;
 }
 
 .pill-search svg.icon {
-  color: #222;
+  color: var(--salink-dark);
   font-size: 1.1rem;
 }
 
@@ -206,10 +220,10 @@ svg.icon {
   border: none;
   background: transparent;
   outline: none;
-  font-family: var(--font-ui);
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: #000000;
+  font-family: var(--font);
+  font-size: 0.95rem;
+  letter-spacing: 0.02em;
+  color: var(--salink-dark);
   appearance: none;
   -webkit-appearance: none;
   cursor: pointer;
@@ -219,20 +233,38 @@ svg.icon {
   padding-right: 20px;
 }
 
+.pill-search input[type="date"] {
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+  border: none;
+  background: transparent;
+  outline: none;
+  font-family: var(--font);
+  font-size: 0.95rem;
+  letter-spacing: 0.02em;
+  color: var(--salink-dark);
+  cursor: pointer;
+}
+
 .pill-search::after {
   content: "▼";
   font-size: 0.65rem;
-  color: #333;
+  color: var(--salink-dark);
   position: absolute;
   right: 14px;
   pointer-events: none;
+}
+
+.pill-search--date::after {
+  content: none;
 }
 
 .pill-search .clear-btn {
   border: none;
   background: transparent;
   cursor: pointer;
-  color: #444;
+  color: var(--salink-muted);
   display: flex;
   align-items: center;
   padding: 0;
@@ -241,7 +273,7 @@ svg.icon {
 }
 
 .pill-search .clear-btn:hover {
-  color: #000;
+  color: var(--salink-primary);
 }
 
 /* ==========================================================================
@@ -256,17 +288,29 @@ svg.icon {
 .ride-card {
   display: grid;
   grid-template-columns: 110px 220px 1fr 220px;
+  grid-template-areas:
+    "driver info route badge"
+    "driver info route actions";
   align-items: center;
   gap: 16px;
-  background: var(--salink-grey);
+  background: var(--salink-accent);
+  border: 2px solid var(--salink-dark);
   border-radius: 20px;
+  box-shadow: var(--shadow-flat-lg);
   padding: 20px 28px;
   position: relative;
-  min-height: 140px;
+  min-height: 190px;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.ride-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 6px 6px 0 var(--salink-dark);
 }
 
 /* Driver column */
 .ride-card__driver {
+  grid-area: driver;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -278,8 +322,8 @@ svg.icon {
   width: 72px;
   height: 72px;
   border-radius: 50%;
-  background: #FFFFFF;
-  border: 2px solid #000000;
+  background: var(--salink-white);
+  border: 2px solid var(--salink-dark);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -289,31 +333,32 @@ svg.icon {
 .ride-card__avatar svg {
   width: 75%;
   height: 75%;
-  fill: #000000;
+  fill: var(--salink-dark);
   margin-top: 10%;
 }
 
 .ride-card__name {
-  font-family: var(--font-display);
+  font-family: var(--font);
   font-size: 1.15rem;
   letter-spacing: 0.05em;
-  color: #000000;
+  color: var(--salink-dark);
   text-align: center;
   line-height: 1;
 }
 
 /* Info column */
 .ride-card__info {
+  grid-area: info;
   display: flex;
   flex-direction: column;
   gap: 5px;
 }
 
 .ride-card__origin {
-  font-family: var(--font-display);
+  font-family: var(--font);
   font-size: 1.25rem;
   letter-spacing: 0.04em;
-  color: #000000;
+  color: var(--salink-dark);
   margin: 0 0 2px 0;
   white-space: nowrap;
   overflow: hidden;
@@ -321,10 +366,9 @@ svg.icon {
 }
 
 .ride-card__detail {
-  font-family: var(--font-ui);
+  font-family: var(--font);
   font-size: 0.95rem;
-  font-weight: 600;
-  color: #1A1A1A;
+  color: var(--salink-dark);
   margin: 0;
 }
 
@@ -337,11 +381,13 @@ svg.icon {
 .ride-card__vehicle-icon {
   width: 46px;
   height: 32px;
-  fill: #000000;
+  fill: var(--salink-dark);
+  stroke: var(--salink-dark);
 }
 
 /* Route column */
 .ride-card__route {
+  grid-area: route;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -356,18 +402,43 @@ svg.icon {
   overflow: visible;
 }
 
+.route-svg polyline {
+  stroke: var(--salink-dark);
+}
+
+.route-svg circle {
+  fill: var(--salink-dark);
+}
+
+.route-svg use {
+  fill: var(--salink-dark);
+  stroke: var(--salink-dark);
+}
+
 /* Status & Actions */
 .ride-card__badge {
-  position: absolute;
-  top: 18px;
-  right: 28px;
+  grid-area: badge;
+  align-self: start;
+  justify-self: end;
   display: flex;
   align-items: center;
   gap: 6px;
-  font-family: var(--font-display);
+  font-family: var(--font);
   font-size: 1.15rem;
   letter-spacing: 0.05em;
-  color: #000000;
+  color: var(--salink-dark);
+  padding: 4px 10px;
+  border-radius: 999px;
+}
+
+.ride-card__badge--matched {
+  background: #c9d99b;
+  color: var(--salink-dark);
+}
+
+.ride-card__badge--different {
+  background: var(--salink-light);
+  color: var(--salink-dark);
 }
 
 .badge-check-circle {
@@ -377,16 +448,21 @@ svg.icon {
   width: 22px;
   height: 22px;
   border-radius: 50%;
-  background: #000000;
-  color: #FFFFFF;
+  background: var(--salink-dark);
+  color: var(--salink-accent);
   font-size: 0.8rem;
   font-weight: bold;
 }
 
+.ride-card__badge--matched .badge-check-circle {
+  background: var(--salink-dark);
+  color: #c9d99b;
+}
+
 .ride-card__actions {
-  position: absolute;
-  bottom: 18px;
-  right: 28px;
+  grid-area: actions;
+  align-self: end;
+  justify-self: end;
   display: flex;
   align-items: center;
   gap: 12px;
@@ -396,23 +472,25 @@ svg.icon {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: #FFFFFF;
-  color: #000000;
-  border: none;
+  background: var(--salink-white);
+  color: var(--salink-dark);
+  border: 2px solid var(--salink-dark);
   border-radius: 999px;
   padding: 8px 22px;
-  font-family: var(--font-display);
+  font-family: var(--font);
   font-size: 1rem;
   letter-spacing: 0.04em;
   text-decoration: none;
   cursor: pointer;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-  transition: background 0.15s, transform 0.1s;
+  box-shadow: var(--shadow-flat);
+  transition: background 0.15s, transform 0.1s, box-shadow 0.1s, color 0.15s;
 }
 
 .btn-white-pill:hover {
-  background: #F0F0F0;
+  background: var(--salink-dark);
+  color: var(--salink-accent);
   transform: translateY(-1px);
+  box-shadow: 4px 4px 0 var(--salink-dark);
 }
 
 .btn-white-pill:active {
@@ -423,17 +501,23 @@ svg.icon {
 .empty-state {
   padding: 3rem 1.5rem;
   text-align: center;
-  border: 2px dashed #000000;
+  border: 2px dashed var(--salink-dark);
   border-radius: 20px;
-  background: #FAFAFA;
+  background: var(--salink-cream);
+  color: var(--salink-dark);
 }
 
 .empty-state strong {
   display: block;
-  font-family: var(--font-display);
+  font-family: var(--font);
   font-size: 1.35rem;
   letter-spacing: 0.04em;
   margin-bottom: 0.4rem;
+  color: var(--salink-dark);
+}
+
+.empty-state p {
+  color: var(--salink-muted);
 }
 
 /* ==========================================================================
@@ -441,10 +525,10 @@ svg.icon {
    ========================================================================== */
 .offer-title {
   text-align: center;
-  font-family: var(--font-display);
+  font-family: var(--font);
   font-size: 2rem;
   letter-spacing: 0.05em;
-  color: #000000;
+  color: var(--salink-dark);
   margin: 0 0 32px 0;
 }
 
@@ -470,10 +554,10 @@ svg.icon {
 
 .day-column__header {
   text-align: center;
-  font-family: var(--font-display);
+  font-family: var(--font);
   font-size: 1.25rem;
   letter-spacing: 0.05em;
-  color: #000000;
+  color: var(--salink-dark);
   margin: 0 0 4px 0;
 }
 
@@ -487,13 +571,14 @@ svg.icon {
 
 .saved-card {
   position: relative;
-  background: var(--salink-grey);
+  background: var(--salink-cream);
+  border: 2px solid var(--salink-dark);
+  box-shadow: 2px 2px 0 var(--salink-dark);
   border-radius: 14px;
   padding: 10px 12px;
-  font-family: var(--font-ui);
-  font-size: 0.82rem;
-  font-weight: 600;
-  color: #000000;
+  font-family: var(--font);
+  font-size: 0.85rem;
+  color: var(--salink-dark);
 }
 
 .saved-card__route {
@@ -506,9 +591,8 @@ svg.icon {
   align-items: center;
   gap: 4px;
   margin-top: 4px;
-  font-weight: 500;
-  font-size: 0.8rem;
-  color: #333333;
+  font-size: 0.82rem;
+  color: var(--salink-muted);
 }
 
 .saved-card__time svg.icon {
@@ -522,7 +606,7 @@ svg.icon {
   right: 6px;
   border: none;
   background: transparent;
-  color: #444444;
+  color: var(--salink-muted);
   cursor: pointer;
   padding: 2px;
   line-height: 1;
@@ -530,11 +614,12 @@ svg.icon {
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: color 0.15s, background 0.15s;
 }
 
 .saved-card__remove:hover {
-  color: #000000;
-  background: rgba(0, 0, 0, 0.1);
+  color: #D32F2F;
+  background: rgba(77, 42, 0, 0.1);
 }
 
 /* Day input controls */
@@ -546,12 +631,14 @@ svg.icon {
 
 .slot-dropdown {
   position: relative;
-  background: var(--salink-grey);
+  background: var(--salink-cream);
+  border: 2px solid var(--salink-dark);
   border-radius: 999px;
   padding: 4px 12px;
-  height: 32px;
+  height: 34px;
   display: flex;
   align-items: center;
+  box-shadow: 1px 1px 0 var(--salink-dark);
 }
 
 .slot-dropdown select {
@@ -559,10 +646,10 @@ svg.icon {
   border: none;
   background: transparent;
   outline: none;
-  font-family: var(--font-ui);
-  font-size: 0.78rem;
-  font-weight: 600;
-  color: #1A1A1A;
+  font-family: var(--font);
+  font-size: 0.82rem;
+  letter-spacing: 0.02em;
+  color: var(--salink-dark);
   appearance: none;
   -webkit-appearance: none;
   cursor: pointer;
@@ -575,7 +662,7 @@ svg.icon {
 .slot-dropdown::after {
   content: "▼";
   font-size: 0.6rem;
-  color: #444;
+  color: var(--salink-dark);
   position: absolute;
   right: 10px;
   pointer-events: none;
@@ -584,21 +671,23 @@ svg.icon {
 /* Plus (+) button */
 .btn-add-slot {
   margin: 4px auto 0;
-  width: 28px;
-  height: 28px;
+  width: 30px;
+  height: 30px;
   border-radius: 50%;
-  border: none;
-  background: #666666;
-  color: #FFFFFF;
+  border: 2px solid var(--salink-dark);
+  background: var(--salink-accent);
+  color: var(--salink-dark);
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
+  box-shadow: 2px 2px 0 var(--salink-dark);
   transition: background 0.15s, transform 0.1s;
 }
 
 .btn-add-slot:hover {
-  background: #000000;
+  background: var(--salink-dark);
+  color: var(--salink-accent);
   transform: scale(1.1);
 }
 
@@ -619,19 +708,21 @@ svg.icon {
 }
 
 .vehicle-box__title {
-  font-family: var(--font-display);
+  font-family: var(--font);
   font-size: 1.35rem;
   letter-spacing: 0.05em;
-  color: #000000;
+  color: var(--salink-dark);
   margin: 0 0 4px 0;
 }
 
 .vehicle-pill {
   position: relative;
-  background: var(--salink-grey);
+  background: var(--salink-cream);
+  border: 2px solid var(--salink-dark);
+  box-shadow: 2px 2px 0 var(--salink-dark);
   border-radius: 999px;
   padding: 8px 16px;
-  height: 44px;
+  height: 46px;
   display: flex;
   align-items: center;
 }
@@ -641,10 +732,10 @@ svg.icon {
   border: none;
   background: transparent;
   outline: none;
-  font-family: var(--font-display);
+  font-family: var(--font);
   font-size: 1.1rem;
   letter-spacing: 0.04em;
-  color: #000000;
+  color: var(--salink-dark);
   appearance: none;
   -webkit-appearance: none;
   cursor: pointer;
@@ -654,7 +745,7 @@ svg.icon {
 .vehicle-pill::after {
   content: "▼";
   font-size: 0.75rem;
-  color: #333;
+  color: var(--salink-dark);
   position: absolute;
   right: 14px;
   pointer-events: none;
@@ -674,46 +765,53 @@ svg.icon {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: var(--salink-grey);
-  color: #000000;
-  border: none;
+  background: var(--salink-cream);
+  color: var(--salink-dark);
+  border: 2px solid var(--salink-dark);
   border-radius: 999px;
   padding: 10px 32px;
-  font-family: var(--font-display);
+  font-family: var(--font);
   font-size: 1.1rem;
   letter-spacing: 0.05em;
   text-decoration: none;
   cursor: pointer;
-  transition: background 0.15s, transform 0.1s;
+  box-shadow: var(--shadow-flat);
+  transition: background 0.15s, transform 0.1s, box-shadow 0.1s;
 }
 
 .btn-cancel:hover {
-  background: var(--salink-grey-dark);
+  background: var(--salink-light);
+  transform: translate(-1px, -1px);
+  box-shadow: 4px 4px 0 var(--salink-dark);
 }
 
 .btn-save {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: #000000;
-  color: #FFFFFF;
-  border: none;
+  background: var(--salink-dark);
+  color: var(--salink-accent);
+  border: 2px solid var(--salink-dark);
   border-radius: 999px;
   padding: 10px 38px;
-  font-family: var(--font-display);
+  font-family: var(--font);
   font-size: 1.1rem;
   letter-spacing: 0.05em;
   cursor: pointer;
-  transition: background 0.15s, transform 0.1s;
+  box-shadow: var(--shadow-flat);
+  transition: background 0.15s, transform 0.1s, box-shadow 0.1s, color 0.15s;
 }
 
 .btn-save:hover {
-  background: #333333;
-  transform: translateY(-1px);
+  background: var(--salink-primary);
+  color: var(--salink-white);
+  transform: translate(-1px, -1px);
+  box-shadow: 4px 4px 0 var(--salink-dark);
 }
 
 .btn-save:active {
-  transform: translateY(0);
+  transform: translate(1px, 1px);
+  box-shadow: 1px 1px 0 var(--salink-dark);
 }
 
 /* Responsive */
@@ -723,7 +821,7 @@ svg.icon {
   }
   .sidebar {
     border-right: none;
-    border-bottom: 2px solid #000000;
+    border-bottom: 2px solid var(--salink-dark);
     flex-direction: row;
     padding: 12px 18px;
   }
@@ -744,5 +842,12 @@ svg.icon {
       "route route"
       "badge badge"
       "actions actions";
+  }
+  .ride-card__badge,
+  .ride-card__actions {
+    justify-self: end;
+  }
+  .search-field {
+    width: min(100%, 300px);
   }
 }

@@ -3,7 +3,142 @@
 
 {% block title %}FAQ & Syarat Ketentuan | SaLink{% endblock %}
 
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'style.css' %}">
+<link rel="stylesheet" href="{% static 'faq.css' %}">
+{% endblock %}
+
 {% block content %}
+  <main class="faq-page">
+      <div class="faq-container">
+
+          <!-- Tombol Kembali -->
+          <a href="{% url 'main:show_main' %}" class="faq-back">
+              ← Kembali ke Beranda
+          </a>
+
+          <!-- Header FAQ -->
+          <header class="faq-header">
+              <p class="faq-eyebrow">
+                  Pusat Bantuan • SaLink
+              </p>
+
+              <h1>
+                  ❓ FAQ & Syarat Ketentuan
+              </h1>
+
+              <p class="faq-header-description">
+                  Pertanyaan umum seputar layanan SaLink, tata cara penggunaan
+                  modul, dan kebijakan komunitas mahasiswa Universitas Indonesia.
+              </p>
+          </header>
+
+          <!-- Daftar Pertanyaan dan Jawaban -->
+          <div class="faq-list">
+
+              <!-- FAQ 1 -->
+              <details class="faq-item" open>
+                  <summary class="faq-question">
+                      <span>Apa itu platform SaLink?</span>
+                      <span class="faq-chevron" aria-hidden="true">▾</span>
+                  </summary>
+
+                  <p class="faq-answer">
+                      SaLink adalah platform terintegrasi mahasiswa Universitas
+                      Indonesia yang bertujuan mewujudkan gaya hidup kampus
+                      berkelanjutan (sustainable living). Di SaLink, mahasiswa
+                      dapat memperjualbelikan barang bekas (Saling Beli),
+                      meminjamkan alat belajar (Saling Pinjam), membagikan
+                      makanan berlebih (Saling Bagi), dan berbagi tumpangan
+                      motor/mobil di seputar kampus (Saling Tebeng).
+                  </p>
+              </details>
+
+              <!-- FAQ 2 -->
+              <details class="faq-item">
+                  <summary class="faq-question">
+                      <span>Bagaimana sistem pembayaran dan COD di Saling Beli?</span>
+                      <span class="faq-chevron" aria-hidden="true">▾</span>
+                  </summary>
+
+                  <p class="faq-answer">
+                      Pembayaran dilakukan secara langsung (direct transfer)
+                      ke rekening bank atau e-wallet penjual tanpa biaya admin
+                      platform. Pembeli mengunggah konfirmasi transfer di
+                      tracker, penjual memverifikasi dana masuk, lalu kedua
+                      pihak menyepakati jadwal temu COD di kampus untuk serah
+                      terima barang. Khusus barang hibah gratis (Rp0), tahapan
+                      pembayaran otomatis ditiadakan.
+                  </p>
+              </details>
+
+              <!-- FAQ 3 -->
+              <details class="faq-item">
+                  <summary class="faq-question">
+                      <span>Apakah barang yang sudah terjual akan tetap muncul di katalog?</span>
+                      <span class="faq-chevron" aria-hidden="true">▾</span>
+                  </summary>
+
+                  <p class="faq-answer">
+                      Tidak. Barang yang status transaksinya telah selesai
+                      otomatis disembunyikan dari katalog utama agar etalase
+                      barang tetap segar dan hanya menampilkan barang yang
+                      masih tersedia bagi pembeli lain. Penjual juga memiliki
+                      kontrol penuh untuk mengedit detail atau menghapus barang
+                      dagangan miliknya kapan saja.
+                  </p>
+              </details>
+
+              <!-- FAQ 4 -->
+              <details class="faq-item">
+                  <summary class="faq-question">
+                      <span>Bagaimana aturan username akun SaLink?</span>
+                      <span class="faq-chevron" aria-hidden="true">▾</span>
+                  </summary>
+
+                  <p class="faq-answer">
+                      Setiap username di SaLink bersifat unik. Anda dapat
+                      mengganti username profil kapan pun di halaman Akun.
+                      Jika Anda mengubah username lama Anda atau menghapus
+                      akun, maka username lama tersebut otomatis dibebaskan
+                      dan dapat digunakan oleh pengguna lain.
+                  </p>
+              </details>
+
+              <!-- Syarat dan Ketentuan -->
+              <section class="faq-terms">
+                  <h2>
+                      📜 Syarat & Ketentuan Komunitas SaLink
+                  </h2>
+
+                  <ol>
+                      <li>
+                          Pengguna dilarang memperjualbelikan atau membagikan
+                          barang ilegal, senjata tajam, zat terlarang, atau
+                          barang yang melanggar peraturan perundang-undangan RI
+                          dan tata tertib Universitas Indonesia.
+                      </li>
+
+                      <li>
+                          Setiap barang yang ditawarkan wajib mencantumkan
+                          deskripsi kondisi sebenarnya secara jujur dan transparan.
+                      </li>
+
+                      <li>
+                          Kedua belah pihak bertanggung jawab penuh atas
+                          kesepakatan janji temu COD dan kondisi fisik barang
+                          saat serah terima di kampus.
+                      </li>
+
+                      <li>
+                          Pengguna wajib menjaga etika komunikasi yang sopan
+                          dan saling menghargai sesama sivitas akademika UI.
+                      </li>
+                  </ol>
+              </section>
+
+          </div>
+      </div>
   <main class="flex-1 max-w-4xl mx-auto px-4 py-8 w-full">
     <!-- Breadcrumb / Tombol Kembali -->
     <div style="margin-bottom: 24px;">
@@ -33,7 +168,7 @@
           <span style="font-size: 1.2rem;">▾</span>
         </summary>
         <p style="margin: 12px 0 0; font-size: 0.9rem; line-height: 1.6; color: #333; border-top: 1px dashed rgba(77,42,0,0.2); padding-top: 10px;">
-          SaLink adalah platform terintegrasi mahasiswa Universitas Indonesia yang bertujuan mewujudkan gaya hidup kampus berkelanjutan (*sustainable living*). Di SaLink, mahasiswa dapat memperjualbelikan barang bekas (*Saling Beli*), meminjamkan alat belajar (*Saling Pinjam*), membagikan makanan berlebih (*Saling Bagi*), dan berbagi tumpangan motor/mobil di seputar kampus (*Saling Tebeng*).
+          SaLink adalah platform terintegrasi mahasiswa Universitas Indonesia yang bertujuan mewujudkan gaya hidup kampus berkelanjutan (*sustainable living*). Di SaLink, mahasiswa dapat memperjualbelikan barang bekas (*Saling Beli*), meminjamkan alat belajar (*Saling Pinjam*), membagikan makanan berlebih (*Saling Bagi*), dan berbagi tumpangan motor/mobil di seputar kampus (*Saling Nebeng*).
         </p>
       </details>
 

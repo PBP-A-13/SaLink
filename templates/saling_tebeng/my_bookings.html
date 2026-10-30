@@ -12,7 +12,7 @@
   <a class="side-cta" href="{% url 'saling_tebeng:tawarkan_tebengan' %}">Tawarkan Tebengan</a>
 {% endblock %}
 
-{% block content %}
+{% block page_content %}
 <h1 class="offer-title">Tebengan Saya</h1>
 
 {% if bookings %}
@@ -29,7 +29,7 @@
 
       <div class="ride-card__info">
         <div class="ride-card__origin">[{{ s.origin|upper }} → {{ s.destination|upper }}]</div>
-        <p class="ride-card__detail">Waktu: {{ s.date|date:"d M Y" }} @ {{ s.departure_time|time:"H.i" }}</p>
+        <p class="ride-card__detail">Waktu: {{ b.ride_date|date:"d M Y" }} @ {{ s.departure_time|time:"H.i" }}</p>
         <p class="ride-card__detail">Kursi: {{ b.seats }} | Status: {{ b.get_status_display|upper }}</p>
       </div>
 
@@ -49,8 +49,7 @@
   <div class="empty-state">
     <strong>Belum ada booking tebengan</strong>
     <p>Kamu belum bergabung dengan tebengan manapun.</p>
-    <a href="{% url 'saling_tebeng:nebeng_list' %}" class="btn-white-pill" style="border: 2px solid #000; margin-top: 10px;">Cari Tebengan</a>
+    <a href="{% url 'saling_tebeng:nebeng_list' %}" class="btn-white-pill" style="border: 2px solid var(--salink-dark); margin-top: 10px;">Cari Tebengan</a>
   </div>
 {% endif %}
 {% endblock %}
-

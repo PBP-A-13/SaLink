@@ -14,7 +14,7 @@
   </div>
 {% endblock %}
 
-{% block content %}
+{% block page_content %}
 <h1 class="offer-title">Jadwal Nebeng</h1>
 
 <form method="post" id="offer-form" novalidate>
@@ -125,7 +125,7 @@
 </form>
 {% endblock %}
 
-{% block scripts %}
+{% block extra_js %}
 <script>
   var slotCounter = 0;
 
@@ -198,7 +198,7 @@
   function cancelExistingSchedule(scheduleId) {
     if (confirm('Batalkan jadwal ini?')) {
       var form = document.getElementById('cancel-existing-form');
-      form.action = '/saling-tebeng/nebeng/jadwal/' + scheduleId + '/batal/';
+      form.action = '/saling-nebeng/nebeng/jadwal/' + scheduleId + '/batal/';
       form.submit();
     }
   }
