@@ -4,6 +4,7 @@ from django.urls import reverse
 
 from django.contrib.auth.models import User
 from saling_beli.models import ItemListing
+from saling_tebeng.models import RideOffer, RideSchedule, Vehicle
 
 
 class HomePageTests(TestCase):

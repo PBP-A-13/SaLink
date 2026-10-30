@@ -3,8 +3,10 @@ from django.shortcuts import render
 from saling_beli.models import ItemListing
 from saling_bagi.models import Makanan
 from saling_pinjam.models import BorrowItem
+from saling_tebeng.models import RideSchedule
 
 from SaLink.cache_keys import HOME
+
 
 def show_main(request):
     public_data = cache.get(HOME)
@@ -16,6 +18,10 @@ def show_main(request):
             'count_beli': ItemListing.objects.filter(status=ItemListing.Status.AVAILABLE).count(),
             'count_bagi': Makanan.objects.count(),
             'count_pinjam': BorrowItem.objects.count(),
+            'count_tebeng': RideSchedule.objects.filter(
+                is_active=True,
+                ride_offer__is_active=True,
+            ).count(),
         }
         cache.set(HOME, public_data, timeout=60)
 
