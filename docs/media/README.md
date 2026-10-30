@@ -89,9 +89,11 @@ menggunakan data seed yang sudah dianonimkan.
 ![Halaman Saling Bagi](salingbagi-page.jpeg)
 
 ### Form Bagikan Makanan
+
 ![Form Bagikan Makanan](salingbagi-bagikanmakanan.jpeg)
 
-### Janji Temi
+### Janji Temu
+
 ![Janji Temu](salingbagi-janjitemu.jpeg)
 
 ---
