@@ -113,6 +113,13 @@ def profile(request):
             'url': reverse('saling_bagi:index'),
             'tone': 'orange',
         },
+        {
+            'label': 'Saling Nebeng',
+            'value': user.RideSchedule.count(),
+            'detail': 'tebengan ditawarkan',
+            'url': reverse('saling_tebeng: index'),
+            'tone': 'beige',
+        }
     ]
     return render(request, 'user_page/profile.html', {
         'form': form,
