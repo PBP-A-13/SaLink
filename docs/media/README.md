@@ -82,6 +82,20 @@ menggunakan data seed yang sudah dianonimkan.
 
 ---
 
+### Saling Bagi
+
+### Halaman Saling Bagi
+
+![Halaman Saling Bagi](salingbagi-page.jpeg)
+
+### Form Bagikan Makanan
+![Form Bagikan Makanan](salingbagi-bagikanmakanan.jpeg)
+
+### Janji Temi
+![Janji Temu](salingbagi-janjitemu.jpeg)
+
+---
+
 ## Panduan capture
 
 - Ukuran acuan: **1440×900** untuk desktop dan **390×844** untuk mobile.
