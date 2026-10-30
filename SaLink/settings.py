@@ -26,22 +26,12 @@ SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'django-insecure-dev-only-change-me'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DJANGO_DEBUG', '1') == '1'
 
-ALLOWED_HOSTS = [
-    host.strip()
-    for host in os.getenv(
-        'DJANGO_ALLOWED_HOSTS',
-        'localhost,127.0.0.1,muhammad-hasbi52-salink.pws.cs.ui.ac.id,.pws.cs.ui.ac.id'
-    ).split(',')
-    if host.strip()
-]
+ALLOWED_HOSTS = ["localhost", "127.0.0.1", "muhammad-hasbi52-salink.pws.cs.ui.ac.id"]
 
 CSRF_TRUSTED_ORIGINS = [
-    origin.strip()
-    for origin in os.getenv(
-        'DJANGO_CSRF_TRUSTED_ORIGINS',
-        'http://localhost,http://127.0.0.1,https://muhammad-hasbi52-salink.pws.cs.ui.ac.id,https://*.pws.cs.ui.ac.id'
-    ).split(',')
-    if origin.strip()
+    "http://localhost",
+    "http://127.0.0.1",
+    "https://muhammad-hasbi52-salink.pws.cs.ui.ac.id",
 ]
 
 # Application definition
