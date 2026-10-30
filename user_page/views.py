@@ -9,6 +9,8 @@ from django.urls import reverse
 from django.utils.http import url_has_allowed_host_and_scheme
 from urllib.parse import urlencode
 
+from saling_tebeng.models import RideBooking
+
 from .forms import ProfileForm, SaLinkAuthenticationForm, SignUpForm
 
 
@@ -91,6 +93,11 @@ def profile(request):
     transaction_count = TransactionOrder.objects.filter(
         Q(seller=user) | Q(buyer=user),
     ).exclude(stage=TransactionOrder.Stage.BATAL).count()
+    ride_count = RideBooking.objects.filter(
+        ride_schedule__ride_offer__driver=user,
+    ).exclude(
+        Q(passenger=user) | Q(status='cancelled'),
+    ).count()
     stats = [
         {
             'label': 'Saling Beli',
@@ -115,9 +122,9 @@ def profile(request):
         },
         {
             'label': 'Saling Nebeng',
-            'value': user.RideSchedule.count(),
-            'detail': 'tebengan ditawarkan',
-            'url': reverse('saling_tebeng: index'),
+            'value': ride_count,
+            'detail': 'orang pernah ditebengi',
+            'url': reverse('saling_tebeng:index'),
             'tone': 'beige',
         }
     ]

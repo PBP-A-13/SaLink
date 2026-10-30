@@ -1,6 +1,9 @@
 from django.contrib.auth.models import User
+from django.utils import timezone
 from django.test import TestCase
 from django.urls import reverse
+
+from saling_tebeng.models import RideBooking, RideOffer, RideSchedule, Vehicle
 
 
 class UserPageTests(TestCase):
