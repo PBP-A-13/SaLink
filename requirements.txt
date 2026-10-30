@@ -5,3 +5,4 @@ tzdata==2026.4
 gunicorn
 whitenoise
 Pillow==13.0.0
+django-cas-ng==5.1.2
