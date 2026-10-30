@@ -1,9 +1,10 @@
-
 document.addEventListener("DOMContentLoaded", function () {
 
-    // CUSTOM LOCATION INPUT
+
     const lokasiSelect = document.getElementById("id_lokasi_pengambilan");
-    const lokasiContainer = document.getElementById("lokasi-lainnya-container");
+    const lokasiContainer = document.getElementById(
+        "lokasi-lainnya-container"
+    );
     const lokasiInput = document.getElementById("id_lokasi_lainnya");
 
     function toggleLokasiLainnya() {
@@ -27,10 +28,13 @@ document.addEventListener("DOMContentLoaded", function () {
         toggleLokasiLainnya();
     }
 
-    // FOOD SEARCH, LOCATION FILTER, AND SORTING
+
+    // ========================================
+    // FOOD SEARCH AND LOCATION FILTER
+    // ========================================
+
     const searchInput = document.getElementById("bagiSearch");
     const locationSelect = document.getElementById("bagiLocation");
-    const sortSelect = document.getElementById("bagiSort");
     const resultCount = document.getElementById("bagiResultCount");
     const noResults = document.getElementById("bagiNoResults");
     const foodGrid = document.getElementById("bagiFoodGrid");
@@ -54,7 +58,10 @@ document.addEventListener("DOMContentLoaded", function () {
 
         cards.forEach(function (card) {
             const name = (card.dataset.name || "").toLowerCase();
-            const description = (card.dataset.description || "").toLowerCase();
+            const description = (
+                card.dataset.description || ""
+            ).toLowerCase();
+
             const cardLocation = card.dataset.location || "";
 
             const matchesKeyword =
@@ -75,39 +82,13 @@ document.addEventListener("DOMContentLoaded", function () {
         });
 
         if (resultCount) {
-            resultCount.textContent = visibleCount;
+            resultCount.textContent =
+                visibleCount + " makanan tersedia";
         }
 
         if (noResults) {
-            noResults.hidden = !(cards.length > 0 && visibleCount === 0);
+            noResults.hidden = visibleCount !== 0;
         }
-    }
-
-    function sortFoods() {
-        if (!sortSelect) return;
-
-        const sortType = sortSelect.value;
-        const sortedCards = [...cards];
-
-        sortedCards.sort(function (a, b) {
-            if (sortType === "oldest") {
-                return Number(a.dataset.date) - Number(b.dataset.date);
-            }
-
-            if (sortType === "name") {
-                return (a.dataset.name || "").localeCompare(
-                    b.dataset.name || ""
-                );
-            }
-
-            return Number(b.dataset.date) - Number(a.dataset.date);
-        });
-
-        sortedCards.forEach(function (card) {
-            foodGrid.insertBefore(card, noResults);
-        });
-
-        filterFoods();
     }
 
     if (searchInput) {
@@ -118,9 +99,6 @@ document.addEventListener("DOMContentLoaded", function () {
         locationSelect.addEventListener("change", filterFoods);
     }
 
-    if (sortSelect) {
-        sortSelect.addEventListener("change", sortFoods);
-    }
-
     filterFoods();
+
 });

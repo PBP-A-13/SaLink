@@ -14,14 +14,15 @@ def index(request):
     makanan_list = Makanan.objects.filter(
         is_available=True,
         batas_layak_konsumsi__gt=timezone.now()
-    ).select_related('pemberi').order_by('-id')
+    ).select_related(
+        'pemberi'
+    ).order_by('-id')
 
-    context = {
-        'makanan_list': makanan_list,
-        'lokasi_choices': Makanan.LOKASI_CHOICES,
-    }
-
-    return render(request, 'saling_bagi/index.html', context)
+    return render(
+        request,
+        'saling_bagi/saling_bagi.html',
+        {'makanan_list': makanan_list}
+    )
 
 
 @login_required
