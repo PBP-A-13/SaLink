@@ -15,10 +15,27 @@
     <!-- ===== KONTEN UTAMA ===== -->
     <main class="pinjam">
 
+        {% if messages %}
+        <div class="notices">
+            {% for message in messages %}
+            <p class="notice notice--{{ message.tags }}">{{ message }}</p>
+            {% endfor %}
+        </div>
+        {% endif %}
+
         <!-- Kiri: Jadwal Pinjam -->
         <section class="jadwal">
             <h2 class="today">{{ today_label }}</h2>
-            <h3 class="section-title section-title--center">Jadwal Pinjam &middot; {{ month_label }}</h3>
+
+            <div class="calendar__nav">
+                {% if prev_month_date %}
+                <a href="?tanggal={{ prev_month_date|date:'Y-m-d' }}" class="calendar__nav-btn" aria-label="Bulan sebelumnya">&lsaquo;</a>
+                {% else %}
+                <span class="calendar__nav-btn calendar__nav-btn--off" aria-hidden="true">&lsaquo;</span>
+                {% endif %}
+                <h3 class="section-title">Jadwal Pinjam &middot; {{ month_label }}</h3>
+                <a href="?tanggal={{ next_month_date|date:'Y-m-d' }}" class="calendar__nav-btn" aria-label="Bulan berikutnya">&rsaquo;</a>
+            </div>
 
             <div class="calendar">
                 <div class="calendar__days">
@@ -31,19 +48,30 @@
                     <span>Sabtu</span>
                 </div>
 
+                <!-- Tanggal yang belum lewat berupa link: klik = tampilkan barang yang bebas di tanggal itu -->
                 <div class="calendar__grid">
                     {% for week in calendar_weeks %}
                         {% for day in week %}
-                            {% if day.in_month %}
-                            <label class="calendar__cell{% if day.is_today %} calendar__cell--today{% endif %}">
-                                <input type="radio" name="tanggal" class="calendar__radio"
-                                    value="{{ day.date|date:'Y-m-d' }}"{% if day.is_today %} checked{% endif %}>
-                                <span class="calendar__date">{{ day.date.day }}</span>
-                            </label>
-                            {% else %}
+                            {% if not day.in_month %}
                             <div class="calendar__cell calendar__cell--muted">
                                 <span class="calendar__date">{{ day.date.day }}</span>
                             </div>
+                            {% elif day.is_past %}
+                            <div class="calendar__cell calendar__cell--past">
+                                <span class="calendar__date">{{ day.date.day }}</span>
+                                {% for booking in day.bookings %}
+                                <span class="calendar__booking" title="{{ booking.item.name }}">{{ booking.item.name }}</span>
+                                {% endfor %}
+                            </div>
+                            {% else %}
+                            <a href="?tanggal={{ day.date|date:'Y-m-d' }}#barang-tersedia"
+                               class="calendar__cell{% if day.is_today %} calendar__cell--today{% endif %}{% if day.is_selected %} is-selected{% endif %}"
+                               {% if day.is_selected %}aria-current="true"{% endif %}>
+                                <span class="calendar__date">{{ day.date.day }}</span>
+                                {% for booking in day.bookings %}
+                                <span class="calendar__booking" title="{{ booking.item.name }}">{{ booking.item.name }}</span>
+                                {% endfor %}
+                            </a>
                             {% endif %}
                         {% endfor %}
                     {% endfor %}
@@ -54,7 +82,12 @@
         <!-- Kanan: Barang & Pinjaman Saya -->
         <aside class="sidebar">
             <section class="barang">
-                <h3 class="section-title">Barang</h3>
+                <div class="barang__head">
+                    <h3 class="section-title">Barang</h3>
+                    {% if user.is_authenticated %}
+                    <a href="{% url 'saling_pinjam:item_create' %}" class="barang__add">+ Pinjamkan Barang</a>
+                    {% endif %}
+                </div>
 
                 <div class="barang__list">
                     {% for item in items|slice:":4" %}
@@ -62,7 +95,7 @@
                         <div class="item-card__image"></div>
                         <div class="item-card__info">
                             <span class="item-card__name">{{ item.name }}</span>
-                            <span class="item-card__meta">Lokasi Pickup</span>
+                            <span class="item-card__meta">{{ item.pickup_location }}</span>
                             <span class="item-card__status">{{ item.get_status_display }}</span>
                         </div>
                     </a>
@@ -72,25 +105,106 @@
                 </div>
             </section>
 
-            <section class="pinjaman-saya">
-                <h3 class="section-title">Pinjaman Saya</h3>
+            <section class="pinjaman-saya" id="pinjaman-aktif">
+                <div class="barang__head">
+                    <h3 class="section-title">Pinjaman Saya</h3>
+                    {% if user.is_authenticated %}
+                    <span class="slot-count">{{ active_count }}/{{ max_active }} slot</span>
+                    {% endif %}
+                </div>
 
                 <div class="pinjaman-saya__box">
                     {% if user.is_authenticated %}
-                        {% for req in my_requests %}
-                        <a href="{% url 'saling_pinjam:my_borrows' %}" class="pinjaman-saya__row">
-                            <span>{{ req.item.name }}</span>
-                            <span class="pinjaman-saya__status">{{ req.get_status_display }}</span>
-                        </a>
-                        {% empty %}
-                        <p class="empty-text">Kamu belum meminjam apa pun.</p>
+                        {% for req in active_slots %}
+                            {% if req %}
+                            <div class="slot">
+                                <a href="{% url 'saling_pinjam:item_detail' req.item.id %}" class="slot__photo">
+                                    {% if req.item.image_url %}<img src="{{ req.item.image_url }}" alt="Foto {{ req.item.name }}">{% endif %}
+                                </a>
+                                <div class="slot__body">
+                                    <a href="{% url 'saling_pinjam:item_detail' req.item.id %}" class="slot__name">{{ req.item.name }}</a>
+                                    <span class="slot__meta">{{ req.start_date|date:"d/m" }} &ndash; {{ req.end_date|date:"d/m" }} &middot; {{ req.item.pickup_location }}</span>
+                                    <span class="slot__status slot__status--{{ req.status|lower }}">
+                                        {% if req.status == 'PENDING' %}Menunggu persetujuan{% elif req.status == 'APPROVED' %}Disetujui, siap diambil{% else %}Sedang kamu pinjam{% endif %}
+                                    </span>
+                                </div>
+                                {% if req.status == 'PENDING' or req.status == 'APPROVED' %}
+                                <form method="post" action="{% url 'saling_pinjam:cancel_request' req.id %}" class="slot__cancel">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="next" value="{{ request.get_full_path }}#pinjaman-aktif">
+                                    <button type="submit">Batalkan</button>
+                                </form>
+                                {% endif %}
+                            </div>
+                            {% else %}
+                            <div class="slot slot--empty">Slot kosong &middot; pilih tanggal di kalender</div>
+                            {% endif %}
                         {% endfor %}
+                        <a href="{% url 'saling_pinjam:my_borrows' %}" class="pinjaman-saya__all">Lihat semua pinjaman &rarr;</a>
                     {% else %}
                         <p class="empty-text">Login untuk melihat pinjaman kamu.</p>
                     {% endif %}
                 </div>
             </section>
         </aside>
+
+        <!-- Bawah: barang yang bebas di tanggal yang diklik -->
+        <section class="tersedia" id="barang-tersedia">
+            <h3 class="section-title">Barang bebas dipinjam &middot; {{ selected_label }}</h3>
+
+            <div class="tersedia__list">
+                {% for item in available_items %}
+                <article class="avail-card">
+                    <a href="{% url 'saling_pinjam:item_detail' item.id %}" class="avail-card__photo">
+                        {% if item.image_url %}<img src="{{ item.image_url }}" alt="Foto {{ item.name }}">{% endif %}
+                    </a>
+
+                    <div class="avail-card__body">
+                        <a href="{% url 'saling_pinjam:item_detail' item.id %}" class="avail-card__name">{{ item.name }}</a>
+                        <p class="avail-card__meta">{{ item.pickup_location }}</p>
+                        <p class="avail-card__desc">{{ item.description|truncatechars:140 }}</p>
+                        <p class="avail-card__facts">
+                            Maks {{ item.max_duration_days }} hari &middot;
+                            {% if item.deposit_fee %}jaminan Rp {{ item.deposit_fee|floatformat:"0g" }}{% else %}tanpa jaminan{% endif %}
+                            &middot; milik {{ item.owner.username }}
+                        </p>
+                    </div>
+
+                    <div class="avail-card__action">
+                        {% if not user.is_authenticated %}
+                            <a href="{% url 'saling_pinjam:request_borrow' item.id %}" class="avail-btn">Login untuk Meminjam</a>
+                        {% elif item.already_requested %}
+                            <span class="avail-card__note">Sudah kamu ajukan</span>
+                        {% elif slots_full %}
+                            <span class="avail-card__note">Slot pinjaman penuh</span>
+                        {% else %}
+                        <form method="post" action="{% url 'saling_pinjam:request_borrow' item.id %}" class="avail-form">
+                            {% csrf_token %}
+                            <input type="hidden" name="start_date" value="{{ selected_date|date:'Y-m-d' }}">
+                            <input type="hidden" name="next" value="{% url 'saling_pinjam:item_list' %}?tanggal={{ selected_date|date:'Y-m-d' }}#pinjaman-aktif">
+                            <label for="end-{{ item.id }}" class="avail-form__label">Tanggal kembali</label>
+                            <select name="end_date" id="end-{{ item.id }}" class="avail-form__select">
+                                {% for option in item.end_options %}
+                                <option value="{{ option.value }}">{{ option.label }}</option>
+                                {% endfor %}
+                            </select>
+                            <button type="submit" class="avail-btn">Tambahkan Pinjaman</button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </article>
+                {% empty %}
+                <p class="empty-text">Belum ada barang yang bebas dipinjam di tanggal ini.</p>
+                {% endfor %}
+            </div>
+
+            {% if busy_items %}
+            <p class="tersedia__busy">
+                Sedang dipinjam orang lain di tanggal ini:
+                {% for busy in busy_items %}{{ busy.name }}{% if not forloop.last %}, {% endif %}{% endfor %}
+            </p>
+            {% endif %}
+        </section>
 
     </main>
 {% endblock %}
