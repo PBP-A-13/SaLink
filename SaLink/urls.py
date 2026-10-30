@@ -13,6 +13,7 @@ urlpatterns = [
     path('saling-beli/', include('saling_beli.urls')),
     path('saling-pinjam/', include('saling_pinjam.urls')),
     path('saling-nebeng/', include('saling_tebeng.urls')),
+    path('favicon.ico', RedirectView.as_view(url='/static/favicon/favicon.ico', permanent=False)),
     path(
         'saling-tebeng/',
         RedirectView.as_view(url='/saling-nebeng/', permanent=False),
