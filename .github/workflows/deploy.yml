@@ -2,24 +2,23 @@ name: Deploy to PWS
 
 on:
   push:
-    branches: [main]
-  workflow_dispatch:
+    branches:
+      - main
 
 jobs:
-  deploy:
+  deployment:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout repo
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
       - name: Push to PWS
         env:
-          PWS_USERNAME: ${{ secrets.PWS_USERNAME }}
-          PWS_TOKEN: ${{ secrets.PWS_TOKEN }}
+          # Pastikan tulisan 'salink' di ujung URL sesuai dengan nama proyek yang didaftarkan temen lu di PWS
+          PWS_URL: https://${{ secrets.PWS_USERNAME }}:${{ secrets.PWS_TOKEN }}@pbp.cs.ui.ac.id/${{ secrets.PWS_USERNAME }}/salink
         run: |
-          USER_ENC=$(python3 -c "import urllib.parse,os; print(urllib.parse.quote(os.environ['PWS_USERNAME'], safe=''))")
-          TOKEN_ENC=$(python3 -c "import urllib.parse,os; print(urllib.parse.quote(os.environ['PWS_TOKEN'], safe=''))")
-          git remote add pws "https://${USER_ENC}:${TOKEN_ENC}@pws.cs.ui.ac.id/muhammad.hasbi52/salink"
-          git push pws HEAD:main --force
+          git remote add pws $PWS_URL
+          git branch -M main
+          git push pws main
