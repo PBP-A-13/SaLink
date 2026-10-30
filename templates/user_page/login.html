@@ -10,6 +10,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Anton&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="{% static 'user_page/user-page.css' %}">
 </head>
+
 <body class="account-body">
   {% include 'user_page/_navbar.html' %}
   <main class="account-page auth-layout">
@@ -26,25 +27,58 @@
       <p class="eyebrow">SELAMAT DATANG KEMBALI</p>
       <h2 id="login-title">Masuk ke SaLink</h2>
       <p class="panel-copy">Gunakan akunmu untuk lanjut ke {{ module_name }}.</p>
-      {% if form.non_field_errors %}
-        <div class="form-alert" role="alert">Username atau password tidak cocok.</div>
+
+      {% if messages %}
+        <div class="messages" aria-live="polite">
+          {% for message in messages %}
+            <p class="messages__item">{{ message }}</p>
+          {% endfor %}
+        </div>
       {% endif %}
+
+      {% if form.non_field_errors %}
+        <div class="form-alert" role="alert">
+          Username atau password tidak cocok.
+        </div>
+      {% endif %}
+
       <form method="post" class="account-form">
         {% csrf_token %}
         <input type="hidden" name="next" value="{{ next }}">
+
         <div class="field">
           <label for="{{ form.username.id_for_label }}">Username</label>
           {{ form.username }}
           {{ form.username.errors }}
         </div>
+
         <div class="field">
           <label for="{{ form.password.id_for_label }}">Password</label>
           {{ form.password }}
           {{ form.password.errors }}
         </div>
-        <button class="action-button" type="submit">Masuk <span aria-hidden="true">&#8594;</span></button>
+
+        <button class="action-button" type="submit">
+          Masuk <span aria-hidden="true">&#8594;</span>
+        </button>
       </form>
-      <p class="auth-switch">Belum punya akun? <a href="{% url 'user_page:register' %}?next={{ next|urlencode }}">Daftar sekarang</a></p>
+
+      <div class="auth-divider">
+        <span>ATAU</span>
+      </div>
+
+      <a
+        class="sso-button"
+        href="{% url 'user_page:sso_login' %}?next={{ next|urlencode }}"
+      >
+        Masuk dengan UI SSO
+        <span aria-hidden="true">&#8594;</span>
+      </a>
+
+      <p class="auth-switch">
+        Belum punya akun?
+        <a href="{% url 'user_page:register' %}?next={{ next|urlencode }}">Daftar sekarang</a>
+      </p>
     </section>
   </main>
 </body>

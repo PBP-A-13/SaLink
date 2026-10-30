@@ -133,9 +133,16 @@ def profile(request):
             'tone': 'beige',
         }
     ]
+
+    sso_identity = SSOIdentity.objects.filter(
+        user=user,
+        provider='ui',
+    ).first()
+
     return render(request, 'user_page/profile.html', {
         'form': form,
         'stats': stats,
+        'sso_linked': sso_identity is not None,
     })
 
 

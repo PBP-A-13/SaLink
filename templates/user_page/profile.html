@@ -10,6 +10,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Anton&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="{% static 'user_page/user-page.css' %}">
 </head>
+
 <body class="account-body">
   {% include 'user_page/_navbar.html' %}
   <main class="account-page profile-page">
@@ -65,6 +66,31 @@
           {% endfor %}
           <button class="action-button" type="submit">Simpan profil</button>
         </form>
+
+        <!-- Koneksi Akun UI SSO -->
+        <div class="sso-connection">
+          <p class="eyebrow">KONEKSI AKUN</p>
+          <h3>UI SSO</h3>
+
+          {% if sso_linked %}
+            <div class="sso-connection__status">
+              <span class="sso-status-dot" aria-hidden="true"></span>
+              <div>
+                <strong>UI SSO Terhubung</strong>
+                <p>Akun SaLink kamu sudah terhubung dengan akun UI SSO.</p>
+              </div>
+            </div>
+          {% else %}
+            <p class="sso-connection__description">
+              Hubungkan akun UI SSO untuk memudahkanmu masuk ke SaLink
+              menggunakan akun Universitas Indonesia.
+            </p>
+            <a href="{% url 'user_page:sso_link' %}" class="sso-button">
+              Hubungkan Akun UI SSO
+              <span aria-hidden="true">&#8594;</span>
+            </a>
+          {% endif %}
+        </div>
 
         <!-- Zona Bahaya: Hapus Akun -->
         <div style="margin-top: 36px; padding-top: 24px; border-top: 1.5px dashed rgba(77, 42, 0, 0.25);">
