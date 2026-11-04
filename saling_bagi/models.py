@@ -33,7 +33,7 @@ class Makanan(models.Model):
     )
 
     lokasi_lainnya = models.CharField(
-        max_length=255,
+        max_length=5,
         blank=True,
         default=''
     )
