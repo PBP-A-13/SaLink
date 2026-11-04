@@ -1,29 +1,35 @@
-{% load static %}
+{# ============================================================
+   janji_temu.html -> "T" di MVT. Menerima data dari views.janji_temu.
+   Komentar Django pakai {# ... #} (nggak ikut terkirim ke browser).
+   Variabel dari view: janji_diterima (saya pemberi), janji_dibuat (saya pengambil).
+   ============================================================ #}
+{% load static %}                                      {# aktifin tag {% static %} buat CSS/JS/gambar #}
 <!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">   {# biar responsif di HP #}
     <title>SaLink - Janji Temu</title>
 
-    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.googleapis.com">              {# percepat load Google Fonts #}
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Anton&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-    <link rel="stylesheet" href="{% static 'style.css' %}">
-    <link rel="stylesheet" href="{% static 'navbar-footer.css' %}">
-    <link rel="stylesheet" href="{% static 'saling_bagi/saling_bagi.css' %}">
+    <link rel="stylesheet" href="{% static 'style.css' %}">                  {# CSS global #}
+    <link rel="stylesheet" href="{% static 'navbar-footer.css' %}">          {# CSS navbar & footer bersama #}
+    <link rel="stylesheet" href="{% static 'saling_bagi/saling_bagi.css' %}"> {# CSS khusus fitur Bagi #}
 </head>
 
 <body>
-{% include "_navbar.html" with active_nav="bagi" %}
+{% include "_navbar.html" with active_nav="bagi" %}    {# sisipin navbar bersama; active_nav nandain menu BAGI aktif #}
 
 <main class="bagi-page">
 
+    {# Pesan flash dari messages.success/error/warning di views.py (tampil sekali lalu hilang) #}
     {% if messages %}
     <div class="bagi-messages">
         {% for message in messages %}
-        <div class="bagi-message">{{ message }}</div>
+        <div class="bagi-message">{{ message }}</div>   {# {{ }} = cetak nilai variabel #}
         {% endfor %}
     </div>
     {% endif %}
@@ -37,7 +43,7 @@
         </p>
     </section>
 
-    <!-- PERMINTAAN YANG DITERIMA -->
+    {# ===================== BAGIAN 1: SAYA SEBAGAI PEMBERI ===================== #}
     <section class="bagi-appointment-section">
 
         <div class="bagi-section-heading">
@@ -50,35 +56,39 @@
 
         <div class="bagi-appointment-list">
 
-            {% for janji in janji_diterima %}
+            {% for janji in janji_diterima %}          {# loop queryset dari view; tiap iterasi = satu objek JanjiTemu #}
             <article class="bagi-appointment-card">
 
                 <div class="bagi-appointment-card__top">
                     <div>
                         <span class="bagi-food-category">MAKANAN</span>
-                        <h3>{{ janji.makanan.nama_makanan }}</h3>
+                        <h3>{{ janji.makanan.nama_makanan }}</h3>   {# titik nelusurin relasi: janji -> makanan -> nama #}
                     </div>
 
+                    {# |lower = jadi huruf kecil -> class CSS dinamis, mis. bagi-status--pending (warna beda tiap status) #}
                     <span class="bagi-status bagi-status--{{ janji.status|lower }}">
-                        {{ janji.get_status_display }}
+                        {{ janji.get_status_display }}   {# label ramah dari STATUS_CHOICES, mis. "Menunggu Persetujuan" #}
                     </span>
                 </div>
 
                 <div class="bagi-appointment-details">
                     <p>👤 Pengambil: <strong>{{ janji.pengambil.username }}</strong></p>
+                    {# BUG KECIL: buat lokasi "lainnya" ini nampilin teks "Lainnya". Fix: {{ janji.makanan.nama_lokasi }} #}
                     <p>📍 Lokasi: {{ janji.makanan.get_lokasi_pengambilan_display }}</p>
-                    <p>📅 Tanggal: {{ janji.waktu_janji|date:"d F Y" }}</p>
-                    <p>🕒 Jam: {{ janji.waktu_janji|date:"H:i" }} WIB</p>
+                    <p>📅 Tanggal: {{ janji.waktu_janji|date:"d F Y" }}</p>   {# filter date: format tanggal #}
+                    <p>🕒 Jam: {{ janji.waktu_janji|date:"H:i" }} WIB</p>      {# TIME_ZONE Asia/Jakarta, jadi label WIB akurat #}
                     <p>🍴 Porsi: {{ janji.makanan.porsi }}</p>
                 </div>
 
+                {# Tombol yang muncul tergantung status #}
                 {% if janji.status == 'PENDING' %}
                 <div class="bagi-appointment-actions">
 
+                    {# Aksi ubah data = form POST + csrf_token, BUKAN link <a>. Cocok sama @require_POST di view #}
                     <form method="POST"
-                          action="{% url 'saling_bagi:keputusan_janji' janji.id %}">
-                        {% csrf_token %}
-                        <input type="hidden" name="keputusan" value="approve">
+                          action="{% url 'saling_bagi:keputusan_janji' janji.id %}">   {# {% url %} bikin URL dari name di urls.py #}
+                        {% csrf_token %}                                              {# token anti-CSRF, wajib di tiap form POST #}
+                        <input type="hidden" name="keputusan" value="approve">        {# dibaca view: request.POST.get('keputusan') #}
                         <button class="bagi-approve-button" type="submit">
                             ✓ SETUJUI
                         </button>
@@ -96,6 +106,7 @@
                 </div>
 
                 {% elif janji.status == 'APPROVED' %}
+                {# Udah disetujui -> tombol buat nandain serah-terima selesai (view selesaikan_janji) #}
                 <form method="POST"
                       action="{% url 'saling_bagi:selesaikan_janji' janji.id %}">
                     {% csrf_token %}
@@ -104,11 +115,11 @@
                         ✓ TANDAI PENYERAHAN SELESAI
                     </button>
                 </form>
-                {% endif %}
+                {% endif %}                                                       {# REJECTED/COMPLETED: nggak ada tombol #}
 
             </article>
 
-            {% empty %}
+            {% empty %}                                {# jalan kalau janji_diterima kosong #}
             <div class="bagi-appointment-empty">
                 <span>📭</span>
                 <h3>Belum Ada Permintaan Masuk</h3>
@@ -119,7 +130,7 @@
         </div>
     </section>
 
-    <!-- PERMINTAAN YANG DIBUAT -->
+    {# ===================== BAGIAN 2: SAYA SEBAGAI PENGAMBIL ===================== #}
     <section class="bagi-appointment-section">
 
         <div class="bagi-section-heading">
@@ -132,7 +143,7 @@
 
         <div class="bagi-appointment-list">
 
-            {% for janji in janji_dibuat %}
+            {% for janji in janji_dibuat %}            {# loop janji yang saya ajukan #}
             <article class="bagi-appointment-card">
 
                 <div class="bagi-appointment-card__top">
@@ -147,12 +158,14 @@
                 </div>
 
                 <div class="bagi-appointment-details">
-                    <p>👤 Pemberi: <strong>{{ janji.makanan.pemberi.username }}</strong></p>
+                    <p>👤 Pemberi: <strong>{{ janji.makanan.pemberi.username }}</strong></p>   {# berkat select_related, nggak ada query tambahan #}
+                    {# Sama kayak di atas: sebaiknya {{ janji.makanan.nama_lokasi }} #}
                     <p>📍 Lokasi: {{ janji.makanan.get_lokasi_pengambilan_display }}</p>
                     <p>📅 Tanggal: {{ janji.waktu_janji|date:"d F Y" }}</p>
                     <p>🕒 Jam: {{ janji.waktu_janji|date:"H:i" }} WIB</p>
                 </div>
 
+                {# Pengambil cuma lihat pesan status (nggak ada tombol aksi; belum ada fitur batal) #}
                 {% if janji.status == 'PENDING' %}
                 <p class="bagi-pending-note">
                     ⏳ Menunggu persetujuan pemberi makanan.
@@ -179,7 +192,7 @@
                 <h3>Belum Ada Janji Temu</h3>
                 <p>Janji temu yang kamu ajukan akan muncul di sini.</p>
                 <a href="{% url 'saling_bagi:index' %}"
-                   class="bagi-primary-button">
+                   class="bagi-primary-button">           {# link biasa (GET) boleh, karena cuma navigasi, nggak ngubah data #}
                     CARI MAKANAN →
                 </a>
             </div>
@@ -194,7 +207,7 @@
 
 </main>
 
-{% include "_footer.html" %}
+{% include "_footer.html" %}                           {# sisipin footer bersama #}
 
 </body>
 </html>
