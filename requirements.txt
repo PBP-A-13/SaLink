@@ -5,3 +5,4 @@ tzdata==2026.4
 gunicorn
 whitenoise
 Pillow==13.0.0
+djangorestframework==3.17.2

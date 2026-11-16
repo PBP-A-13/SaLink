@@ -26,7 +26,7 @@ SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'django-insecure-dev-only-change-me'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DJANGO_DEBUG', '1') == '1'
 
-ALLOWED_HOSTS = ["localhost", "127.0.0.1", "muhammad-hasbi52-salink.pws.cs.ui.ac.id"]
+ALLOWED_HOSTS = ["localhost", "127.0.0.1", "10.0.2.2", "muhammad-hasbi52-salink.pws.cs.ui.ac.id"]
 
 CSRF_TRUSTED_ORIGINS = [
     "http://localhost",
@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'rest_framework',
     'main',
     'saling_beli',
     'saling_bagi',
