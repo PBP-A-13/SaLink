@@ -7,3 +7,4 @@ whitenoise
 Pillow==13.0.0
 django-cas-ng==5.1.2
 djangorestframework==3.18.3
+django-cors-headers==4.9.0
