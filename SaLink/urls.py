@@ -11,6 +11,11 @@ from django.views.generic import RedirectView          # view bawaan untuk redir
 from django.views.static import serve                  # view bawaan untuk melayani file statis/media
 
 urlpatterns = [
+    path('admin/', admin.site.urls),
+    path('akun/', include('user_page.urls')),
+    path('api/auth/', include('user_page.api_urls')),
+    path('', include('main.urls')),
+    path('saling-bagi/', include('saling_bagi.urls')),
     path('admin/', admin.site.urls),                   # /admin/ -> panel admin Django
     path('akun/', include('user_page.urls')),          # /akun/...        -> app login/profil
     path('', include('main.urls')),                    # /                -> halaman home
