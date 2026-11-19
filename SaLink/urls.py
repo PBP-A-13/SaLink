@@ -8,6 +8,7 @@ from django.views.static import serve
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('akun/', include('user_page.urls')),
+    path('api/auth/', include('user_page.api_urls')),
     path('', include('main.urls')),
     path('saling-bagi/', include('saling_bagi.urls')),
     path('saling-beli/', include('saling_beli.urls')),
