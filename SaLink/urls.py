@@ -13,7 +13,7 @@ from django.views.static import serve                  # view bawaan untuk melay
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('akun/', include('user_page.urls')),
-    path('api/auth/', include('user_page.api_urls')),
+    path('api/v1/auth/', include('user_page.api_urls')),
     path('', include('main.urls')),
     path('saling-bagi/', include('saling_bagi.urls')),
     path('admin/', admin.site.urls),                   # /admin/ -> panel admin Django
