@@ -73,8 +73,39 @@ class BorrowRequest(models.Model):
     actual_return_date = models.DateField(blank=True, null=True, help_text="Tanggal aktual barang dikembalikan")
     notes = models.TextField(blank=True, help_text="Alasan peminjaman / pesan untuk pemilik barang")
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING)
+    
+    # Konfirmasi Serah-Terima Dua Arah (Handover Saat Pengambilan)
+    owner_handover_confirmed = models.BooleanField(
+        default=False,
+        help_text="Pemilik mengonfirmasi barang telah diserahkan kepada peminjam"
+    )
+    borrower_handover_confirmed = models.BooleanField(
+        default=False,
+        help_text="Peminjam mengonfirmasi telah menerima fisik barang dari pemilik"
+    )
+
+    # Konfirmasi Serah-Terima Dua Arah (Return Saat Pengembalian)
+    borrower_return_confirmed = models.BooleanField(
+        default=False,
+        help_text="Peminjam mengonfirmasi telah mengembalikan fisik barang kepada pemilik"
+    )
+    owner_return_confirmed = models.BooleanField(
+        default=False,
+        help_text="Pemilik mengonfirmasi telah menerima kembali barang dalam kondisi baik"
+    )
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    @property
+    def handover_ready(self):
+        """Siap bertransisi ke ONGOING jika kedua pihak telah konfirmasi serah-terima."""
+        return self.owner_handover_confirmed and self.borrower_handover_confirmed
+
+    @property
+    def return_ready(self):
+        """Siap bertransisi ke RETURNED jika kedua pihak telah konfirmasi pengembalian."""
+        return self.borrower_return_confirmed and self.owner_return_confirmed
 
     class Meta:
         ordering = ['-created_at']
